@@ -66,3 +66,15 @@ refresh(RT1) ─▶ RT1은 이미 used → 재사용 감지 → family의 모든
 
 - `JWT_ACCESS_SECRET` 반드시 설정 (기본값은 개발용), `NODE_ENV=production`이면 쿠키 `Secure`.
 - `AUTH_DEMO_ENDPOINTS=false` (탈취/만료 토큰 데모 엔드포인트, 본문으로 리프레시 토큰 받기 비활성화).
+
+## Reload recovery (silent refresh)
+
+The access token lives only in JS memory (not localStorage) to limit XSS exposure, so it is gone after a page reload.
+On mount, `/auth` calls `POST /auth/refresh` with `credentials: 'include'`; the browser attaches the httpOnly
+`bv_refresh_token` cookie (localhost:3000 → localhost:4000 is same-site, so SameSite=Lax is sent; CORS allows
+`http://localhost:3000` with credentials). 200 → session restored and the timeline logs
+"새로고침 → 쿠키의 리프레시 토큰으로 액세스 토큰 복구"; 401 → logged-out state with the reason.
+
+The refresh is a module-level single-flight shared by the mount effect and the 401-retry path, so React
+StrictMode's double effect run (dev) sends **one** request. Two requests with the same refresh token would make the
+second one look like reuse and revoke the whole family.
