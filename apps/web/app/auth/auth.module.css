@@ -1,0 +1,387 @@
+.main {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 5rem;
+}
+.main button,
+.main select,
+.main input {
+  font: inherit;
+  color: #e6e9f2;
+  background: #1a2342;
+  border: 1px solid #2f3b66;
+  border-radius: 10px;
+  padding: 0.45rem 0.85rem;
+}
+.main button {
+  cursor: pointer;
+}
+.main button:hover:not(:disabled) {
+  background: #24305a;
+}
+.main button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.main .primary {
+  background: #4f46e5;
+  border-color: #6366f1;
+}
+.main .ghost {
+  background: transparent;
+}
+.main h1 {
+  font-size: 2.1rem;
+  margin: 0.2rem 0 0.6rem;
+  letter-spacing: -0.02em;
+}
+.kicker {
+  color: #818cf8;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0;
+}
+.lead {
+  color: #aab1cc;
+  max-width: 800px;
+  line-height: 1.6;
+}
+.muted {
+  color: #8b93b0;
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+.mono {
+  font-family: ui-monospace, monospace;
+  font-size: 0.8rem;
+  color: #c7cce0;
+}
+.okText {
+  color: #34d399;
+}
+.badText {
+  color: #fb7185;
+}
+.warn {
+  color: #facc15;
+}
+.card {
+  background: #10172f;
+  border: 1px solid #222c50;
+  border-radius: 16px;
+  padding: 1.2rem 1.3rem;
+  margin-top: 1.2rem;
+}
+.card h2 {
+  font-size: 1.08rem;
+  margin: 0 0 0.6rem;
+}
+.card h3 {
+  font-size: 0.95rem;
+  margin: 0 0 0.4rem;
+}
+.cardHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-bottom: 0.4rem;
+}
+.cardHead h2 {
+  margin: 0;
+}
+.actions,
+.toggle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin: 0.6rem 0;
+}
+.loginForm {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+.loginForm input {
+  width: 140px;
+}
+
+.sessionGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem;
+}
+@media (max-width: 860px) {
+  .sessionGrid {
+    grid-template-columns: 1fr;
+  }
+}
+.sessionGrid .actions {
+  grid-column: 1 / -1;
+}
+.tokenCard {
+  background: #0b1226;
+  border: 1px solid #1f2847;
+  border-radius: 12px;
+  padding: 0.8rem 1rem;
+}
+.tokenHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+.countdown {
+  height: 10px;
+  background: #1a2342;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.countdownFill {
+  display: block;
+  height: 100%;
+  transform-origin: left;
+  transition: transform 0.25s linear;
+  will-change: transform;
+}
+.badgeOk,
+.badgeBad {
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+}
+.badgeOk {
+  background: rgba(52, 211, 153, 0.16);
+  color: #34d399;
+}
+.badgeBad {
+  background: rgba(251, 113, 133, 0.16);
+  color: #fb7185;
+}
+
+.timeline {
+  list-style: none;
+  padding: 0;
+  margin: 0.8rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.timelineRow {
+  display: grid;
+  grid-template-columns: 70px 24px 220px 110px 48px 1fr;
+  gap: 0.5rem;
+  align-items: center;
+  font-size: 0.84rem;
+  padding: 0.35rem 0.5rem;
+  background: #0b1226;
+  border-radius: 8px;
+  animation: slideIn 0.35s ease-out;
+}
+.attackerRow {
+  background: rgba(251, 113, 133, 0.08);
+}
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.credential {
+  font-family: ui-monospace, monospace;
+  font-size: 0.78rem;
+  color: #facc15;
+}
+
+.race {
+  margin-top: 0.8rem;
+}
+.raceLane {
+  display: grid;
+  grid-template-columns: 70px 1fr;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0.35rem 0;
+}
+.raceLabel {
+  font-size: 0.82rem;
+  color: #8b93b0;
+}
+.raceTrack {
+  position: relative;
+  height: 30px;
+  background: #0b1226;
+  border-radius: 8px;
+}
+.raceStep {
+  position: absolute;
+  top: 4px;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  white-space: nowrap;
+  opacity: 0;
+  animation: stepIn 0.35s ease-out forwards;
+}
+@keyframes stepIn {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.stepOk {
+  background: rgba(52, 211, 153, 0.2);
+  color: #34d399;
+}
+.stepBad {
+  background: rgba(251, 113, 133, 0.2);
+  color: #fb7185;
+}
+.raceSummary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.2rem;
+  margin-top: 0.6rem;
+  font-size: 0.9rem;
+}
+
+.verdict {
+  background: #0b1226;
+  border-left: 3px solid #facc15;
+  padding: 0.5rem 0.8rem;
+  border-radius: 0 8px 8px 0;
+  font-size: 0.9rem;
+}
+.chain {
+  margin-top: 0.6rem;
+}
+.dbTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: ui-monospace, monospace;
+  font-size: 0.78rem;
+}
+.dbTable th {
+  text-align: left;
+  color: #8b93b0;
+  font-weight: 500;
+  padding: 0.3rem 0.4rem;
+  border-bottom: 1px solid #222c50;
+}
+.dbTable td {
+  padding: 0.3rem 0.4rem;
+  border-bottom: 1px solid #182040;
+  animation: slideIn 0.3s ease-out;
+}
+.row_revoked td {
+  color: #fb7185;
+}
+.row_used td {
+  color: #8b93b0;
+}
+.status_active,
+.status_used,
+.status_revoked {
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  font-weight: 700;
+}
+.status_active {
+  background: rgba(52, 211, 153, 0.18);
+  color: #34d399;
+}
+.status_used {
+  background: rgba(139, 147, 176, 0.18);
+  color: #c7cce0;
+}
+.status_revoked {
+  background: rgba(251, 113, 133, 0.18);
+  color: #fb7185;
+}
+
+.storageGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.8rem;
+  margin-top: 0.6rem;
+}
+@media (max-width: 860px) {
+  .storageGrid {
+    grid-template-columns: 1fr;
+  }
+}
+.storageCard {
+  background: #0b1226;
+  border: 1px solid #1f2847;
+  border-radius: 12px;
+  padding: 0.8rem 1rem;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  transition: border-color 0.3s;
+}
+.storageStolen {
+  border-color: #fb7185;
+}
+.storageSafe {
+  border-color: #34d399;
+}
+
+.jwtInput {
+  width: 100%;
+  min-height: 70px;
+  box-sizing: border-box;
+  font-family: ui-monospace, monospace;
+  font-size: 0.78rem;
+  color: #e6e9f2;
+  background: #0b1226;
+  border: 1px solid #2f3b66;
+  border-radius: 10px;
+  padding: 0.6rem;
+}
+.jwtColored {
+  font-family: ui-monospace, monospace;
+  font-size: 0.78rem;
+  word-break: break-all;
+}
+.jwtHeader {
+  color: #fb7185;
+}
+.jwtPayload {
+  color: #c084fc;
+}
+.jwtSignature {
+  color: #22d3ee;
+}
+.jwtGrid {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr 1fr;
+  gap: 1rem;
+}
+@media (max-width: 860px) {
+  .jwtGrid {
+    grid-template-columns: 1fr;
+  }
+}
+.pre {
+  background: #0b1226;
+  border-radius: 8px;
+  padding: 0.6rem;
+  font-size: 0.78rem;
+  overflow-x: auto;
+  margin: 0;
+}

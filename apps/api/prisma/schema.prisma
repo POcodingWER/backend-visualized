@@ -53,3 +53,40 @@ model CouponIssue {
 
   @@index([couponId, createdAt])
 }
+
+/// Stage 3: 인증 토큰 데모용 사용자 (서버 시작 시 데모 계정 upsert)
+model User {
+  id            Int            @id @default(autoincrement())
+  username      String         @unique @db.VarChar(50)
+  displayName   String         @db.VarChar(100)
+  /// scrypt: salt:hash (hex)
+  passwordHash  String         @db.VarChar(255)
+  createdAt     DateTime       @default(now()) @db.DateTime(3)
+  refreshTokens RefreshToken[]
+}
+
+enum RefreshTokenStatus {
+  active
+  used
+  revoked
+}
+
+/// 리프레시 토큰은 원문 대신 SHA-256 해시만 저장. 같은 로그인에서 회전된 토큰들은 같은 familyId.
+model RefreshToken {
+  id            String             @id @db.Char(36)
+  userId        Int
+  familyId      String             @db.Char(36)
+  /// 바로 이전 토큰 (회전 체인)
+  parentId      String?            @db.Char(36)
+  tokenHash     String             @unique @db.Char(64)
+  status        RefreshTokenStatus @default(active)
+  revokedReason String?            @db.VarChar(50)
+  createdAt     DateTime           @default(now()) @db.DateTime(3)
+  usedAt        DateTime?          @db.DateTime(3)
+  revokedAt     DateTime?          @db.DateTime(3)
+  expiresAt     DateTime           @db.DateTime(3)
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([familyId, createdAt])
+  @@index([userId])
+}

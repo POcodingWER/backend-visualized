@@ -5,6 +5,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { HealthController } from './health/health.controller';
 import { EventsModule } from './events/events.module';
 import { CouponsModule } from './coupons/coupons.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { CouponsModule } from './coupons/coupons.module';
     PrismaModule,
     EventsModule,
     CouponsModule,
+    AuthModule,
   ],
   controllers: [HealthController],
 })

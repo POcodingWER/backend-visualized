@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 const LINKS = [
   { href: '/', label: '① 이벤트 수집 파이프라인' },
   { href: '/coupon', label: '② 선착순 쿠폰 동시성' },
+  { href: '/auth', label: '③ 액세스·리프레시 토큰' },
 ];
 
 export default function Nav() {
