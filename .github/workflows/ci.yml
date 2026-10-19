@@ -42,6 +42,9 @@ jobs:
           node-version: 20
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Prisma Client 타입은 생성 코드라 typecheck 전에 만들어야 한다 (로컬은 이미 생성돼 있어 드러나지 않음)
+      - name: Generate Prisma Client
+        run: pnpm --filter @bv/api prisma:generate
       - name: Apply migrations
         run: pnpm --filter @bv/api exec prisma migrate deploy
       - run: pnpm format:check
