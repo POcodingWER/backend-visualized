@@ -1,0 +1,219 @@
+.hero {
+  max-width: var(--wide);
+  margin: var(--space-8) auto var(--space-24);
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: var(--space-12);
+  align-items: center;
+}
+.heroTitle {
+  font-size: var(--text-hero);
+  letter-spacing: -0.04em;
+}
+.heroLead {
+  margin: var(--space-6) 0 var(--space-8);
+  font-size: var(--text-lg);
+  color: var(--ink-soft);
+  max-width: 36rem;
+}
+.cta {
+  display: inline-block;
+  text-align: center;
+  text-decoration: none;
+}
+.heroArt {
+  width: 100%;
+  max-width: 24rem;
+  justify-self: center;
+}
+
+.teasers {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-6);
+}
+.teaser {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  height: 100%;
+  padding: var(--space-6) var(--space-6) var(--space-6);
+  border: 2px solid var(--ink);
+  border-radius: var(--hand-radius-soft);
+  background: var(--paper-raised);
+  text-decoration: none;
+  transition: transform 0.15s ease;
+}
+.teaser:hover {
+  transform: translateY(-3px);
+}
+.teaser h3 {
+  font-size: var(--text-lg);
+}
+.teaser h3 small {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--ink-soft);
+  letter-spacing: 0;
+}
+.teaserNumber {
+  font-weight: 750;
+  color: var(--apricot-ink);
+  font-size: var(--text-sm);
+}
+.teaserValue {
+  margin-top: auto;
+  padding-top: var(--space-4);
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+.teaserLabel,
+.draft {
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+}
+.draft {
+  border-top: 1px dashed var(--line-strong);
+  padding-top: var(--space-2);
+}
+
+.author {
+  display: grid;
+  grid-template-columns: 8rem minmax(0, 1fr);
+  gap: var(--space-8);
+  align-items: start;
+  max-width: var(--column);
+}
+.photoPlaceholder {
+  aspect-ratio: 1;
+  border: 1.5px dashed var(--line-strong);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: var(--ink-soft);
+  font-size: var(--text-sm);
+}
+.authorText {
+  display: grid;
+  gap: var(--space-3);
+}
+.authorName {
+  font-size: var(--text-lg);
+  font-weight: 750;
+}
+.authorLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+/* 아직 채우지 않은 자리: 눈에 덜 띄게 점선 칸으로 */
+.todo {
+  display: inline-block;
+  min-width: 4.5rem;
+  padding: 0 var(--space-2);
+  border: 1px dashed var(--line-strong);
+  border-radius: 4px;
+  color: var(--ink-soft);
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+.decisions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-8);
+}
+.decisions article {
+  border-top: 3px solid var(--ink);
+  padding-top: var(--space-4);
+}
+.decisions h3 {
+  font-size: 1.1rem;
+  margin-bottom: var(--space-3);
+}
+.decisions dl {
+  margin: 0;
+}
+.decisions dt {
+  margin-top: var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: 750;
+  color: var(--apricot-ink);
+}
+.decisions dd {
+  margin: 0;
+  font-size: 0.97rem;
+}
+
+.stack {
+  list-style: none;
+  margin: 0 0 var(--space-8);
+  padding: 0;
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-3);
+}
+.stack li:not(.arrow) {
+  flex: 1;
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-4) var(--space-6);
+  border: 2px solid var(--ink);
+  border-radius: var(--hand-radius-soft);
+  background: var(--paper-raised);
+}
+.stack li:nth-child(1) {
+  background: var(--sky);
+}
+.stack li:nth-child(5) {
+  background: var(--sage);
+}
+.stack small {
+  color: var(--ink);
+  font-size: var(--text-sm);
+}
+.arrow {
+  align-self: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+.facts {
+  margin: 0;
+  padding-left: 1.2rem;
+  display: grid;
+  gap: var(--space-2);
+  max-width: var(--column);
+}
+
+@media (max-width: 860px) {
+  .hero,
+  .teasers,
+  .decisions {
+    grid-template-columns: 1fr;
+  }
+  .hero {
+    gap: var(--space-8);
+    margin-bottom: var(--space-16);
+  }
+  .heroArt {
+    max-width: 16rem;
+  }
+  .cta {
+    width: 100%;
+  }
+  .stack {
+    flex-direction: column;
+  }
+  .arrow {
+    transform: rotate(90deg);
+  }
+  .author {
+    grid-template-columns: 5rem minmax(0, 1fr);
+    gap: var(--space-4);
+  }
+}
