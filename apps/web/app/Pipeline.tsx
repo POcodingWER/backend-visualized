@@ -1,7 +1,7 @@
 'use client';
 
 import { createTracker, type SendInfo, type Tracker } from '@bv/sdk';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { API_URL } from '../lib/api';
 import DailyChart, { type Daily } from './DailyChart';
 import s from './pipeline.module.css';
@@ -9,6 +9,63 @@ import s from './pipeline.module.css';
 const FLUSH_INTERVAL_MS = 10_000;
 const MAX_BATCH = 10;
 const CRON_MS = 5 * 60_000;
+/** 동시에 화면에 떠 있는 패킷 최대 수 (폭주 시 DOM/애니메이션 폭증 방지) */
+const MAX_PACKETS = 24;
+/** SSE ingested 메시지를 모아서 반영하는 주기 */
+const SSE_COALESCE_MS = 300;
+
+/** 일정 주기로만 리렌더되는 작은 컴포넌트용 tick */
+function useTick(ms: number): number {
+  const [t, setT] = useState(0);
+  useEffect(() => {
+    setT(Date.now());
+    const id = setInterval(() => setT(Date.now()), ms);
+    return () => clearInterval(id);
+  }, [ms]);
+  return t;
+}
+
+const mmss = (ms: number) => {
+  const t = Math.ceil(ms / 1000);
+  return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
+};
+
+/** SDK 큐 상태: 자기 자신만 250ms/1s 주기로 리렌더 (부모 트리 전체 리렌더 X) */
+const SdkQueue = memo(function SdkQueue({
+  tracker,
+  startedAt,
+}: {
+  tracker: React.RefObject<Tracker | null>;
+  startedAt: React.RefObject<number>;
+}) {
+  const [pending, setPending] = useState(0);
+  useEffect(() => {
+    // 값이 같으면 React가 렌더를 건너뜀
+    const id = setInterval(() => setPending(tracker.current?.pending() ?? 0), 250);
+    return () => clearInterval(id);
+  }, [tracker]);
+  const now = useTick(1000);
+  const nextFlushIn = now
+    ? FLUSH_INTERVAL_MS - ((now - startedAt.current) % FLUSH_INTERVAL_MS)
+    : FLUSH_INTERVAL_MS;
+  return (
+    <>
+      <span className={s.queue}>
+        {Array.from({ length: MAX_BATCH }, (_, i) => (
+          <i key={i} className={i < pending ? s.qOn : s.qOff} />
+        ))}
+      </span>
+      대기 <b>{pending}</b>/{MAX_BATCH} · 자동 flush {Math.ceil(nextFlushIn / 1000)}s
+    </>
+  );
+});
+
+const CronCountdown = memo(function CronCountdown() {
+  const now = useTick(1000);
+  return <>다음 자동 실행 {mmss(now ? CRON_MS - (now % CRON_MS) : CRON_MS)}</>;
+});
+
+const MemoChart = memo(DailyChart);
 
 type StageId = 'browser' | 'sdk' | 'network' | 'api' | 'db' | 'agg' | 'sse';
 
@@ -101,8 +158,6 @@ export default function Pipeline() {
   const tracker = useRef<Tracker | null>(null);
   const startedAt = useRef(0);
   const [packets, setPackets] = useState<Packet[]>([]);
-  const [pending, setPending] = useState(0);
-  const [now, setNow] = useState(0);
   const [sentReq, setSentReq] = useState(0);
   const [sentEvents, setSentEvents] = useState(0);
   const [apiStatus, setApiStatus] = useState<{ code: number; key: number } | null>(null);
@@ -114,23 +169,50 @@ export default function Pipeline() {
   const [aggResult, setAggResult] = useState<string | null>(null);
   const [aggBusy, setAggBusy] = useState(false);
   const [active, setActive] = useState<StageId | null>(null);
-  const [flash, setFlash] = useState<Partial<Record<StageId, number>>>({});
+  const nodeRefs = useRef<Partial<Record<StageId, HTMLButtonElement | null>>>({});
 
-  const pulse = useCallback((id: StageId) => setFlash((f) => ({ ...f, [id]: ++seq })), []);
+  // 하이라이트는 state/key 변경 없이 Web Animations API로 (노드 리마운트·리렌더 X)
+  const pulse = useCallback((id: StageId) => {
+    nodeRefs.current[id]?.animate(
+      [
+        { boxShadow: '0 0 0 0 rgba(129,140,248,0.9)' },
+        { boxShadow: '0 0 0 14px rgba(129,140,248,0)' },
+      ],
+      { duration: 600, easing: 'ease-out' },
+    );
+  }, []);
+  const doneRefs = useRef(new Map<number, () => void>());
 
   const fly = useCallback(
     (p: Omit<Packet, 'key'>) =>
       new Promise<void>((resolve) => {
         const key = ++seq;
-        setPackets((ps) => [...ps, { ...p, key }]);
-        setTimeout(() => {
-          setPackets((ps) => ps.filter((x) => x.key !== key));
+        doneRefs.current.set(key, () => {
           pulse(p.to);
           resolve();
-        }, p.ms);
+        });
+        // 상한 초과 시 가장 오래된 패킷을 즉시 완료 처리하고 제거
+        setPackets((ps) => {
+          const next = [...ps, { ...p, key }];
+          const drop = next.length - MAX_PACKETS;
+          if (drop > 0) next.slice(0, drop).forEach((x) => finish(x.key));
+          return drop > 0 ? next.slice(drop) : next;
+        });
       }),
     [pulse],
   );
+
+  function finish(key: number) {
+    const done = doneRefs.current.get(key);
+    doneRefs.current.delete(key);
+    if (done) queueMicrotask(done);
+  }
+  const onPacketEnd = useCallback((key: number) => {
+    setPackets((ps) => ps.filter((x) => x.key !== key));
+    const done = doneRefs.current.get(key);
+    doneRefs.current.delete(key);
+    done?.();
+  }, []);
 
   const loadStats = useCallback(async () => {
     try {
@@ -186,15 +268,8 @@ export default function Pipeline() {
   }, [fly]);
 
   useEffect(() => {
-    const id = setInterval(() => {
-      setNow(Date.now());
-      setPending(tracker.current?.pending() ?? 0);
-    }, 200);
     const t = setTimeout(() => void loadStats(), 300);
-    return () => {
-      clearInterval(id);
-      clearTimeout(t);
-    };
+    return () => clearTimeout(t);
   }, [loadStats]);
 
   // SSE: 저장 완료 알림 → DB 행 수/실시간 카운터 갱신 + 브라우저로 push 애니메이션
@@ -202,27 +277,43 @@ export default function Pipeline() {
     const es = new EventSource(`${API_URL}/events/stream`);
     es.onopen = () => setConnected(true);
     es.onerror = () => setConnected(false);
-    es.addEventListener('ingested', (e) => {
-      const { added } = JSON.parse((e as MessageEvent<string>).data) as { added: number };
-      setLive((n) => n + added);
-      setDbTotal((n) => (n ?? 0) + added);
+    // 폭주 시 메시지마다 setState+애니메이션 하지 않고 SSE_COALESCE_MS 동안 합쳐서 한 번만 반영
+    let acc = 0;
+    let msgs = 0;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const drain = () => {
+      timer = null;
+      const added = acc;
+      const n = msgs;
+      acc = 0;
+      msgs = 0;
+      setLive((v) => v + added);
+      setDbTotal((v) => (v ?? 0) + added);
       pulse('db');
       void fly({
         from: 'db',
         to: 'browser',
-        label: `+${added}`,
+        label: n > 1 ? `+${added} (${n}건)` : `+${added}`,
         kind: 'push',
         ms: 1300,
         lane: 'bottom',
       }).then(() => pulse('sse'));
+    };
+    es.addEventListener('ingested', (e) => {
+      const { added } = JSON.parse((e as MessageEvent<string>).data) as { added: number };
+      acc += added;
+      msgs++;
+      timer ??= setTimeout(drain, SSE_COALESCE_MS);
     });
-    return () => es.close();
+    return () => {
+      if (timer) clearTimeout(timer);
+      es.close();
+    };
   }, [fly, pulse]);
 
   const click = (count: number) => {
     for (let i = 0; i < count; i++)
       tracker.current?.track('button_click', { button: count > 1 ? 'burst' : 'single' });
-    setPending(tracker.current?.pending() ?? 0);
     for (let i = 0; i < Math.min(count, 6); i++) {
       setTimeout(
         () =>
@@ -247,13 +338,6 @@ export default function Pipeline() {
     }
   };
 
-  const elapsed = now - startedAt.current;
-  const nextFlushIn = now ? FLUSH_INTERVAL_MS - (elapsed % FLUSH_INTERVAL_MS) : FLUSH_INTERVAL_MS;
-  const nextCronIn = now ? CRON_MS - (now % CRON_MS) : CRON_MS;
-  const mmss = (ms: number) => {
-    const t = Math.ceil(ms / 1000);
-    return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
-  };
   const shown = active ? STAGES[idx(active)] : null;
 
   return (
@@ -283,8 +367,11 @@ export default function Pipeline() {
         <div className={s.rail}>
           {STAGES.map((st) => (
             <button
-              key={`${st.id}-${flash[st.id] ?? 0}`}
-              className={`${s.node} ${flash[st.id] ? s.flash : ''} ${active === st.id ? s.nodeActive : ''}`}
+              key={st.id}
+              ref={(el) => {
+                nodeRefs.current[st.id] = el;
+              }}
+              className={`${s.node} ${active === st.id ? s.nodeActive : ''}`}
               onClick={() => setActive(active === st.id ? null : st.id)}
               onMouseEnter={() => setActive(st.id)}
             >
@@ -295,16 +382,7 @@ export default function Pipeline() {
                 {st.id === 'browser' && (
                   <>탭 세션 {tracker.current?.sessionId.slice(0, 6) ?? '…'}</>
                 )}
-                {st.id === 'sdk' && (
-                  <>
-                    <span className={s.queue}>
-                      {Array.from({ length: MAX_BATCH }, (_, i) => (
-                        <i key={i} className={i < pending ? s.qOn : s.qOff} />
-                      ))}
-                    </span>
-                    대기 <b>{pending}</b>/{MAX_BATCH} · 자동 flush {Math.ceil(nextFlushIn / 1000)}s
-                  </>
-                )}
+                {st.id === 'sdk' && <SdkQueue tracker={tracker} startedAt={startedAt} />}
                 {st.id === 'network' && (
                   <>
                     요청 <b>{sentReq}</b>개로 이벤트 <b>{sentEvents}</b>개
@@ -331,7 +409,7 @@ export default function Pipeline() {
                     events <b>{dbTotal?.toLocaleString() ?? '…'}</b>행
                   </>
                 )}
-                {st.id === 'agg' && <>다음 자동 실행 {mmss(nextCronIn)}</>}
+                {st.id === 'agg' && <CronCountdown />}
                 {st.id === 'sse' && (
                   <>
                     {connected ? '🟢' : '🔴'} 이 화면에서 <b>+{live}</b>
@@ -347,16 +425,17 @@ export default function Pipeline() {
           {packets.map((p) => (
             <span
               key={p.key}
-              className={`${s.packet} ${s[p.kind]} ${p.lane === 'bottom' ? s.laneBottom : s.laneTop}`}
+              className={`${s.track} ${p.lane === 'bottom' ? s.laneBottom : s.laneTop}`}
               style={
                 {
-                  '--from': pos(p.from),
-                  '--to': pos(p.to),
+                  '--from': `${pos(p.from)}`,
+                  '--to': `${pos(p.to)}`,
                   animationDuration: `${p.ms}ms`,
                 } as React.CSSProperties
               }
+              onAnimationEnd={(e) => e.target === e.currentTarget && onPacketEnd(p.key)}
             >
-              {p.label}
+              <span className={`${s.packet} ${s[p.kind]}`}>{p.label}</span>
             </span>
           ))}
         </div>
@@ -426,10 +505,57 @@ export default function Pipeline() {
           방금 보낸 이벤트는 다음 집계(또는 버튼) 이후 차트에 반영됩니다.
           {aggResult && <span className={s.okText}> · {aggResult}</span>}
         </p>
-        {daily ? <DailyChart daily={daily} /> : <p className={s.muted}>불러오는 중…</p>}
+        {daily ? <MemoChart daily={daily} /> : <p className={s.muted}>불러오는 중…</p>}
       </section>
     </main>
   );
+}
+
+type Progress = { done: number; ms?: number } | null;
+
+/** 컴포넌트 밖에 정의 (렌더마다 새 컴포넌트 타입 → 리마운트 방지) */
+const Lane = memo(function Lane({
+  title,
+  total,
+  st,
+  color,
+}: {
+  title: string;
+  total: number;
+  st: Progress;
+  color: string;
+}) {
+  return (
+    <div className={s.lane}>
+      <div className={s.laneHead}>
+        <b>{title}</b>
+        <span>
+          HTTP 요청 <b>{st?.done ?? 0}</b>/{total}
+          {st?.ms !== undefined && ` · ${Math.round(st.ms)}ms`}
+        </span>
+      </div>
+      <div className={s.reqs}>
+        {Array.from({ length: total }, (_, i) => (
+          <i key={i} style={{ background: i < (st?.done ?? 0) ? color : undefined }} />
+        ))}
+      </div>
+    </div>
+  );
+});
+
+/** 요청 폭주 중 setState를 프레임당 최대 1번으로 합치는 헬퍼 */
+function rafBatch<T>(apply: (v: T) => void) {
+  let latest: T;
+  let scheduled = false;
+  return (v: T) => {
+    latest = v;
+    if (scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(() => {
+      scheduled = false;
+      apply(latest);
+    });
+  };
 }
 
 /** 단건 vs 배치: 같은 N개 이벤트를 실제 API로 보내 요청 수/시간 비교 */
@@ -453,6 +579,8 @@ function Compare() {
     // 단건: 이벤트마다 POST /events (동시 10)
     let t0 = performance.now();
     let next = 0;
+    let done = 0;
+    const show = rafBatch<number>((d) => setSingle((x) => (x?.ms !== undefined ? x : { done: d })));
     const worker = async () => {
       while (next < n) {
         const i = next++;
@@ -461,7 +589,7 @@ function Compare() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(ev(i, 'single')),
         }).catch(() => null);
-        setSingle((x) => ({ done: (x?.done ?? 0) + 1 }));
+        show(++done);
       }
     };
     await Promise.all(Array.from({ length: 10 }, worker));
@@ -480,33 +608,6 @@ function Compare() {
     setBatch({ done: Math.ceil(n / 100), ms: performance.now() - t0 });
     setBusy(false);
   };
-
-  const Lane = ({
-    title,
-    total,
-    st,
-    color,
-  }: {
-    title: string;
-    total: number;
-    st: typeof single;
-    color: string;
-  }) => (
-    <div className={s.lane}>
-      <div className={s.laneHead}>
-        <b>{title}</b>
-        <span>
-          HTTP 요청 <b>{st?.done ?? 0}</b>/{total}
-          {st?.ms !== undefined && ` · ${Math.round(st.ms)}ms`}
-        </span>
-      </div>
-      <div className={s.reqs}>
-        {Array.from({ length: total }, (_, i) => (
-          <i key={i} style={{ background: i < (st?.done ?? 0) ? color : undefined }} />
-        ))}
-      </div>
-    </div>
-  );
 
   return (
     <section className={s.card}>
@@ -585,6 +686,8 @@ function RateLimit() {
     setBusy(true);
     const acc = { ok: 0, limited: 0, other: 0 };
     setRes({ ...acc });
+    // 210번 응답마다 setState하지 않고 프레임당 1번만 반영
+    const show = rafBatch<typeof acc>((v) => setRes({ ...v }));
     let next = 0;
     const worker = async () => {
       while (next < 210) {
@@ -606,10 +709,11 @@ function RateLimit() {
         if (r?.status === 202) acc.ok++;
         else if (r?.status === 429) acc.limited++;
         else acc.other++;
-        setRes({ ...acc });
+        show(acc);
       }
     };
     await Promise.all(Array.from({ length: 15 }, worker));
+    setRes({ ...acc });
     setBusy(false);
   };
   return (
