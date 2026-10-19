@@ -1,0 +1,3633 @@
+{
+  "recordedAt": "2026-10-20",
+  "note": "로컬 API(NestJS) + MySQL 8.4(맥북 M1 Pro)에 POST /points/simulate 200건을 그대로 저장한 기록",
+  "results": [
+    {
+      "mode": "overwrite",
+      "walletName": "sim-overwrite",
+      "requests": 200,
+      "openingBalance": 5000,
+      "expectedBalance": 15000,
+      "reconciliation": { "balance": 4900, "entriesSum": 15000, "difference": -10100 },
+      "lostPoints": 10100,
+      "rejected": 0,
+      "durationMs": 106.3,
+      "traces": [
+        {
+          "amount": 100,
+          "startedAtMs": 0.1,
+          "readAtMs": 11.6,
+          "wroteAtMs": 48.2,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.3,
+          "readAtMs": 11.7,
+          "wroteAtMs": 48.3,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.3,
+          "readAtMs": 11.7,
+          "wroteAtMs": 49.8,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 0.3,
+          "readAtMs": 11.7,
+          "wroteAtMs": 50.1,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.3,
+          "readAtMs": 11.8,
+          "wroteAtMs": 50.4,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.1,
+          "readAtMs": 11.8,
+          "wroteAtMs": 50.6,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.1,
+          "readAtMs": 11.8,
+          "wroteAtMs": 48.3,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 2.2,
+          "readAtMs": 11.8,
+          "wroteAtMs": 56.8,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.2,
+          "readAtMs": 11.8,
+          "wroteAtMs": 50.7,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.2,
+          "readAtMs": 11.8,
+          "wroteAtMs": 51,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.2,
+          "readAtMs": 11.8,
+          "wroteAtMs": 51.1,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 2.2,
+          "readAtMs": 11.8,
+          "wroteAtMs": 48.3,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.2,
+          "readAtMs": 11.8,
+          "wroteAtMs": 48.3,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.2,
+          "readAtMs": 11.8,
+          "wroteAtMs": 48.3,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.2,
+          "readAtMs": 11.8,
+          "wroteAtMs": 57.1,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 2.3,
+          "readAtMs": 11.8,
+          "wroteAtMs": 57.5,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.3,
+          "readAtMs": 11.8,
+          "wroteAtMs": 48.3,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.3,
+          "readAtMs": 11.8,
+          "wroteAtMs": 48.3,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.3,
+          "readAtMs": 11.9,
+          "wroteAtMs": 48.3,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 2.3,
+          "readAtMs": 11.9,
+          "wroteAtMs": 51.5,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.3,
+          "readAtMs": 11.9,
+          "wroteAtMs": 48.3,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.3,
+          "readAtMs": 11.9,
+          "wroteAtMs": 48.3,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.3,
+          "readAtMs": 11.9,
+          "wroteAtMs": 48.8,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 2.3,
+          "readAtMs": 11.9,
+          "wroteAtMs": 48.5,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.4,
+          "readAtMs": 11.9,
+          "wroteAtMs": 51.8,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.4,
+          "readAtMs": 11.9,
+          "wroteAtMs": 49,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.4,
+          "readAtMs": 11.9,
+          "wroteAtMs": 48.4,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 2.4,
+          "readAtMs": 11.9,
+          "wroteAtMs": 49.5,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.4,
+          "readAtMs": 11.9,
+          "wroteAtMs": 51.9,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.4,
+          "readAtMs": 11.9,
+          "wroteAtMs": 57.7,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.4,
+          "readAtMs": 11.9,
+          "wroteAtMs": 52.1,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 2.4,
+          "readAtMs": 11.9,
+          "wroteAtMs": 52.7,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.4,
+          "readAtMs": 12,
+          "wroteAtMs": 52.2,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.4,
+          "readAtMs": 12,
+          "wroteAtMs": 52.4,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.4,
+          "readAtMs": 12,
+          "wroteAtMs": 53,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 2.5,
+          "readAtMs": 12,
+          "wroteAtMs": 53.4,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.5,
+          "readAtMs": 12,
+          "wroteAtMs": 53.6,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.5,
+          "readAtMs": 12,
+          "wroteAtMs": 53.8,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.5,
+          "readAtMs": 12,
+          "wroteAtMs": 53.9,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 2.5,
+          "readAtMs": 12,
+          "wroteAtMs": 54.2,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.5,
+          "readAtMs": 12,
+          "wroteAtMs": 54.6,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.5,
+          "readAtMs": 12,
+          "wroteAtMs": 54.8,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.5,
+          "readAtMs": 12,
+          "wroteAtMs": 54.9,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 2.5,
+          "readAtMs": 12,
+          "wroteAtMs": 58,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.6,
+          "readAtMs": 12,
+          "wroteAtMs": 55,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.7,
+          "readAtMs": 12,
+          "wroteAtMs": 55.3,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.7,
+          "readAtMs": 12.1,
+          "wroteAtMs": 55.4,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 2.7,
+          "readAtMs": 12.1,
+          "wroteAtMs": 55.6,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.7,
+          "readAtMs": 12.1,
+          "wroteAtMs": 55.9,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.7,
+          "readAtMs": 12.1,
+          "wroteAtMs": 56.1,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.7,
+          "readAtMs": 12.1,
+          "wroteAtMs": 58.3,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 2.7,
+          "readAtMs": 12.1,
+          "wroteAtMs": 56.4,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.7,
+          "readAtMs": 12.1,
+          "wroteAtMs": 56.6,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.7,
+          "readAtMs": 12.1,
+          "wroteAtMs": 58.5,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.7,
+          "readAtMs": 12.1,
+          "wroteAtMs": 58.6,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 2.7,
+          "readAtMs": 12.1,
+          "wroteAtMs": 59,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.8,
+          "readAtMs": 12.1,
+          "wroteAtMs": 59.3,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.8,
+          "readAtMs": 12.1,
+          "wroteAtMs": 59.5,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.8,
+          "readAtMs": 12.2,
+          "wroteAtMs": 60.6,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 2.8,
+          "readAtMs": 12.2,
+          "wroteAtMs": 59.8,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.8,
+          "readAtMs": 12.2,
+          "wroteAtMs": 60.2,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.8,
+          "readAtMs": 12.2,
+          "wroteAtMs": 60.3,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.8,
+          "readAtMs": 12.2,
+          "wroteAtMs": 60.8,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 2.8,
+          "readAtMs": 12.2,
+          "wroteAtMs": 61.3,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.8,
+          "readAtMs": 12.2,
+          "wroteAtMs": 61.6,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.8,
+          "readAtMs": 12.2,
+          "wroteAtMs": 61.8,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.8,
+          "readAtMs": 12.2,
+          "wroteAtMs": 61.9,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 2.9,
+          "readAtMs": 12.2,
+          "wroteAtMs": 62.2,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.9,
+          "readAtMs": 12.2,
+          "wroteAtMs": 62.5,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.9,
+          "readAtMs": 12.2,
+          "wroteAtMs": 62.7,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.9,
+          "readAtMs": 12.3,
+          "wroteAtMs": 62.9,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 2.9,
+          "readAtMs": 12.3,
+          "wroteAtMs": 63.1,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.9,
+          "readAtMs": 12.3,
+          "wroteAtMs": 63.5,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.9,
+          "readAtMs": 12.3,
+          "wroteAtMs": 63.6,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.9,
+          "readAtMs": 12.3,
+          "wroteAtMs": 63.8,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 2.9,
+          "readAtMs": 12.3,
+          "wroteAtMs": 64.7,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.9,
+          "readAtMs": 12.3,
+          "wroteAtMs": 65.3,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 2.9,
+          "readAtMs": 12.3,
+          "wroteAtMs": 65.5,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3,
+          "readAtMs": 12.3,
+          "wroteAtMs": 65.6,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 3,
+          "readAtMs": 12.3,
+          "wroteAtMs": 66.1,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3,
+          "readAtMs": 12.3,
+          "wroteAtMs": 66.6,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3,
+          "readAtMs": 12.3,
+          "wroteAtMs": 66.8,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3,
+          "readAtMs": 12.3,
+          "wroteAtMs": 67,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 3,
+          "readAtMs": 12.4,
+          "wroteAtMs": 67.7,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3,
+          "readAtMs": 12.4,
+          "wroteAtMs": 68.3,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3,
+          "readAtMs": 12.4,
+          "wroteAtMs": 68.5,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3,
+          "readAtMs": 12.4,
+          "wroteAtMs": 68.7,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 3,
+          "readAtMs": 12.4,
+          "wroteAtMs": 69.1,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.1,
+          "readAtMs": 12.4,
+          "wroteAtMs": 69.6,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.1,
+          "readAtMs": 12.4,
+          "wroteAtMs": 69.8,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.1,
+          "readAtMs": 12.4,
+          "wroteAtMs": 69.9,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 3.1,
+          "readAtMs": 12.4,
+          "wroteAtMs": 70.3,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.1,
+          "readAtMs": 12.4,
+          "wroteAtMs": 70.7,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.1,
+          "readAtMs": 12.4,
+          "wroteAtMs": 70.9,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.1,
+          "readAtMs": 12.4,
+          "wroteAtMs": 71,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 3.1,
+          "readAtMs": 12.4,
+          "wroteAtMs": 71.3,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.1,
+          "readAtMs": 12.5,
+          "wroteAtMs": 71.6,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.3,
+          "readAtMs": 12.5,
+          "wroteAtMs": 71.8,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.3,
+          "readAtMs": 12.5,
+          "wroteAtMs": 71.9,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 3.3,
+          "readAtMs": 12.5,
+          "wroteAtMs": 72.2,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.3,
+          "readAtMs": 12.5,
+          "wroteAtMs": 72.4,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.3,
+          "readAtMs": 12.5,
+          "wroteAtMs": 72.6,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.4,
+          "readAtMs": 12.5,
+          "wroteAtMs": 72.7,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 3.4,
+          "readAtMs": 12.5,
+          "wroteAtMs": 73.2,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.4,
+          "readAtMs": 12.5,
+          "wroteAtMs": 73.7,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.4,
+          "readAtMs": 12.5,
+          "wroteAtMs": 73.5,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.4,
+          "readAtMs": 12.5,
+          "wroteAtMs": 73.8,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 3.4,
+          "readAtMs": 12.5,
+          "wroteAtMs": 74.1,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.4,
+          "readAtMs": 12.5,
+          "wroteAtMs": 74.5,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.4,
+          "readAtMs": 12.6,
+          "wroteAtMs": 74.6,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.4,
+          "readAtMs": 12.6,
+          "wroteAtMs": 74.8,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 3.4,
+          "readAtMs": 12.6,
+          "wroteAtMs": 75.2,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.4,
+          "readAtMs": 12.6,
+          "wroteAtMs": 75.9,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.4,
+          "readAtMs": 12.6,
+          "wroteAtMs": 77.1,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.5,
+          "readAtMs": 12.6,
+          "wroteAtMs": 76,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 3.5,
+          "readAtMs": 12.6,
+          "wroteAtMs": 76.4,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.5,
+          "readAtMs": 12.6,
+          "wroteAtMs": 77.4,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.5,
+          "readAtMs": 12.6,
+          "wroteAtMs": 77.5,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.5,
+          "readAtMs": 12.6,
+          "wroteAtMs": 77.9,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 3.5,
+          "readAtMs": 12.6,
+          "wroteAtMs": 78,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.5,
+          "readAtMs": 12.6,
+          "wroteAtMs": 78.6,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.5,
+          "readAtMs": 12.7,
+          "wroteAtMs": 78.4,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.5,
+          "readAtMs": 12.7,
+          "wroteAtMs": 78.7,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 3.5,
+          "readAtMs": 12.7,
+          "wroteAtMs": 79,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.5,
+          "readAtMs": 12.7,
+          "wroteAtMs": 79.5,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.5,
+          "readAtMs": 12.7,
+          "wroteAtMs": 79.9,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.6,
+          "readAtMs": 12.7,
+          "wroteAtMs": 79.9,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 3.6,
+          "readAtMs": 12.7,
+          "wroteAtMs": 80.2,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.6,
+          "readAtMs": 12.7,
+          "wroteAtMs": 80.4,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.6,
+          "readAtMs": 12.7,
+          "wroteAtMs": 84.7,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.6,
+          "readAtMs": 12.7,
+          "wroteAtMs": 81,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 3.6,
+          "readAtMs": 12.7,
+          "wroteAtMs": 81.2,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.6,
+          "readAtMs": 12.7,
+          "wroteAtMs": 81.6,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.6,
+          "readAtMs": 12.8,
+          "wroteAtMs": 81.7,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.6,
+          "readAtMs": 12.8,
+          "wroteAtMs": 82,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 3.6,
+          "readAtMs": 12.8,
+          "wroteAtMs": 82.3,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.6,
+          "readAtMs": 12.8,
+          "wroteAtMs": 82.7,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.7,
+          "readAtMs": 12.8,
+          "wroteAtMs": 85.8,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.7,
+          "readAtMs": 12.8,
+          "wroteAtMs": 86.1,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 3.7,
+          "readAtMs": 12.8,
+          "wroteAtMs": 87.4,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.7,
+          "readAtMs": 12.8,
+          "wroteAtMs": 87.6,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.7,
+          "readAtMs": 12.8,
+          "wroteAtMs": 87.9,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.7,
+          "readAtMs": 12.8,
+          "wroteAtMs": 88.3,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 3.7,
+          "readAtMs": 12.8,
+          "wroteAtMs": 88.5,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.7,
+          "readAtMs": 12.8,
+          "wroteAtMs": 89.2,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.7,
+          "readAtMs": 12.9,
+          "wroteAtMs": 89.2,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.7,
+          "readAtMs": 12.9,
+          "wroteAtMs": 89.2,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 3.7,
+          "readAtMs": 12.9,
+          "wroteAtMs": 89.6,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.8,
+          "readAtMs": 12.9,
+          "wroteAtMs": 90,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.8,
+          "readAtMs": 12.9,
+          "wroteAtMs": 90.2,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.8,
+          "readAtMs": 12.9,
+          "wroteAtMs": 90.3,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 3.8,
+          "readAtMs": 12.9,
+          "wroteAtMs": 90.7,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.8,
+          "readAtMs": 12.9,
+          "wroteAtMs": 90.9,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.8,
+          "readAtMs": 12.9,
+          "wroteAtMs": 91.2,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.8,
+          "readAtMs": 12.9,
+          "wroteAtMs": 91.4,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 3.8,
+          "readAtMs": 12.9,
+          "wroteAtMs": 91.8,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.8,
+          "readAtMs": 12.9,
+          "wroteAtMs": 92.1,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.8,
+          "readAtMs": 12.9,
+          "wroteAtMs": 92.2,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.8,
+          "readAtMs": 13,
+          "wroteAtMs": 92.4,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 3.8,
+          "readAtMs": 13,
+          "wroteAtMs": 92.7,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.9,
+          "readAtMs": 13.6,
+          "wroteAtMs": 93,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.9,
+          "readAtMs": 13.6,
+          "wroteAtMs": 93.1,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.9,
+          "readAtMs": 13.6,
+          "wroteAtMs": 93.3,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 3.9,
+          "readAtMs": 13.6,
+          "wroteAtMs": 93.7,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.9,
+          "readAtMs": 13.6,
+          "wroteAtMs": 94,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.9,
+          "readAtMs": 13.6,
+          "wroteAtMs": 94,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.9,
+          "readAtMs": 13.6,
+          "wroteAtMs": 94.5,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 3.9,
+          "readAtMs": 13.6,
+          "wroteAtMs": 94.6,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 3.9,
+          "readAtMs": 13.6,
+          "wroteAtMs": 95,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 4,
+          "readAtMs": 13.7,
+          "wroteAtMs": 95.2,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 4,
+          "readAtMs": 13.7,
+          "wroteAtMs": 95.7,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 4,
+          "readAtMs": 13.7,
+          "wroteAtMs": 96.1,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 4,
+          "readAtMs": 13.7,
+          "wroteAtMs": 97.6,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 4,
+          "readAtMs": 13.7,
+          "wroteAtMs": 97.6,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 4,
+          "readAtMs": 13.7,
+          "wroteAtMs": 97.6,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 4,
+          "readAtMs": 13.7,
+          "wroteAtMs": 98,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 4,
+          "readAtMs": 13.7,
+          "wroteAtMs": 98.3,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 4,
+          "readAtMs": 13.7,
+          "wroteAtMs": 98.4,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 4,
+          "readAtMs": 13.7,
+          "wroteAtMs": 98.9,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 4,
+          "readAtMs": 13.7,
+          "wroteAtMs": 101.7,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 4,
+          "readAtMs": 13.7,
+          "wroteAtMs": 102.4,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 4.1,
+          "readAtMs": 13.8,
+          "wroteAtMs": 102.4,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 4.1,
+          "readAtMs": 13.8,
+          "wroteAtMs": 102.6,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 4.1,
+          "readAtMs": 13.8,
+          "wroteAtMs": 103.1,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 4.1,
+          "readAtMs": 13.8,
+          "wroteAtMs": 103.5,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 4.1,
+          "readAtMs": 13.8,
+          "wroteAtMs": 103.6,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 4.1,
+          "readAtMs": 13.8,
+          "wroteAtMs": 103.7,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 4.1,
+          "readAtMs": 13.8,
+          "wroteAtMs": 104,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 4.1,
+          "readAtMs": 13.8,
+          "wroteAtMs": 104.2,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 4.1,
+          "readAtMs": 13.8,
+          "wroteAtMs": 104.4,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 4.1,
+          "readAtMs": 13.8,
+          "wroteAtMs": 104.5,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 4.1,
+          "readAtMs": 13.8,
+          "wroteAtMs": 104.7,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 4.2,
+          "readAtMs": 13.8,
+          "wroteAtMs": 105.1,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 4.2,
+          "readAtMs": 13.8,
+          "wroteAtMs": 105.2,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 4.2,
+          "readAtMs": 13.9,
+          "wroteAtMs": 105.4,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 4.2,
+          "readAtMs": 13.9,
+          "wroteAtMs": 105.6,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 4.2,
+          "readAtMs": 13.9,
+          "wroteAtMs": 105.8,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 4.2,
+          "readAtMs": 13.9,
+          "wroteAtMs": 105.9,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 4.2,
+          "readAtMs": 13.9,
+          "wroteAtMs": 106,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 4.2,
+          "readAtMs": 13.9,
+          "wroteAtMs": 106.3,
+          "balanceSeen": 5000,
+          "balanceWritten": 4900,
+          "outcome": "applied"
+        }
+      ]
+    },
+    {
+      "mode": "ledger",
+      "walletName": "sim-ledger",
+      "requests": 200,
+      "openingBalance": 5000,
+      "expectedBalance": 15000,
+      "reconciliation": { "balance": 15000, "entriesSum": 15000, "difference": 0 },
+      "lostPoints": 0,
+      "rejected": 0,
+      "durationMs": 263.5,
+      "traces": [
+        {
+          "amount": 100,
+          "startedAtMs": 0,
+          "readAtMs": 25.4,
+          "wroteAtMs": 26.1,
+          "balanceSeen": 5900,
+          "balanceWritten": 6000,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.2,
+          "readAtMs": 26.4,
+          "wroteAtMs": 27,
+          "balanceSeen": 6000,
+          "balanceWritten": 6100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.2,
+          "readAtMs": 6.4,
+          "wroteAtMs": 7.7,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 0.2,
+          "readAtMs": 8.1,
+          "wroteAtMs": 9.1,
+          "balanceSeen": 5100,
+          "balanceWritten": 5000,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.2,
+          "readAtMs": 9.8,
+          "wroteAtMs": 11,
+          "balanceSeen": 5000,
+          "balanceWritten": 5100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.2,
+          "readAtMs": 46.1,
+          "wroteAtMs": 48.1,
+          "balanceSeen": 6800,
+          "balanceWritten": 6900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.2,
+          "readAtMs": 11.3,
+          "wroteAtMs": 12.2,
+          "balanceSeen": 5100,
+          "balanceWritten": 5200,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 0.2,
+          "readAtMs": 52.8,
+          "wroteAtMs": 54.4,
+          "balanceSeen": 7000,
+          "balanceWritten": 6900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.2,
+          "readAtMs": 12.4,
+          "wroteAtMs": 13.1,
+          "balanceSeen": 5200,
+          "balanceWritten": 5300,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.2,
+          "readAtMs": 13.3,
+          "wroteAtMs": 14.4,
+          "balanceSeen": 5300,
+          "balanceWritten": 5400,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.2,
+          "readAtMs": 14.7,
+          "wroteAtMs": 15.5,
+          "balanceSeen": 5400,
+          "balanceWritten": 5500,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 0.2,
+          "readAtMs": 15.9,
+          "wroteAtMs": 16.8,
+          "balanceSeen": 5500,
+          "balanceWritten": 5400,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.2,
+          "readAtMs": 17.1,
+          "wroteAtMs": 18,
+          "balanceSeen": 5400,
+          "balanceWritten": 5500,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.2,
+          "readAtMs": 18.3,
+          "wroteAtMs": 19,
+          "balanceSeen": 5500,
+          "balanceWritten": 5600,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.2,
+          "readAtMs": 34.1,
+          "wroteAtMs": 34.9,
+          "balanceSeen": 6500,
+          "balanceWritten": 6600,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 0.2,
+          "readAtMs": 54.9,
+          "wroteAtMs": 56.7,
+          "balanceSeen": 6900,
+          "balanceWritten": 6800,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.2,
+          "readAtMs": 58.8,
+          "wroteAtMs": 60.3,
+          "balanceSeen": 6900,
+          "balanceWritten": 7000,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.2,
+          "readAtMs": 70.5,
+          "wroteAtMs": 71.7,
+          "balanceSeen": 6900,
+          "balanceWritten": 7000,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.2,
+          "readAtMs": 88.5,
+          "wroteAtMs": 89.3,
+          "balanceSeen": 8000,
+          "balanceWritten": 8100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 0.2,
+          "readAtMs": 106.4,
+          "wroteAtMs": 107.5,
+          "balanceSeen": 8500,
+          "balanceWritten": 8400,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.2,
+          "readAtMs": 118.6,
+          "wroteAtMs": 119.8,
+          "balanceSeen": 8500,
+          "balanceWritten": 8600,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.2,
+          "readAtMs": 128.9,
+          "wroteAtMs": 129.9,
+          "balanceSeen": 9100,
+          "balanceWritten": 9200,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.2,
+          "readAtMs": 142,
+          "wroteAtMs": 142.7,
+          "balanceSeen": 9600,
+          "balanceWritten": 9700,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 0.3,
+          "readAtMs": 155.7,
+          "wroteAtMs": 156.6,
+          "balanceSeen": 10400,
+          "balanceWritten": 10300,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.3,
+          "readAtMs": 168.1,
+          "wroteAtMs": 168.9,
+          "balanceSeen": 10900,
+          "balanceWritten": 11000,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.3,
+          "readAtMs": 182.7,
+          "wroteAtMs": 183.4,
+          "balanceSeen": 11200,
+          "balanceWritten": 11300,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.3,
+          "readAtMs": 199.5,
+          "wroteAtMs": 200.2,
+          "balanceSeen": 12000,
+          "balanceWritten": 12100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 0.3,
+          "readAtMs": 212.9,
+          "wroteAtMs": 213.6,
+          "balanceSeen": 12800,
+          "balanceWritten": 12700,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.3,
+          "readAtMs": 220.1,
+          "wroteAtMs": 222.7,
+          "balanceSeen": 12800,
+          "balanceWritten": 12900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.3,
+          "readAtMs": 228.9,
+          "wroteAtMs": 229.7,
+          "balanceSeen": 13400,
+          "balanceWritten": 13500,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.3,
+          "readAtMs": 235.6,
+          "wroteAtMs": 236.2,
+          "balanceSeen": 13900,
+          "balanceWritten": 14000,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 0.3,
+          "readAtMs": 237.3,
+          "wroteAtMs": 238,
+          "balanceSeen": 14100,
+          "balanceWritten": 14000,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.3,
+          "readAtMs": 244.2,
+          "wroteAtMs": 245,
+          "balanceSeen": 14200,
+          "balanceWritten": 14300,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.3,
+          "readAtMs": 247.9,
+          "wroteAtMs": 248.5,
+          "balanceSeen": 14300,
+          "balanceWritten": 14400,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.3,
+          "readAtMs": 253.1,
+          "wroteAtMs": 253.8,
+          "balanceSeen": 14600,
+          "balanceWritten": 14700,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 0.3,
+          "readAtMs": 255.7,
+          "wroteAtMs": 256.3,
+          "balanceSeen": 14900,
+          "balanceWritten": 14800,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.3,
+          "readAtMs": 19.3,
+          "wroteAtMs": 19.9,
+          "balanceSeen": 5600,
+          "balanceWritten": 5700,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.3,
+          "readAtMs": 20.1,
+          "wroteAtMs": 20.7,
+          "balanceSeen": 5700,
+          "balanceWritten": 5800,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.3,
+          "readAtMs": 28.2,
+          "wroteAtMs": 29,
+          "balanceSeen": 6200,
+          "balanceWritten": 6300,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 0.3,
+          "readAtMs": 60.8,
+          "wroteAtMs": 62.6,
+          "balanceSeen": 7000,
+          "balanceWritten": 6900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 75.3,
+          "wroteAtMs": 76.4,
+          "balanceSeen": 7100,
+          "balanceWritten": 7200,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 81.3,
+          "wroteAtMs": 82.3,
+          "balanceSeen": 7600,
+          "balanceWritten": 7700,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 165,
+          "wroteAtMs": 165.6,
+          "balanceSeen": 10900,
+          "balanceWritten": 11000,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 0.4,
+          "readAtMs": 176.7,
+          "wroteAtMs": 177.5,
+          "balanceSeen": 11200,
+          "balanceWritten": 11100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 186,
+          "wroteAtMs": 186.6,
+          "balanceSeen": 11300,
+          "balanceWritten": 11400,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 201.2,
+          "wroteAtMs": 201.8,
+          "balanceSeen": 12200,
+          "balanceWritten": 12300,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 209.1,
+          "wroteAtMs": 210.2,
+          "balanceSeen": 12800,
+          "balanceWritten": 12900,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 0.4,
+          "readAtMs": 215.5,
+          "wroteAtMs": 217.9,
+          "balanceSeen": 12800,
+          "balanceWritten": 12700,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 224.7,
+          "wroteAtMs": 225.6,
+          "balanceSeen": 13000,
+          "balanceWritten": 13100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 230.1,
+          "wroteAtMs": 231,
+          "balanceSeen": 13500,
+          "balanceWritten": 13600,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 254,
+          "wroteAtMs": 254.6,
+          "balanceSeen": 14700,
+          "balanceWritten": 14800,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 0.4,
+          "readAtMs": 249,
+          "wroteAtMs": 249.5,
+          "balanceSeen": 14400,
+          "balanceWritten": 14300,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 251.9,
+          "wroteAtMs": 252.8,
+          "balanceSeen": 14500,
+          "balanceWritten": 14600,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 260.1,
+          "wroteAtMs": 260.7,
+          "balanceSeen": 15000,
+          "balanceWritten": 15100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 254.8,
+          "wroteAtMs": 255.5,
+          "balanceSeen": 14800,
+          "balanceWritten": 14900,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 0.4,
+          "readAtMs": 257.7,
+          "wroteAtMs": 258.3,
+          "balanceSeen": 14900,
+          "balanceWritten": 14800,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 259.4,
+          "wroteAtMs": 259.9,
+          "balanceSeen": 14900,
+          "balanceWritten": 15000,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 31.7,
+          "wroteAtMs": 32.8,
+          "balanceSeen": 6500,
+          "balanceWritten": 6600,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 21.1,
+          "wroteAtMs": 22.5,
+          "balanceSeen": 5800,
+          "balanceWritten": 5900,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 0.4,
+          "readAtMs": 22.8,
+          "wroteAtMs": 23.9,
+          "balanceSeen": 5900,
+          "balanceWritten": 5800,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 29.3,
+          "wroteAtMs": 30,
+          "balanceSeen": 6300,
+          "balanceWritten": 6400,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 144.6,
+          "wroteAtMs": 145.9,
+          "balanceSeen": 9800,
+          "balanceWritten": 9900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 157,
+          "wroteAtMs": 157.9,
+          "balanceSeen": 10300,
+          "balanceWritten": 10400,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 0.4,
+          "readAtMs": 169.2,
+          "wroteAtMs": 170.1,
+          "balanceSeen": 11000,
+          "balanceWritten": 10900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 189.8,
+          "wroteAtMs": 190.6,
+          "balanceSeen": 11500,
+          "balanceWritten": 11600,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 193.9,
+          "wroteAtMs": 194.5,
+          "balanceSeen": 11700,
+          "balanceWritten": 11800,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 200.4,
+          "wroteAtMs": 201,
+          "balanceSeen": 12100,
+          "balanceWritten": 12200,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 0.4,
+          "readAtMs": 208.1,
+          "wroteAtMs": 208.7,
+          "balanceSeen": 12900,
+          "balanceWritten": 12800,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 213.9,
+          "wroteAtMs": 215.1,
+          "balanceSeen": 12700,
+          "balanceWritten": 12800,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 223.3,
+          "wroteAtMs": 224.3,
+          "balanceSeen": 12900,
+          "balanceWritten": 13000,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 227.7,
+          "wroteAtMs": 228.5,
+          "balanceSeen": 13300,
+          "balanceWritten": 13400,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 0.4,
+          "readAtMs": 262.6,
+          "wroteAtMs": 263.3,
+          "balanceSeen": 15100,
+          "balanceWritten": 15000,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 256.6,
+          "wroteAtMs": 257.3,
+          "balanceSeen": 14800,
+          "balanceWritten": 14900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 258.5,
+          "wroteAtMs": 259.1,
+          "balanceSeen": 14800,
+          "balanceWritten": 14900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 261.8,
+          "wroteAtMs": 262.4,
+          "balanceSeen": 15000,
+          "balanceWritten": 15100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 0.4,
+          "readAtMs": 260.9,
+          "wroteAtMs": 261.5,
+          "balanceSeen": 15100,
+          "balanceWritten": 15000,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 24.2,
+          "wroteAtMs": 25.1,
+          "balanceSeen": 5800,
+          "balanceWritten": 5900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 27.3,
+          "wroteAtMs": 27.9,
+          "balanceSeen": 6100,
+          "balanceWritten": 6200,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 30.4,
+          "wroteAtMs": 31.3,
+          "balanceSeen": 6400,
+          "balanceWritten": 6500,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 0.4,
+          "readAtMs": 33,
+          "wroteAtMs": 33.8,
+          "balanceSeen": 6600,
+          "balanceWritten": 6500,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 35.2,
+          "wroteAtMs": 36.3,
+          "balanceSeen": 6600,
+          "balanceWritten": 6700,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 38,
+          "wroteAtMs": 39.4,
+          "balanceSeen": 6700,
+          "balanceWritten": 6800,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 48.9,
+          "wroteAtMs": 50.7,
+          "balanceSeen": 6900,
+          "balanceWritten": 7000,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 0.4,
+          "readAtMs": 185.1,
+          "wroteAtMs": 185.7,
+          "balanceSeen": 11400,
+          "balanceWritten": 11300,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 233.1,
+          "wroteAtMs": 233.7,
+          "balanceSeen": 13800,
+          "balanceWritten": 13900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 231.3,
+          "wroteAtMs": 232,
+          "balanceSeen": 13600,
+          "balanceWritten": 13700,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 232.2,
+          "wroteAtMs": 232.9,
+          "balanceSeen": 13700,
+          "balanceWritten": 13800,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 0.4,
+          "readAtMs": 234.8,
+          "wroteAtMs": 235.4,
+          "balanceSeen": 14000,
+          "balanceWritten": 13900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 239.4,
+          "wroteAtMs": 240.1,
+          "balanceSeen": 14100,
+          "balanceWritten": 14200,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 233.9,
+          "wroteAtMs": 234.6,
+          "balanceSeen": 13900,
+          "balanceWritten": 14000,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 238.5,
+          "wroteAtMs": 239.2,
+          "balanceSeen": 14000,
+          "balanceWritten": 14100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 0.4,
+          "readAtMs": 242.2,
+          "wroteAtMs": 242.9,
+          "balanceSeen": 14400,
+          "balanceWritten": 14300,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 225.9,
+          "wroteAtMs": 226.7,
+          "balanceSeen": 13100,
+          "balanceWritten": 13200,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 236.5,
+          "wroteAtMs": 237.1,
+          "balanceSeen": 14000,
+          "balanceWritten": 14100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 241.2,
+          "wroteAtMs": 241.9,
+          "balanceSeen": 14300,
+          "balanceWritten": 14400,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 0.4,
+          "readAtMs": 245.3,
+          "wroteAtMs": 245.9,
+          "balanceSeen": 14300,
+          "balanceWritten": 14200,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 250.8,
+          "wroteAtMs": 251.6,
+          "balanceSeen": 14400,
+          "balanceWritten": 14500,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 92.6,
+          "wroteAtMs": 94.1,
+          "balanceSeen": 8000,
+          "balanceWritten": 8100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 102.6,
+          "wroteAtMs": 104.1,
+          "balanceSeen": 8300,
+          "balanceWritten": 8400,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 0.4,
+          "readAtMs": 109.2,
+          "wroteAtMs": 110.1,
+          "balanceSeen": 8300,
+          "balanceWritten": 8200,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 113.4,
+          "wroteAtMs": 114.2,
+          "balanceSeen": 8200,
+          "balanceWritten": 8300,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 125.7,
+          "wroteAtMs": 126.5,
+          "balanceSeen": 8800,
+          "balanceWritten": 8900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 174.6,
+          "wroteAtMs": 175.2,
+          "balanceSeen": 11000,
+          "balanceWritten": 11100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 0.4,
+          "readAtMs": 181.3,
+          "wroteAtMs": 182.4,
+          "balanceSeen": 11300,
+          "balanceWritten": 11200,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 183.8,
+          "wroteAtMs": 184.8,
+          "balanceSeen": 11300,
+          "balanceWritten": 11400,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 204.7,
+          "wroteAtMs": 205.4,
+          "balanceSeen": 12600,
+          "balanceWritten": 12700,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 240.3,
+          "wroteAtMs": 240.9,
+          "balanceSeen": 14200,
+          "balanceWritten": 14300,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 0.4,
+          "readAtMs": 243.2,
+          "wroteAtMs": 244,
+          "balanceSeen": 14300,
+          "balanceWritten": 14200,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 246.8,
+          "wroteAtMs": 247.4,
+          "balanceSeen": 14200,
+          "balanceWritten": 14300,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 249.9,
+          "wroteAtMs": 250.5,
+          "balanceSeen": 14300,
+          "balanceWritten": 14400,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 57.2,
+          "wroteAtMs": 58.4,
+          "balanceSeen": 6800,
+          "balanceWritten": 6900,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 0.4,
+          "readAtMs": 72,
+          "wroteAtMs": 72.9,
+          "balanceSeen": 7000,
+          "balanceWritten": 6900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 73.2,
+          "wroteAtMs": 74,
+          "balanceSeen": 6900,
+          "balanceWritten": 7000,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 79.4,
+          "wroteAtMs": 80.1,
+          "balanceSeen": 7400,
+          "balanceWritten": 7500,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 87.4,
+          "wroteAtMs": 88.2,
+          "balanceSeen": 7900,
+          "balanceWritten": 8000,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 0.4,
+          "readAtMs": 107.8,
+          "wroteAtMs": 108.8,
+          "balanceSeen": 8400,
+          "balanceWritten": 8300,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 137.1,
+          "wroteAtMs": 137.8,
+          "balanceSeen": 9400,
+          "balanceWritten": 9500,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 146.2,
+          "wroteAtMs": 147.3,
+          "balanceSeen": 9900,
+          "balanceWritten": 10000,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 158.2,
+          "wroteAtMs": 158.8,
+          "balanceSeen": 10400,
+          "balanceWritten": 10500,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 0.4,
+          "readAtMs": 165.8,
+          "wroteAtMs": 166.3,
+          "balanceSeen": 11000,
+          "balanceWritten": 10900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 178.7,
+          "wroteAtMs": 179.5,
+          "balanceSeen": 11200,
+          "balanceWritten": 11300,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 190.9,
+          "wroteAtMs": 191.6,
+          "balanceSeen": 11600,
+          "balanceWritten": 11700,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 207.2,
+          "wroteAtMs": 207.8,
+          "balanceSeen": 12800,
+          "balanceWritten": 12900,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 0.4,
+          "readAtMs": 65.7,
+          "wroteAtMs": 66.6,
+          "balanceSeen": 7000,
+          "balanceWritten": 6900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 63.1,
+          "wroteAtMs": 65.3,
+          "balanceSeen": 6900,
+          "balanceWritten": 7000,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 76.8,
+          "wroteAtMs": 77.9,
+          "balanceSeen": 7200,
+          "balanceWritten": 7300,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 86.3,
+          "wroteAtMs": 87,
+          "balanceSeen": 7800,
+          "balanceWritten": 7900,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 0.4,
+          "readAtMs": 97,
+          "wroteAtMs": 98.3,
+          "balanceSeen": 8200,
+          "balanceWritten": 8100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 112,
+          "wroteAtMs": 112.9,
+          "balanceSeen": 8100,
+          "balanceWritten": 8200,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 121.7,
+          "wroteAtMs": 122.7,
+          "balanceSeen": 8700,
+          "balanceWritten": 8800,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 130.4,
+          "wroteAtMs": 131.3,
+          "balanceSeen": 9200,
+          "balanceWritten": 9300,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 0.4,
+          "readAtMs": 138,
+          "wroteAtMs": 138.7,
+          "balanceSeen": 9500,
+          "balanceWritten": 9400,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 147.6,
+          "wroteAtMs": 148.2,
+          "balanceSeen": 10000,
+          "balanceWritten": 10100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 159,
+          "wroteAtMs": 159.7,
+          "balanceSeen": 10500,
+          "balanceWritten": 10600,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.4,
+          "readAtMs": 66.9,
+          "wroteAtMs": 68.1,
+          "balanceSeen": 6900,
+          "balanceWritten": 7000,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 0.4,
+          "readAtMs": 68.9,
+          "wroteAtMs": 70,
+          "balanceSeen": 7000,
+          "balanceWritten": 6900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.5,
+          "readAtMs": 74.3,
+          "wroteAtMs": 75,
+          "balanceSeen": 7000,
+          "balanceWritten": 7100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.5,
+          "readAtMs": 85.3,
+          "wroteAtMs": 86,
+          "balanceSeen": 7700,
+          "balanceWritten": 7800,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.5,
+          "readAtMs": 123.1,
+          "wroteAtMs": 124,
+          "balanceSeen": 8800,
+          "balanceWritten": 8900,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 0.5,
+          "readAtMs": 133.2,
+          "wroteAtMs": 133.8,
+          "balanceSeen": 9400,
+          "balanceWritten": 9300,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.5,
+          "readAtMs": 138.9,
+          "wroteAtMs": 139.5,
+          "balanceSeen": 9400,
+          "balanceWritten": 9500,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.5,
+          "readAtMs": 150.8,
+          "wroteAtMs": 151.8,
+          "balanceSeen": 10200,
+          "balanceWritten": 10300,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.5,
+          "readAtMs": 159.9,
+          "wroteAtMs": 160.6,
+          "balanceSeen": 10600,
+          "balanceWritten": 10700,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 0.5,
+          "readAtMs": 167.3,
+          "wroteAtMs": 167.9,
+          "balanceSeen": 11000,
+          "balanceWritten": 10900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.5,
+          "readAtMs": 177.7,
+          "wroteAtMs": 178.5,
+          "balanceSeen": 11100,
+          "balanceWritten": 11200,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.5,
+          "readAtMs": 78.3,
+          "wroteAtMs": 79.2,
+          "balanceSeen": 7300,
+          "balanceWritten": 7400,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.5,
+          "readAtMs": 80.4,
+          "wroteAtMs": 81,
+          "balanceSeen": 7500,
+          "balanceWritten": 7600,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 0.5,
+          "readAtMs": 84,
+          "wroteAtMs": 85,
+          "balanceSeen": 7800,
+          "balanceWritten": 7700,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.5,
+          "readAtMs": 82.7,
+          "wroteAtMs": 83.6,
+          "balanceSeen": 7700,
+          "balanceWritten": 7800,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.5,
+          "readAtMs": 161.5,
+          "wroteAtMs": 162.4,
+          "balanceSeen": 10800,
+          "balanceWritten": 10900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.5,
+          "readAtMs": 94.7,
+          "wroteAtMs": 95.8,
+          "balanceSeen": 8100,
+          "balanceWritten": 8200,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 0.5,
+          "readAtMs": 89.6,
+          "wroteAtMs": 91.6,
+          "balanceSeen": 8100,
+          "balanceWritten": 8000,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.5,
+          "readAtMs": 99.6,
+          "wroteAtMs": 100.8,
+          "balanceSeen": 8100,
+          "balanceWritten": 8200,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.5,
+          "readAtMs": 101.2,
+          "wroteAtMs": 102.1,
+          "balanceSeen": 8200,
+          "balanceWritten": 8300,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.5,
+          "readAtMs": 104.8,
+          "wroteAtMs": 106,
+          "balanceSeen": 8400,
+          "balanceWritten": 8500,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 0.5,
+          "readAtMs": 110.8,
+          "wroteAtMs": 111.7,
+          "balanceSeen": 8200,
+          "balanceWritten": 8100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.5,
+          "readAtMs": 114.6,
+          "wroteAtMs": 115.4,
+          "balanceSeen": 8300,
+          "balanceWritten": 8400,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.5,
+          "readAtMs": 116.1,
+          "wroteAtMs": 118,
+          "balanceSeen": 8400,
+          "balanceWritten": 8500,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.5,
+          "readAtMs": 120.1,
+          "wroteAtMs": 120.9,
+          "balanceSeen": 8600,
+          "balanceWritten": 8700,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 0.5,
+          "readAtMs": 124.3,
+          "wroteAtMs": 125.4,
+          "balanceSeen": 8900,
+          "balanceWritten": 8800,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.5,
+          "readAtMs": 126.8,
+          "wroteAtMs": 127.6,
+          "balanceSeen": 8900,
+          "balanceWritten": 9000,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.5,
+          "readAtMs": 127.9,
+          "wroteAtMs": 128.6,
+          "balanceSeen": 9000,
+          "balanceWritten": 9100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.5,
+          "readAtMs": 131.8,
+          "wroteAtMs": 133,
+          "balanceSeen": 9300,
+          "balanceWritten": 9400,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 0.5,
+          "readAtMs": 135.1,
+          "wroteAtMs": 135.9,
+          "balanceSeen": 9400,
+          "balanceWritten": 9300,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.5,
+          "readAtMs": 134.1,
+          "wroteAtMs": 134.9,
+          "balanceSeen": 9300,
+          "balanceWritten": 9400,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.5,
+          "readAtMs": 136.2,
+          "wroteAtMs": 136.8,
+          "balanceSeen": 9300,
+          "balanceWritten": 9400,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.5,
+          "readAtMs": 139.7,
+          "wroteAtMs": 140.2,
+          "balanceSeen": 9500,
+          "balanceWritten": 9600,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 0.5,
+          "readAtMs": 141.3,
+          "wroteAtMs": 141.8,
+          "balanceSeen": 9700,
+          "balanceWritten": 9600,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.5,
+          "readAtMs": 140.4,
+          "wroteAtMs": 141,
+          "balanceSeen": 9600,
+          "balanceWritten": 9700,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.5,
+          "readAtMs": 143.1,
+          "wroteAtMs": 144.2,
+          "balanceSeen": 9700,
+          "balanceWritten": 9800,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.5,
+          "readAtMs": 149.4,
+          "wroteAtMs": 150.2,
+          "balanceSeen": 10100,
+          "balanceWritten": 10200,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 0.5,
+          "readAtMs": 152.3,
+          "wroteAtMs": 153,
+          "balanceSeen": 10300,
+          "balanceWritten": 10200,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 0.5,
+          "readAtMs": 153.4,
+          "wroteAtMs": 154.2,
+          "balanceSeen": 10200,
+          "balanceWritten": 10300,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 1.1,
+          "readAtMs": 154.4,
+          "wroteAtMs": 155.4,
+          "balanceSeen": 10300,
+          "balanceWritten": 10400,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 1.2,
+          "readAtMs": 160.8,
+          "wroteAtMs": 161.3,
+          "balanceSeen": 10700,
+          "balanceWritten": 10800,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 1.2,
+          "readAtMs": 162.9,
+          "wroteAtMs": 163.7,
+          "balanceSeen": 10900,
+          "balanceWritten": 10800,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 1.2,
+          "readAtMs": 164,
+          "wroteAtMs": 164.7,
+          "balanceSeen": 10800,
+          "balanceWritten": 10900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 1.2,
+          "readAtMs": 166.5,
+          "wroteAtMs": 167.1,
+          "balanceSeen": 10900,
+          "balanceWritten": 11000,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 1.2,
+          "readAtMs": 170.5,
+          "wroteAtMs": 171.5,
+          "balanceSeen": 10900,
+          "balanceWritten": 11000,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 1.2,
+          "readAtMs": 173.2,
+          "wroteAtMs": 173.9,
+          "balanceSeen": 11100,
+          "balanceWritten": 11000,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 1.2,
+          "readAtMs": 172,
+          "wroteAtMs": 172.8,
+          "balanceSeen": 11000,
+          "balanceWritten": 11100,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 1.2,
+          "readAtMs": 175.5,
+          "wroteAtMs": 176.4,
+          "balanceSeen": 11100,
+          "balanceWritten": 11200,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 1.2,
+          "readAtMs": 179.7,
+          "wroteAtMs": 180.3,
+          "balanceSeen": 11300,
+          "balanceWritten": 11400,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 1.2,
+          "readAtMs": 180.5,
+          "wroteAtMs": 181.1,
+          "balanceSeen": 11400,
+          "balanceWritten": 11300,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 1.2,
+          "readAtMs": 188,
+          "wroteAtMs": 188.6,
+          "balanceSeen": 11500,
+          "balanceWritten": 11600,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 1.2,
+          "readAtMs": 202.9,
+          "wroteAtMs": 203.5,
+          "balanceSeen": 12400,
+          "balanceWritten": 12500,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 1.2,
+          "readAtMs": 226.9,
+          "wroteAtMs": 227.5,
+          "balanceSeen": 13200,
+          "balanceWritten": 13300,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 1.2,
+          "readAtMs": 188.8,
+          "wroteAtMs": 189.6,
+          "balanceSeen": 11600,
+          "balanceWritten": 11500,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 1.2,
+          "readAtMs": 187.2,
+          "wroteAtMs": 187.8,
+          "balanceSeen": 11400,
+          "balanceWritten": 11500,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 1.2,
+          "readAtMs": 192.1,
+          "wroteAtMs": 192.8,
+          "balanceSeen": 11700,
+          "balanceWritten": 11800,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 1.2,
+          "readAtMs": 218.4,
+          "wroteAtMs": 219.7,
+          "balanceSeen": 12700,
+          "balanceWritten": 12800,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 1.2,
+          "readAtMs": 193,
+          "wroteAtMs": 193.6,
+          "balanceSeen": 11800,
+          "balanceWritten": 11700,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 1.2,
+          "readAtMs": 195.5,
+          "wroteAtMs": 196.1,
+          "balanceSeen": 11900,
+          "balanceWritten": 12000,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 1.2,
+          "readAtMs": 194.7,
+          "wroteAtMs": 195.3,
+          "balanceSeen": 11800,
+          "balanceWritten": 11900,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 1.2,
+          "readAtMs": 196.3,
+          "wroteAtMs": 197.3,
+          "balanceSeen": 12000,
+          "balanceWritten": 12100,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 1.2,
+          "readAtMs": 197.7,
+          "wroteAtMs": 199.2,
+          "balanceSeen": 12100,
+          "balanceWritten": 12000,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 1.2,
+          "readAtMs": 202,
+          "wroteAtMs": 202.7,
+          "balanceSeen": 12300,
+          "balanceWritten": 12400,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 1.2,
+          "readAtMs": 203.8,
+          "wroteAtMs": 204.4,
+          "balanceSeen": 12500,
+          "balanceWritten": 12600,
+          "outcome": "applied"
+        },
+        {
+          "amount": 100,
+          "startedAtMs": 1.2,
+          "readAtMs": 206.3,
+          "wroteAtMs": 206.8,
+          "balanceSeen": 12700,
+          "balanceWritten": 12800,
+          "outcome": "applied"
+        },
+        {
+          "amount": -100,
+          "startedAtMs": 1.2,
+          "readAtMs": 210.8,
+          "wroteAtMs": 211.8,
+          "balanceSeen": 12900,
+          "balanceWritten": 12800,
+          "outcome": "applied"
+        }
+      ],
+      "overdraft": { "attemptedAmount": 15100, "rejected": true }
+    }
+  ]
+}

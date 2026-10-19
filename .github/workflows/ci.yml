@@ -29,8 +29,16 @@ jobs:
         options: >-
           --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -pci_root_password --silent"
           --health-interval=5s --health-timeout=5s --health-retries=30
+      # 6장 캐시 통합 테스트(cache stampede)용 실제 Redis
+      redis:
+        image: redis:7.4-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping" --health-interval=5s --health-timeout=3s --health-retries=20
     env:
       DATABASE_URL: mysql://root:ci_root_password@127.0.0.1:3306/backend_visualized
+      REDIS_URL: redis://127.0.0.1:6379/0
       # DB가 없으면 통합 테스트를 skip 하지 말고 실패시킨다
       REQUIRE_DATABASE: 'true'
       NEXT_PUBLIC_API_URL: http://localhost:4000

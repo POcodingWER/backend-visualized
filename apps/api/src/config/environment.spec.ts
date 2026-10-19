@@ -7,6 +7,7 @@ const productionBase = {
   DATABASE_URL: 'mysql://app:password@db.example.com:3306/backend_visualized',
   WEB_ORIGIN: 'https://backend-visualized.vercel.app',
   JWT_ACCESS_SECRET: 'x'.repeat(48),
+  REDIS_URL: 'redis://redis:6379/0',
 };
 
 const problemsOf = (env: NodeJS.ProcessEnv): string[] => {
@@ -43,9 +44,10 @@ test('production: a complete config passes with cross-site cookie defaults', () 
   assert.equal(environment.adminApiKey, null);
 });
 
-test('production: missing DATABASE_URL, WEB_ORIGIN and JWT secret are all reported together', () => {
+test('production: missing DATABASE_URL, REDIS_URL, WEB_ORIGIN and JWT secret are all reported together', () => {
   const problems = problemsOf({ NODE_ENV: 'production' });
-  assert.equal(problems.length, 3);
+  assert.equal(problems.length, 4);
+  assert.ok(problems.some((problem) => problem.includes('REDIS_URL')));
   assert.ok(problems.some((problem) => problem.includes('DATABASE_URL')));
   assert.ok(problems.some((problem) => problem.includes('WEB_ORIGIN')));
   assert.ok(problems.some((problem) => problem.includes('JWT_ACCESS_SECRET')));

@@ -16,7 +16,7 @@ import {
 } from './simulation';
 import StrategyLab from './StrategyLab';
 import type { Result, Strategy } from './types';
-import { useReplay } from './useReplay';
+import { useReplay } from '../components/useReplay';
 
 const FIXES = ['pessimistic', 'optimistic', 'atomic'] as const;
 const BENCHMARK_URL = `${GITHUB_URL}/blob/main/docs/benchmarks/stage3-coupon.md`;

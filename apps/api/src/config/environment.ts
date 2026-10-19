@@ -31,6 +31,8 @@ export interface AppEnvironment {
   isProduction: boolean;
   port: number;
   databaseUrl: string | null;
+  /** 6장 캐시 데모용 Redis. 개발 기본값은 docker-compose의 bv-redis(6380) */
+  redisUrl: string;
   webOrigins: string[];
   trustProxy: TrustProxySetting;
   maxBodySize: string;
@@ -105,6 +107,14 @@ export function loadEnvironment(env: NodeJS.ProcessEnv): AppEnvironment {
   } else if (!/^mysql:\/\//.test(databaseUrl)) {
     problems.push('DATABASE_URL은 mysql:// 로 시작해야 합니다');
   }
+
+  // ── Redis (6장 캐시) ──
+  const configuredRedisUrl = read('REDIS_URL');
+  if (!configuredRedisUrl && isProduction)
+    problems.push('REDIS_URL이 필요합니다 (예: redis://redis:6379/0)');
+  const redisUrl = configuredRedisUrl ?? 'redis://127.0.0.1:6380/0';
+  if (!/^rediss?:\/\//.test(redisUrl))
+    problems.push('REDIS_URL은 redis:// 또는 rediss:// 로 시작해야 합니다');
 
   // ── CORS 허용 출처 ──
   const rawOrigins = read('WEB_ORIGIN') ?? read('CORS_ORIGIN');
@@ -197,6 +207,7 @@ export function loadEnvironment(env: NodeJS.ProcessEnv): AppEnvironment {
     isProduction,
     port: integer('PORT', 4000, 1),
     databaseUrl,
+    redisUrl,
     webOrigins,
     trustProxy,
     maxBodySize,

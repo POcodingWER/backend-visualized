@@ -90,3 +90,45 @@ model RefreshToken {
   @@index([familyId, createdAt])
   @@index([userId])
 }
+
+/// 4장: 포인트 지갑. balance는 "잔액 숫자 하나" — 덮어쓰기 방식은 이 칸만 고친다.
+model PointWallet {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique @db.VarChar(64)
+  balance   Int
+  updatedAt DateTime @updatedAt @db.DateTime(3)
+}
+
+/// 4장: 입출금 내역 (추가만 하고 고치지 않음). 올바른 잔액 = SUM(amount).
+model PointEntry {
+  id         BigInt   @id @default(autoincrement())
+  walletName String   @db.VarChar(64)
+  amount     Int
+  reason     String   @db.VarChar(32)
+  createdAt  DateTime @default(now()) @db.DateTime(3)
+
+  @@index([walletName, id])
+}
+
+/// 5장: 결제. 같은 idempotencyKey는 unique 제약 때문에 한 행만 생긴다 (키 없는 결제는 NULL이라 여러 행 가능).
+model Payment {
+  id             Int       @id @default(autoincrement())
+  orderId        String    @db.VarChar(64)
+  amount         Int
+  /// processing → paid
+  status         String    @db.VarChar(16)
+  idempotencyKey String?   @unique @db.VarChar(64)
+  createdAt      DateTime  @default(now()) @db.DateTime(3)
+  paidAt         DateTime? @db.DateTime(3)
+
+  @@index([orderId])
+}
+
+/// 6장: 맛집 대기판 (캐시할 원본 데이터).
+model MenuBoard {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique @db.VarChar(64)
+  content   String   @db.VarChar(200)
+  version   Int
+  updatedAt DateTime @updatedAt @db.DateTime(3)
+}

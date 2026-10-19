@@ -14,9 +14,10 @@
 | 프론트엔드  | `apps/web` — Next.js (App Router)                        |
 | 백엔드      | `apps/api` — NestJS (REST, GraphQL 미사용)               |
 | DB / ORM    | MySQL 8 + Prisma (`apps/api/prisma`)                     |
+| 캐시        | Redis 7 + ioredis (6장 캐시 데모)                        |
 | SDK         | `packages/sdk` — 트래킹 SDK (TS 패키지)                  |
 | 공통 설정   | `packages/tsconfig`, 루트 ESLint(flat config) / Prettier |
-| 로컬 인프라 | Docker Compose (MySQL), `apps/api/Dockerfile`            |
+| 로컬 인프라 | Docker Compose (MySQL, Redis), `apps/api/Dockerfile`     |
 | 부하 테스트 | k6 (Stage 3)                                             |
 
 ## 디렉터리 구조
@@ -28,7 +29,7 @@ apps/
 packages/
   sdk/        트래킹 SDK
   tsconfig/   공유 tsconfig
-docker-compose.yml   로컬 MySQL
+docker-compose.yml   로컬 MySQL(3307) · Redis(bv-redis, 6380)
 ```
 
 ## 로컬 실행
@@ -43,7 +44,7 @@ pnpm install
 cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.example apps/web/.env.local
 
-# 3. MySQL 기동
+# 3. MySQL + Redis 기동 (Redis만: docker compose up -d redis → bv-redis, localhost:6380)
 docker compose up -d
 
 # 4. 마이그레이션 적용 (Prisma client 생성 포함)
@@ -70,7 +71,8 @@ API Docker 이미지 빌드 (레포 루트에서): `docker build -f apps/api/Doc
   - 쿠폰 발급 동시성 (락, 트랜잭션 격리)
   - 인덱스 유무에 따른 쿼리 성능
   - batch insert vs 단건 insert
-  - 멱등키 (중복 요청 방지)
+  - 멱등키 (중복 요청 방지) ✅ 5장 `/double-pay`
+  - 포인트 원장·대사 ✅ 4장 `/ledger`, Redis 캐시·스탬피드 ✅ 6장 `/cache` — [docs/chapters-4-6.md](docs/chapters-4-6.md)
   - 인증 토큰 (세션 / JWT / refresh) 흐름 시각화
 - **Stage 4 — 기록**: 실험 결과와 배운 점 정리
 

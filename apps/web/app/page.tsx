@@ -30,6 +30,21 @@ const TEASERS = [
     number: '65배',
     numberLabel: '빨라짐 (18.7초 → 0.29초)',
   },
+  {
+    problem: '포인트 적립·사용 200건이 동시에 몰리면, 잔액은 맞을까요?',
+    number: '10,100P',
+    numberLabel: '잔액 숫자만 고칠 때 사라진 포인트 (실측)',
+  },
+  {
+    problem: '결제 버튼을 연달아 누르고 앱이 알아서 다시 보내면, 돈은 몇 번 빠져나갈까요?',
+    number: '4번 → 1번',
+    numberLabel: '결제된 횟수 (번호표 없이 → 함께, 실측)',
+  },
+  {
+    problem: '손님 1000명이 같은 메뉴를 물어보면, 데이터베이스에 몇 번 가야 할까요?',
+    number: '1000번 → 1번',
+    numberLabel: 'DB 읽기 (매번 → Redis 대기판, 실측)',
+  },
 ];
 
 const DECISIONS = [
@@ -67,8 +82,9 @@ export default function Home() {
             버튼 하나 뒤에서 <span className="highlight">벌어지는 일</span>
           </h1>
           <p className={styles.heroLead}>
-            티켓팅, 로그인 유지, 클릭 기록. 서버가 실수하는 순간을 진짜 서버와 데이터베이스에서 직접
-            일으켜 보고, 고친 결과를 잰 숫자로 확인하는 세 편의 그림책이에요.
+            티켓팅, 로그인 유지, 클릭 기록, 포인트, 결제, 캐시. 서버가 실수하는 순간을 진짜 서버와
+            데이터베이스에서 직접 일으켜 보고, 고친 결과를 잰 숫자로 확인하는 여섯 편의
+            그림책이에요.
           </p>
           <Link href="/ticketing" className={`${ui.bigButton} ${styles.cta}`}>
             1장 티켓팅부터 보기 →
@@ -110,7 +126,7 @@ export default function Home() {
       </section>
 
       <section className={ui.wide}>
-        <h2 className={ui.sectionTitle}>세 편의 이야기</h2>
+        <h2 className={ui.sectionTitle}>여섯 편의 이야기</h2>
         <ol className={styles.teasers}>
           {CHAPTERS.map((chapter, index) => {
             const teaser = TEASERS[index]!;
@@ -238,14 +254,15 @@ export default function Home() {
             →
           </li>
           <li>
-            <b>데이터베이스</b>
-            <span>MySQL 8</span>
-            <small>RDS</small>
+            <b>데이터베이스 · 캐시</b>
+            <span>MySQL 8 · Redis 7</span>
+            <small>RDS · Docker</small>
           </li>
         </ol>
         <ul className={styles.facts}>
           <li>
-            자동 테스트 39개 — API 33개(실제 MySQL로 동시성 검증 포함), 화면 4개, 이벤트 SDK 2개
+            자동 테스트 46개 — API 40개(실제 MySQL·Redis로 동시성 검증 포함), 화면 4개, 이벤트 SDK
+            2개
           </li>
           <li>
             GitHub Actions: 커밋마다 포맷 → 타입 검사 → 린트 → 테스트 → 빌드 → 운영 모드 API 스모크

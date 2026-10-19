@@ -16,5 +16,19 @@ services:
       timeout: 5s
       retries: 20
 
+  # 6장 캐시 데모 전용 Redis. 6380으로 열어 다른 Redis(6379)와 겹치지 않게 한다. 데이터는 휘발(디스크 저장 끔)
+  redis:
+    image: redis:7.4-alpine
+    container_name: bv-redis
+    restart: unless-stopped
+    command: ['redis-server', '--save', '', '--appendonly', 'no']
+    ports:
+      - '6380:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
 volumes:
   mysql-data:

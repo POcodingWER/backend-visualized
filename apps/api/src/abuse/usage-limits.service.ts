@@ -20,6 +20,9 @@ export class UsageLimitsService {
   readonly streamConnections = new ConcurrencyLimit(this.limits.maxStreamConnections);
   readonly aggregationDemoCooldown = new Cooldown(this.limits.aggregationCooldownMs);
   readonly couponSimulationCooldown = new Cooldown(this.limits.couponSimulationCooldownMs);
+  // 4장·6장 시뮬레이션도 DB 커넥션을 많이 써서 같은 쿨다운 값을 쓴다 (장마다 따로 센다)
+  readonly pointSimulationCooldown = new Cooldown(this.limits.couponSimulationCooldownMs);
+  readonly cacheStampedeCooldown = new Cooldown(this.limits.couponSimulationCooldownMs);
 
   /** 거절이면 Retry-After 헤더를 달고 429를 던진다 */
   enforce(decision: LimitDecision, response: Response, reason: string, message: string) {
