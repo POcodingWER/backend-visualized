@@ -7,7 +7,7 @@ import styles from './auth.module.css';
 import type { AddLogEntry } from './types';
 
 const PARALLEL_REQUESTS = 5;
-type RefreshMode = 'naive' | 'single-flight';
+export type RefreshMode = 'naive' | 'single-flight';
 
 interface LaneStep {
   label: string;
@@ -17,12 +17,103 @@ interface LaneStep {
   atMs: number;
 }
 
-interface RaceResult {
+export interface RaceResult {
   mode: RefreshMode;
   lanes: LaneStep[][];
   refreshCalls: number;
   totalMs: number;
   loggedOut: boolean;
+}
+
+export type RaceOutcome = {
+  result: RaceResult;
+  latestSession: Session | null;
+  failureReason?: string;
+};
+
+/** 만료된 액세스 토큰으로 요청 5개를 동시에 보내고, mode에 따라 refresh를 각자/하나만 호출 (실제 API) */
+export async function runRefreshRace(
+  mode: RefreshMode,
+  accessTokenTtlSeconds: number,
+  addLog: AddLogEntry,
+): Promise<RaceOutcome | { error: string }> {
+  const expired = await authApi.expiredAccessToken();
+  if (!('accessToken' in expired.body))
+    return { error: '먼저 로그인하세요 (활성 리프레시 토큰 필요)' };
+  const expiredAccessToken = expired.body.accessToken;
+  const startedAt = performance.now();
+  const elapsed = () => performance.now() - startedAt;
+  let refreshCalls = 0;
+  let latestSession: Session | null = null;
+  let failureReason: string | undefined;
+
+  const callRefresh = async () => {
+    refreshCalls++;
+    const response = await authApi.refresh(accessTokenTtlSeconds);
+    addLog({
+      actor: 'user',
+      label: `POST /auth/refresh (${mode})`,
+      credential: 'RT 쿠키',
+      status: response.status,
+      reason: errorReason(response.body),
+      durationMs: response.durationMs,
+    });
+    return response;
+  };
+  // single-flight: 5개 요청이 refresh 하나를 공유
+  const sharedRefresh = createSingleFlight(callRefresh);
+
+  const lanes = await Promise.all(
+    Array.from({ length: PARALLEL_REQUESTS }, async () => {
+      const steps: LaneStep[] = [];
+      const first = await authApi.me(expiredAccessToken);
+      steps.push({
+        label: 'me',
+        status: first.status,
+        reason: errorReason(first.body),
+        atMs: elapsed(),
+      });
+      const refreshResponse = mode === 'naive' ? await callRefresh() : await sharedRefresh();
+      steps.push({
+        label: 'refresh',
+        status: refreshResponse.status,
+        reason: errorReason(refreshResponse.body),
+        atMs: elapsed(),
+      });
+      if (!isSession(refreshResponse.body)) {
+        failureReason = errorReason(refreshResponse.body);
+        return steps;
+      }
+      latestSession = refreshResponse.body;
+      const retry = await authApi.me(refreshResponse.body.accessToken);
+      steps.push({
+        label: '재시도',
+        status: retry.status,
+        reason: errorReason(retry.body),
+        atMs: elapsed(),
+      });
+      return steps;
+    }),
+  );
+  // naive: 첫 refresh가 회전한 뒤 나머지가 옛 토큰을 제출 → 재사용 감지 → 패밀리 폐기 → 로그아웃
+  const loggedOut = failureReason !== undefined;
+  return {
+    result: { mode, lanes, refreshCalls, totalMs: elapsed(), loggedOut },
+    latestSession,
+    failureReason,
+  };
+}
+
+export function applyRaceOutcome(
+  outcome: RaceOutcome,
+  applySession: (session: Session | null, reason?: string) => void,
+  labelFor: (accessToken: string) => string,
+) {
+  if (outcome.result.loggedOut) applySession(null, outcome.failureReason);
+  else if (outcome.latestSession) {
+    labelFor(outcome.latestSession.accessToken);
+    applySession(outcome.latestSession);
+  }
 }
 
 /** 만료된 액세스 토큰으로 동시에 요청 5개를 보냈을 때, refresh를 어떻게 부르느냐에 따른 차이 */
@@ -48,75 +139,13 @@ export default function ConcurrencyRace({
     setBusy(true);
     setError(null);
     try {
-      const expired = await authApi.expiredAccessToken();
-      if (!('accessToken' in expired.body)) {
-        setError('먼저 로그인하세요 (활성 리프레시 토큰 필요)');
+      const outcome = await runRefreshRace(mode, accessTokenTtlSeconds, addLog);
+      if ('error' in outcome) {
+        setError(outcome.error);
         return;
       }
-      const expiredAccessToken = expired.body.accessToken;
-      const startedAt = performance.now();
-      const elapsed = () => performance.now() - startedAt;
-      let refreshCalls = 0;
-      let latestSession: Session | null = null;
-      let failureReason: string | undefined;
-
-      const callRefresh = async () => {
-        refreshCalls++;
-        const response = await authApi.refresh(accessTokenTtlSeconds);
-        addLog({
-          actor: 'user',
-          label: `POST /auth/refresh (${mode})`,
-          credential: 'RT 쿠키',
-          status: response.status,
-          reason: errorReason(response.body),
-          durationMs: response.durationMs,
-        });
-        return response;
-      };
-      // single-flight: 5개 요청이 refresh 하나를 공유
-      const sharedRefresh = createSingleFlight(callRefresh);
-
-      const lanes = await Promise.all(
-        Array.from({ length: PARALLEL_REQUESTS }, async () => {
-          const steps: LaneStep[] = [];
-          const first = await authApi.me(expiredAccessToken);
-          steps.push({
-            label: 'me',
-            status: first.status,
-            reason: errorReason(first.body),
-            atMs: elapsed(),
-          });
-          const refreshResponse = mode === 'naive' ? await callRefresh() : await sharedRefresh();
-          steps.push({
-            label: 'refresh',
-            status: refreshResponse.status,
-            reason: errorReason(refreshResponse.body),
-            atMs: elapsed(),
-          });
-          if (!isSession(refreshResponse.body)) {
-            failureReason = errorReason(refreshResponse.body);
-            return steps;
-          }
-          latestSession = refreshResponse.body;
-          const retry = await authApi.me(refreshResponse.body.accessToken);
-          steps.push({
-            label: '재시도',
-            status: retry.status,
-            reason: errorReason(retry.body),
-            atMs: elapsed(),
-          });
-          return steps;
-        }),
-      );
-      const totalMs = elapsed();
-      // naive: 첫 refresh가 회전한 뒤 나머지가 옛 토큰을 제출 → 재사용 감지 → 패밀리 폐기 → 로그아웃
-      const loggedOut = failureReason !== undefined;
-      if (loggedOut) applySession(null, failureReason);
-      else if (latestSession) {
-        labelFor((latestSession as Session).accessToken);
-        applySession(latestSession);
-      }
-      setResult({ mode, lanes, refreshCalls, totalMs, loggedOut });
+      applyRaceOutcome(outcome, applySession, labelFor);
+      setResult(outcome.result);
     } finally {
       setBusy(false);
     }

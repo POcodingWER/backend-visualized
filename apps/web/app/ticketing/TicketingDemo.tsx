@@ -94,7 +94,7 @@ export default function TicketingDemo() {
             들어온 사람은 0명이지만, 걸리는 시간과 수고가 달라요.
           </p>
         </div>
-        <div className={styles.fixes}>
+        <div className={ui.fixes}>
           {FIXES.map((strategy) => (
             <FixColumn
               key={strategy}
@@ -146,7 +146,7 @@ export default function TicketingDemo() {
 
       <section className={ui.wide}>
         <DevDetails description="전략별 SQL, DB 상태 변화 차트, 요청 500개 기록, 실제 DB 행 확인">
-          <div className={styles.devIntro}>
+          <div className={ui.devIntro}>
             <p>
               버튼은 <code>POST /coupons/simulate</code>를 호출해요. 서버(NestJS + Prisma)가 MySQL에
               동시 요청을 던지고, 요청마다 시작·끝 시각, 재시도, 락 대기 시간을 기록해 돌려줘요.
@@ -197,7 +197,7 @@ function OversellStage({ result, sourceLabel, isRunning, isBlocked, error, onRun
       <div className={styles.stageLayout}>
         <SeatGrid seated={seated} standing={standing} showStanding />
         <div className={styles.stageSide}>
-          <p className={styles.source}>{sourceLabel}</p>
+          <p className={ui.source}>{sourceLabel}</p>
           <dl className={styles.tally}>
             <div>
               <dt>앉은 사람</dt>
@@ -228,18 +228,18 @@ function OversellStage({ result, sourceLabel, isRunning, isBlocked, error, onRun
             {isRunning ? '500명이 예매하는 중…' : '500명 동시에 예매 시키기'}
           </button>
           {error ? (
-            <p className={styles.errorLine} role="alert">
+            <p className={ui.errorLine} role="alert">
               {error}
             </p>
           ) : (
-            <p className={styles.hint}>
+            <p className={ui.hint}>
               진짜 서버와 데이터베이스에서 500명의 예매가 동시에 일어나요. 1초도 안 걸려요.
             </p>
           )}
         </div>
       </div>
       {result && isDone && result.final.oversold > 0 && (
-        <p className={styles.conclusion}>
+        <p className={ui.conclusion}>
           {QUANTITY}석에 {result.final.issueRows}명이 들어왔어요. 모두가 같은 순간에 &quot;자리
           있음&quot;을 봤기 때문이에요.
         </p>
@@ -254,15 +254,15 @@ function FixColumn({ strategy, ...props }: RunProps & { strategy: (typeof FIXES)
   const state = result ? replayStateAt(result.requests, elapsedMs) : null;
   const analogy = FIX_ANALOGY[strategy];
   return (
-    <article className={styles.fix}>
+    <article className={ui.fix}>
       <h3>{analogy.title}</h3>
       <SeatGrid seated={state ? state.issued - state.over : 0} standing={state?.over ?? 0} />
       <p>{analogy.story}</p>
       {result && (
-        <dl className={styles.fixStats}>
+        <dl className={ui.fixStats}>
           <div>
             <dt>자리 없이 들어온 사람</dt>
-            <dd className={result.final.oversold > 0 ? styles.failText : styles.goodText}>
+            <dd className={result.final.oversold > 0 ? ui.failText : ui.goodText}>
               {isDone ? result.final.oversold : '…'}명
             </dd>
           </div>
@@ -279,15 +279,15 @@ function FixColumn({ strategy, ...props }: RunProps & { strategy: (typeof FIXES)
           {result.summary.retry_exhausted > 0 && (
             <div>
               <dt>자리가 남았는데 못 산 사람</dt>
-              <dd className={styles.failText}>{result.summary.retry_exhausted}명</dd>
+              <dd className={ui.failText}>{result.summary.retry_exhausted}명</dd>
             </div>
           )}
         </dl>
       )}
-      <p className={styles.tradeoff}>{analogy.tradeoff}</p>
-      <p className={styles.source}>{sourceLabel}</p>
+      <p className={ui.tradeoff}>{analogy.tradeoff}</p>
+      <p className={ui.source}>{sourceLabel}</p>
       {strategy === 'optimistic' && (
-        <p className={styles.hint}>사람이 몰리면 수 초~20초 넘게 걸릴 수 있어요.</p>
+        <p className={ui.hint}>사람이 몰리면 수 초~20초 넘게 걸릴 수 있어요.</p>
       )}
       <button
         type="button"
@@ -298,7 +298,7 @@ function FixColumn({ strategy, ...props }: RunProps & { strategy: (typeof FIXES)
         {isRunning ? '실행 중…' : '이 방법으로 직접 실행'}
       </button>
       {error && (
-        <p className={styles.errorLine} role="alert">
+        <p className={ui.errorLine} role="alert">
           {error}
         </p>
       )}

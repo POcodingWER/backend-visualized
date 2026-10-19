@@ -75,7 +75,7 @@ export function DevDetails({
   children: ReactNode;
 }) {
   return (
-    <details className={styles.devDetails}>
+    <details className={styles.devDetails} open>
       <summary>
         <b>개발자용 자세히</b>
         {description && <span>{description}</span>}

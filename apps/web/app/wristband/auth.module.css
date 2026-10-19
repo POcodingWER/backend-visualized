@@ -1,7 +1,8 @@
 .main {
-  max-width: 1180px;
-  margin: 0 auto;
-  padding: 2.5rem 1.5rem 5rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.25rem;
+  min-width: 0;
 }
 .main button,
 .main select,
@@ -30,24 +31,6 @@
 }
 .main .ghost {
   background: transparent;
-}
-.main h1 {
-  font-size: 2.1rem;
-  margin: 0.2rem 0 0.6rem;
-  letter-spacing: -0.02em;
-}
-.kicker {
-  color: var(--sky-ink);
-  font-weight: 600;
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin: 0;
-}
-.lead {
-  color: var(--ink-soft);
-  max-width: 800px;
-  line-height: 1.6;
 }
 .muted {
   color: var(--ink-soft);
@@ -396,4 +379,72 @@
 }
 .steps li {
   margin: 0.25rem 0;
+}
+
+/* ---------- 2장 본문 (그림책) ---------- */
+.storyStage {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: var(--space-8);
+  align-items: center;
+}
+.storyStage > svg {
+  width: 100%;
+  height: auto;
+  max-width: 30rem;
+  justify-self: center;
+}
+.storySide {
+  display: grid;
+  gap: var(--space-4);
+  justify-items: start;
+}
+.storySteps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+.storySteps li {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+}
+.storySteps li p:first-child {
+  font-weight: 650;
+}
+.stepIndex {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  margin-top: 0.1rem;
+  border: 1.5px solid var(--ink);
+  border-radius: 50%;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+.crowdScene {
+  width: 100%;
+  height: auto;
+}
+.reloadStatus {
+  margin-bottom: var(--space-4);
+  padding-left: var(--space-4);
+  border-left: 3px solid var(--line-strong);
+}
+.lockerAction {
+  margin-top: var(--space-6);
+  display: flex;
+  justify-content: center;
+}
+@media (max-width: 860px) {
+  .storyStage {
+    grid-template-columns: 1fr;
+  }
+  .storySide {
+    justify-items: stretch;
+  }
 }

@@ -23,8 +23,7 @@ const TEASERS = [
   {
     problem: '로그인이 만료된 순간 요청 5개가 동시에 나가면, 새 손목밴드를 몇 번 받으러 갈까요?',
     number: '5번 → 1번',
-    numberLabel: '갱신 요청 (동시 요청 5개 기준)',
-    isDraft: true,
+    numberLabel: '재발급 창구에 간 횟수 (동시 요청 5개, 실측)',
   },
   {
     problem: '클릭 기록 10,000개를 하나씩 보내는 것과 100개씩 묶어 보내는 것, 얼마나 다를까요?',
@@ -125,11 +124,6 @@ export default function Home() {
                   <p>{teaser.problem}</p>
                   <p className={styles.teaserValue}>{teaser.number}</p>
                   <p className={styles.teaserLabel}>{teaser.numberLabel}</p>
-                  {teaser.isDraft && (
-                    <p className={styles.draft}>
-                      그림책으로 다시 쓰는 중 · 지금은 실험 화면만 있어요
-                    </p>
-                  )}
                 </Link>
               </li>
             );
