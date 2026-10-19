@@ -1,6 +1,6 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "globalPassThroughEnv": ["DATABASE_URL", "REQUIRE_DATABASE", "CI", "VERCEL", "VERCEL_ENV"],
+  "globalPassThroughEnv": ["DATABASE_URL", "REDIS_URL", "REQUIRE_DATABASE", "CI", "VERCEL", "VERCEL_ENV"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
