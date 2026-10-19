@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
+import Nav from './Nav';
 
 export const metadata: Metadata = {
   title: 'backend-visualized',
@@ -17,6 +18,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           color: '#e6e9f2',
         }}
       >
+        <Nav />
         {children}
       </body>
     </html>

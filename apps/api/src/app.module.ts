@@ -4,6 +4,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { PrismaModule } from './prisma/prisma.module';
 import { HealthController } from './health/health.controller';
 import { EventsModule } from './events/events.module';
+import { CouponsModule } from './coupons/coupons.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { EventsModule } from './events/events.module';
     ScheduleModule.forRoot(),
     PrismaModule,
     EventsModule,
+    CouponsModule,
   ],
   controllers: [HealthController],
 })
