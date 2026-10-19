@@ -29,3 +29,27 @@ model EventDailyStat {
   @@unique([date, name])
   @@index([date])
 }
+
+/// Stage 3: 선착순 쿠폰. issuedCount는 "카운터", 실제 발급 건수는 CouponIssue 행 수.
+/// version은 낙관적 락용.
+model Coupon {
+  id            Int           @id @default(autoincrement())
+  name          String        @unique @db.VarChar(50)
+  totalQuantity Int
+  issuedCount   Int           @default(0)
+  version       Int           @default(0)
+  updatedAt     DateTime      @updatedAt @db.DateTime(3)
+  issues        CouponIssue[]
+}
+
+/// 발급 내역. 'none' 전략의 초과 발급을 그대로 관찰하려고 (couponId, userId) unique는 걸지 않음.
+model CouponIssue {
+  id        BigInt   @id @default(autoincrement())
+  couponId  Int
+  userId    String   @db.VarChar(64)
+  strategy  String   @db.VarChar(16)
+  createdAt DateTime @default(now()) @db.DateTime(3)
+  coupon    Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+
+  @@index([couponId, createdAt])
+}
