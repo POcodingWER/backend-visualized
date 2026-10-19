@@ -27,8 +27,10 @@ export interface Tracker {
   sessionId: string;
   /** 큐에 적재 (네트워크 전송은 배치로) */
   track(name: string, properties?: Record<string, unknown>): void;
-  /** 큐를 즉시 전송 */
-  flush(): Promise<void>;
+  /** 큐를 즉시 전송, 이번 flush로 서버에 전송 성공한 이벤트 수를 반환 */
+  flush(): Promise<number>;
+  /** 아직 전송 대기 중인 이벤트 수 */
+  pending(): number;
   /** 타이머/리스너 해제 (남은 큐는 beacon으로 전송) */
   destroy(): void;
 }
@@ -120,19 +122,24 @@ export function createTracker(opts: TrackerOptions): Tracker {
     }
   }
 
-  async function flush(): Promise<void> {
+  async function flush(): Promise<number> {
     if (inflight) await inflight;
-    if (queue.length === 0) return;
+    if (queue.length === 0) return 0;
     const batches: TrackedEvent[][] = [];
     while (queue.length) batches.push(queue.splice(0, maxBatch));
+    let sent = 0;
     inflight = (async () => {
-      for (const b of batches) if (!(await send(b))) persist(b);
+      for (const b of batches) {
+        if (await send(b)) sent += b.length;
+        else persist(b);
+      }
     })();
     try {
       await inflight;
     } finally {
       inflight = null;
     }
+    return sent;
   }
 
   /** 페이지 이탈 시: sendBeacon (Content-Type text/plain → CORS preflight 없음) */
@@ -195,6 +202,7 @@ export function createTracker(opts: TrackerOptions): Tracker {
       if (queue.length >= maxBatch) void flush();
     },
     flush,
+    pending: () => queue.length,
     destroy() {
       clearInterval(timer);
       g.removeEventListener?.('pagehide', onPageHide);
