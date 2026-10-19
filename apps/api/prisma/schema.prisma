@@ -1,0 +1,18 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Event {
+  id         BigInt   @id @default(autoincrement())
+  name       String   @db.VarChar(100)
+  properties Json
+  sessionId  String   @db.VarChar(64)
+  createdAt  DateTime @default(now()) @db.DateTime(3)
+
+  @@index([name, createdAt])
+}
