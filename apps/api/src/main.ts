@@ -20,7 +20,11 @@ async function bootstrap() {
     next();
   });
   const origin = process.env.WEB_ORIGIN ?? process.env.CORS_ORIGIN ?? 'http://localhost:3000';
-  app.enableCors({ origin: origin.split(',').map((allowedOrigin) => allowedOrigin.trim()) });
+  // credentials: 리프레시 토큰 httpOnly 쿠키를 주고받기 위해 필요
+  app.enableCors({
+    origin: origin.split(',').map((allowedOrigin) => allowedOrigin.trim()),
+    credentials: true,
+  });
   app.useGlobalPipes(
     new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),
   );
