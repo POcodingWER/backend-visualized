@@ -63,7 +63,7 @@ API Docker 이미지 빌드 (레포 루트에서): `docker build -f apps/api/Doc
 ## 로드맵
 
 - **Stage 0 — 세팅**: 모노레포, Next.js / NestJS / Prisma / MySQL, 공통 lint·format, Docker Compose ✅
-- **Stage 1 — 얇게 관통 + 배포**: SDK → API → DB → 대시보드를 최소 기능으로 끝까지 연결하고 배포
+- **Stage 1 — 얇게 관통 + 배포**: SDK → API → DB → 대시보드를 최소 기능으로 끝까지 연결하고 배포 (로컬 slice ✅, 배포 ⏳)
   (web: Vercel / api: AWS EC2 Docker + RDS)
 - **Stage 2 — 미니 GA 심화**: 세션·퍼널·리텐션 등 집계, 대시보드 고도화
 - **Stage 3 — 데모 (k6로 측정·시각화)**
@@ -73,3 +73,27 @@ API Docker 이미지 빌드 (레포 루트에서): `docker build -f apps/api/Doc
   - 멱등키 (중복 요청 방지)
   - 인증 토큰 (세션 / JWT / refresh) 흐름 시각화
 - **Stage 4 — 기록**: 실험 결과와 배운 점 정리
+
+## Stage 1 체험하기 (로컬)
+
+```bash
+docker compose up -d            # MySQL (host 3307)
+pnpm install
+pnpm --filter @bv/api prisma:deploy
+pnpm build
+# 터미널 1: API (:4000)  — apps/api/.env 의 DATABASE_URL, WEB_ORIGIN 사용
+cd apps/api && set -a && . ./.env && set +a && node dist/main.js
+# 터미널 2: Web (:3000)  — NEXT_PUBLIC_API_URL (기본 http://localhost:4000)
+pnpm --filter @bv/web start
+```
+
+- http://localhost:3000 접속 시 `page_view` 자동 전송, 버튼으로 `button_click` 전송, 아래 대시보드에서 집계 확인(새로고침 버튼)
+- API
+  - `POST /events` — body `{ "name": string, "sessionId": string, "properties"?: object }` (검증 실패 시 400)
+  - `GET /events/stats?from=&to=` — `{ total, byName: [{ name, count }] }`
+
+```bash
+curl -XPOST localhost:4000/events -H 'Content-Type: application/json' \
+  -d '{"name":"page_view","sessionId":"s1","properties":{"path":"/"}}'
+curl localhost:4000/events/stats
+```
