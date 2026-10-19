@@ -1,29 +1,35 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateEventDto } from './create-event.dto';
+import { parseDate } from './date-range';
+import { EventBus } from './event-bus';
 
-function parseDate(v: string | undefined, field: string): Date | undefined {
-  if (!v) return undefined;
-  const d = new Date(v);
-  if (Number.isNaN(d.getTime())) throw new BadRequestException(`invalid ${field}`);
-  return d;
-}
+const toRow = (dto: CreateEventDto): Prisma.EventCreateManyInput => ({
+  name: dto.name,
+  sessionId: dto.sessionId,
+  properties: (dto.properties ?? {}) as Prisma.InputJsonValue,
+});
 
 @Injectable()
 export class EventsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly bus: EventBus,
+  ) {}
 
   async create(dto: CreateEventDto) {
-    const e = await this.prisma.event.create({
-      data: {
-        name: dto.name,
-        sessionId: dto.sessionId,
-        properties: (dto.properties ?? {}) as Prisma.InputJsonValue,
-      },
-    });
+    const e = await this.prisma.event.create({ data: toRow(dto) });
+    this.bus.emit(1);
     // BigInt는 JSON 직렬화 불가 → string으로 변환
     return { ...e, id: e.id.toString() };
+  }
+
+  /** 배치 insert: 단일 INSERT ... VALUES (...), (...) 쿼리 */
+  async createBatch(dtos: CreateEventDto[]) {
+    const { count } = await this.prisma.event.createMany({ data: dtos.map(toRow) });
+    this.bus.emit(count);
+    return { inserted: count };
   }
 
   async stats(fromStr?: string, toStr?: string) {
