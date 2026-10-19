@@ -1,0 +1,145 @@
+/*
+ * 디자인 토큰 — "손으로 그린 그림책" 방향
+ * 종이(크림) 위 먹선, 차분한 파스텔 3색(세이지·살구·하늘)은 면 채움에만, 실패는 빨강 하나.
+ * 글자색은 모두 종이 배경 대비 4.5:1 이상 (파스텔 자체는 글자에 쓰지 않고 *-ink 변형을 쓴다).
+ */
+:root {
+  --paper: #f6f1e7;
+  --paper-raised: #fbf8f2;
+  --paper-deep: #ede5d5;
+  --ink: #2b2620; /* 종이 대비 13.3:1 */
+  --ink-soft: #5e564b; /* 종이 대비 6.4:1 */
+  --line: #d8cdba;
+  --line-strong: #b9ac95;
+
+  --sage: #b4c9a9;
+  --sage-ink: #44633d; /* 종이 대비 6.0:1 */
+  --apricot: #f2c7a2;
+  --apricot-ink: #8e4f1f; /* 종이 대비 5.7:1 */
+  --sky: #bcd4e0;
+  --sky-ink: #345e72; /* 종이 대비 6.2:1 */
+  --fail: #a3321f; /* 종이 대비 6.1:1, fail-soft 위 4.9:1 */
+  --fail-soft: #f2d3c8;
+
+  --font-body: 'Pretendard Variable', Pretendard, -apple-system, 'Apple SD Gothic Neo', sans-serif;
+  --font-mono: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+
+  --text-sm: 0.875rem;
+  --text-base: 1.0625rem; /* 17px */
+  --text-lg: 1.25rem;
+  --text-xl: clamp(1.6rem, 1.2rem + 1.6vw, 2.25rem);
+  --text-hero: clamp(2.2rem, 1.4rem + 3.6vw, 4rem);
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-24: 6rem;
+
+  --column: 44rem; /* 읽기 폭 */
+  --wide: 68rem; /* 그림·데모 폭 */
+  /* 손으로 그은 듯 비대칭 모서리 */
+  --hand-radius: 255px 18px 225px 18px / 18px 225px 18px 255px;
+  --hand-radius-soft: 20px 6px 18px 8px / 8px 18px 6px 20px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: 1.7;
+  color: var(--ink);
+  background-color: var(--paper);
+  /* 아주 옅은 종이 결 (정적 노이즈, 0.04 불투명도) */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.17 0 0 0 0 0.15 0 0 0 0 0.12 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: 'tnum' 0;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.25;
+  letter-spacing: -0.025em;
+  font-weight: 750;
+  margin: 0;
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+button {
+  font: inherit;
+}
+
+:focus-visible {
+  outline: 2.5px solid var(--sky-ink);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+code,
+pre,
+kbd {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+}
+
+/* 형광펜으로 그은 듯한 강조 (제목·현재 메뉴) */
+.highlight {
+  text-decoration: underline 0.32em var(--apricot);
+  text-underline-offset: -0.12em;
+  text-decoration-skip-ink: none;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

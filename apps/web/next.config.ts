@@ -12,6 +12,13 @@ const nextConfig: NextConfig = {
   transpilePackages: ['@bv/sdk'],
   // lint은 루트 ESLint flat config로 별도 실행 (pnpm lint)
   eslint: { ignoreDuringBuilds: true },
+  // 장 이름을 바꾸기 전 주소
+  async redirects() {
+    return [
+      { source: '/coupon', destination: '/ticketing', permanent: true },
+      { source: '/auth', destination: '/wristband', permanent: true },
+    ];
+  },
 };
 
 export default nextConfig;
