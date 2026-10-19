@@ -16,3 +16,16 @@ model Event {
 
   @@index([name, createdAt])
 }
+
+/// 일 단위 집계 (UTC 날짜 기준). 집계 잡이 Event에서 upsert.
+model EventDailyStat {
+  id             Int      @id @default(autoincrement())
+  date           DateTime @db.Date
+  name           String   @db.VarChar(100)
+  count          Int
+  uniqueSessions Int
+  updatedAt      DateTime @updatedAt @db.DateTime(3)
+
+  @@unique([date, name])
+  @@index([date])
+}
