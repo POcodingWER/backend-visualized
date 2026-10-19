@@ -385,3 +385,13 @@
   overflow-x: auto;
   margin: 0;
 }
+.steps {
+  margin: 0.4rem 0 0.6rem;
+  padding-left: 1.2rem;
+  line-height: 1.65;
+  font-size: 0.9rem;
+  color: #c7cce0;
+}
+.steps li {
+  margin: 0.25rem 0;
+}

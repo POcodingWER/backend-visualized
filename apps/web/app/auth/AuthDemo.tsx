@@ -1,7 +1,14 @@
 'use client';
 
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
-import { authApi, errorReason, isSession, REASON_KO, type Session } from '../../lib/auth-api';
+import {
+  authApi,
+  errorReason,
+  isSession,
+  REASON_KO,
+  type ApiResult,
+  type Session,
+} from '../../lib/auth-api';
 import { createSingleFlight } from '../../lib/single-flight';
 import ConcurrencyRace from './ConcurrencyRace';
 import JwtDecoder from './JwtDecoder';
@@ -15,6 +22,13 @@ const AUTO_CALL_INTERVAL_MS = 4000;
 
 let nextLogId = 0;
 
+/**
+ * 페이지 전체가 공유하는 쿠키 기반 refresh (single-flight).
+ * 동시에 401이 여러 개 나거나 StrictMode로 마운트가 두 번 일어나도 /auth/refresh 요청은 하나.
+ */
+let refreshTtlSeconds = 15;
+const refreshWithCookieOnce = createSingleFlight(() => authApi.refresh(refreshTtlSeconds));
+
 export default function AuthDemo() {
   const [session, setSession] = useState<Session | null>(null);
   const [accessTokenTtlSeconds, setAccessTokenTtlSeconds] = useState(15);
@@ -22,6 +36,7 @@ export default function AuthDemo() {
   const [autoCall, setAutoCall] = useState(false);
   const [rotationCount, setRotationCount] = useState(0);
   const [message, setMessage] = useState<string | null>(null);
+  const [restoreState, setRestoreState] = useState<'restoring' | 'restored' | 'none'>('restoring');
   const sessionRef = useRef<Session | null>(null);
   const tokenLabels = useRef(new Map<string, string>());
 
@@ -49,39 +64,73 @@ export default function AuthDemo() {
     } else setMessage(null);
   }, []);
 
-  // 평소 흐름의 갱신은 single-flight (동시에 여러 곳에서 401이 나도 refresh는 한 번)
-  const refreshOnce = useRef(
-    createSingleFlight(async () => {
-      const result = await authApi.refresh(ttlRef.current);
-      addLogRef.current({
+  const loggedRefreshResults = useRef(new WeakSet<object>());
+  /** 공유된 refresh 결과 하나당 로그 한 줄만 (여러 호출자가 같은 결과를 받아도 중복 기록 X) */
+  const logRefreshOnce = useCallback(
+    (result: ApiResult<unknown>, label: string, note?: string) => {
+      if (loggedRefreshResults.current.has(result)) return;
+      loggedRefreshResults.current.add(result);
+      addLog({
         actor: 'user',
-        label: 'POST /auth/refresh',
+        label,
         credential: 'RT 쿠키',
         status: result.status,
         reason: errorReason(result.body),
         durationMs: result.durationMs,
-        note: isSession(result.body) ? '회전: 새 AT + 새 RT' : undefined,
+        note,
       });
-      if (!isSession(result.body)) throw new Error(errorReason(result.body) || 'refresh_failed');
-      return result.body;
-    }),
+    },
+    [addLog],
   );
-  const ttlRef = useRef(accessTokenTtlSeconds);
-  ttlRef.current = accessTokenTtlSeconds;
-  const addLogRef = useRef(addLog);
-  addLogRef.current = addLog;
+
+  useEffect(() => {
+    refreshTtlSeconds = accessTokenTtlSeconds;
+  }, [accessTokenTtlSeconds]);
 
   const refreshSession = useCallback(async () => {
-    try {
-      const next = await refreshOnce.current();
-      applySession(next);
+    const result = await refreshWithCookieOnce();
+    logRefreshOnce(result, 'POST /auth/refresh', '회전: 새 AT + 새 RT');
+    if (isSession(result.body)) {
+      applySession(result.body);
       setRotationCount((count) => count + 1);
-      return next;
-    } catch (error) {
-      applySession(null, error instanceof Error ? error.message : undefined);
-      return null;
+      return result.body;
     }
-  }, [applySession]);
+    applySession(null, errorReason(result.body));
+    return null;
+  }, [applySession, logRefreshOnce]);
+
+  // 새로고침/첫 방문: 메모리의 액세스 토큰은 사라졌으므로 httpOnly 쿠키의 리프레시 토큰으로 조용히 복구.
+  // StrictMode(dev)에서 effect가 두 번 실행돼도 refreshWithCookieOnce가 진행 중 요청을 공유하므로
+  // 같은 리프레시 토큰으로 두 번 회전하지 않는다 (두 번 보내면 재사용 감지로 로그인이 폐기됨).
+  useEffect(() => {
+    let mounted = true;
+    void refreshWithCookieOnce().then((result) => {
+      if (!mounted) return;
+      const restored = isSession(result.body);
+      logRefreshOnce(
+        result,
+        '새로고침 → POST /auth/refresh',
+        restored ? '쿠키의 리프레시 토큰으로 액세스 토큰 복구' : undefined,
+      );
+      if (isSession(result.body)) {
+        applySession(result.body);
+        setRestoreState('restored');
+      } else {
+        sessionRef.current = null;
+        setSession(null);
+        const reason = errorReason(result.body);
+        setRestoreState('none');
+        setMessage(
+          reason === 'refresh_token_missing'
+            ? '저장된 로그인이 없습니다 (리프레시 쿠키 없음) — 로그인하세요'
+            : `로그인 복구 실패: ${REASON_KO[reason] ?? reason} — 다시 로그인하세요`,
+        );
+      }
+    });
+    return () => {
+      mounted = false;
+    };
+  }, [applySession, logRefreshOnce]);
 
   /** GET /auth/me → 401(만료)이면 refresh 후 1번 재시도 */
   const callMe = useCallback(async () => {
@@ -161,7 +210,9 @@ export default function AuthDemo() {
 
       <section className={styles.card}>
         <h2>① 토큰 수명 타임라인</h2>
-        {session ? (
+        {restoreState === 'restoring' && !session ? (
+          <p className={styles.muted}>🔄 쿠키의 리프레시 토큰으로 로그인 복구 중…</p>
+        ) : session ? (
           <SessionBar
             session={session}
             rotationCount={rotationCount}
@@ -181,6 +232,8 @@ export default function AuthDemo() {
         {message && <p className={styles.warn}>{message}</p>}
         <RequestTimeline log={log} />
       </section>
+
+      <ReloadExplainer restoreState={restoreState} />
 
       <ConcurrencyRace
         session={session}
@@ -355,3 +408,47 @@ const RequestTimeline = memo(function RequestTimeline({ log }: { log: RequestLog
     </ol>
   );
 });
+
+/** 왜 액세스 토큰은 메모리에 두는지, 새로고침 후 어떻게 복구되는지 */
+function ReloadExplainer({ restoreState }: { restoreState: 'restoring' | 'restored' | 'none' }) {
+  return (
+    <section className={styles.card}>
+      <h2>🔄 새로고침하면 액세스 토큰은 사라지는데, 왜 로그인은 유지될까?</h2>
+      <ol className={styles.steps}>
+        <li>
+          액세스 토큰은 <b>메모리(JS 변수)</b>에만 둡니다. localStorage에 두면 XSS 스크립트가 바로
+          훔쳐 갈 수 있기 때문입니다. 대신 새로고침하면 사라집니다.
+        </li>
+        <li>
+          리프레시 토큰은 <b>httpOnly 쿠키</b>라 JS는 못 읽지만, 브라우저가 <code>/auth</code>{' '}
+          요청에 자동으로 붙여 보냅니다 (
+          <code>
+            fetch(…, {'{'} credentials: &apos;include&apos; {'}'})
+          </code>
+          ).
+        </li>
+        <li>
+          그래서 페이지가 열리면 바로 <code>POST /auth/refresh</code>를 한 번 호출해 새 액세스
+          토큰을 받습니다 (silent refresh). 이때 리프레시 토큰도 회전됩니다.
+        </li>
+        <li>
+          React StrictMode(dev)는 effect를 두 번 실행합니다. 같은 쿠키로 refresh를 두 번 보내면 두
+          번째가 <b>재사용으로 감지돼 로그인이 폐기</b>되므로, 진행 중인 요청을
+          공유(single-flight)해 한 번만 보냅니다.
+        </li>
+      </ol>
+      <p className={styles.muted}>
+        localhost:3000(웹)과 localhost:4000(API)은 포트만 다른 <b>같은 사이트</b>라 SameSite=Lax
+        쿠키가 전송되고, API는 CORS에서 <code>credentials: true</code>로 http://localhost:3000만
+        허용합니다. 이번 페이지 로드:{' '}
+        <b className={restoreState === 'restored' ? styles.okText : ''}>
+          {restoreState === 'restoring'
+            ? '복구 중…'
+            : restoreState === 'restored'
+              ? '쿠키로 복구 성공'
+              : '복구할 로그인 없음'}
+        </b>
+      </p>
+    </section>
+  );
+}
