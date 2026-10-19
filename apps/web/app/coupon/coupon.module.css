@@ -367,3 +367,120 @@
   height: 100%;
   min-width: 3px;
 }
+.dbGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+@media (max-width: 960px) {
+  .dbGrid {
+    grid-template-columns: 1fr;
+  }
+}
+.panel {
+  background: #10172f;
+  border: 1px solid #222c50;
+  border-radius: 14px;
+  padding: 0.9rem 1rem;
+  min-width: 0;
+}
+.svg {
+  width: 100%;
+  height: 190px;
+  background: #0a1022;
+  border-radius: 8px;
+}
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  font-size: 0.82rem;
+  margin-top: 0.4rem;
+}
+.legend i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  margin-right: 4px;
+}
+.dbTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: ui-monospace, monospace;
+  font-size: 0.78rem;
+}
+.dbTable th {
+  text-align: left;
+  color: #8b93b0;
+  font-weight: 500;
+  padding: 0.25rem 0.35rem;
+  border-bottom: 1px solid #222c50;
+}
+.dbTable td {
+  padding: 0.25rem 0.35rem;
+  border-bottom: 1px solid #182040;
+  white-space: nowrap;
+}
+.rowIn {
+  animation: rowIn 0.4s ease-out;
+}
+@keyframes rowIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.rowOver td {
+  color: #fb7185;
+  background: rgba(251, 113, 133, 0.08);
+}
+.bdRow {
+  display: grid;
+  grid-template-columns: 120px 1fr 48px;
+  gap: 0.5rem;
+  align-items: center;
+  font-size: 0.85rem;
+  margin: 0.35rem 0;
+}
+.bdRow b {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.bdRow .barWrap {
+  width: 100%;
+  margin: 0;
+}
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+.filters button {
+  padding: 0.3rem 0.6rem !important;
+  font-size: 0.8rem !important;
+}
+.cardHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.cardHead h2 {
+  margin: 0;
+}
+.pager {
+  display: flex;
+  gap: 0.8rem;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.8rem;
+  font-size: 0.85rem;
+}

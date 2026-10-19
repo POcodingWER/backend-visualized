@@ -43,3 +43,19 @@ export class SimulateDto {
   @Max(MAX_QUANTITY)
   quantity?: number;
 }
+
+export class StateQueryDto {
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  @Max(10_000)
+  offset?: number;
+}

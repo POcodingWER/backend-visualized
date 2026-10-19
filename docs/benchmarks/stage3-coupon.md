@@ -64,3 +64,27 @@ k6 run -e STRATEGY=atomic -e API_URL=http://localhost:4100 load/coupon.js
   선착순 재고 차감처럼 "남은 수량 감소"가 핵심인 경우 가장 단순하고 효과적.
 - 테스트: [`coupon-strategies.spec.ts`](../../apps/api/src/coupons/coupon-strategies.spec.ts) — 300명 vs 50장에서
   `none`은 초과 발급, 나머지 3개는 정확히 50장임을 실제 MySQL로 검증.
+
+## API 응답 형태 (관찰용)
+
+`POST /coupons/simulate { strategy?, users ≤ 1000, quantity ≤ 500 }` → `{ results: SimulationResult[] }`
+
+```jsonc
+{
+  "strategy": "none", "couponName": "sim-none", "couponId": 3, "users": 500, "quantity": 100, "durationMs": 2512.4,
+  "final": { "issueRows": 500, "issuedCount": 1, "version": 0, "oversold": 400, "counterMismatch": true },
+  "summary": { "issued": 500, "sold_out": 0, "retry_exhausted": 0, "error": 0, "totalRetries": 0 },
+  // 시뮬레이션 중 별도 DB 커넥션(connection_limit=1)으로 ~25ms마다 읽은 실제 상태
+  "dbSnapshots": [{ "atMs": 0, "issuedCount": 0, "version": 0, "issueRows": 0 }, …],
+  // 요청별 기록 (완료 순)
+  "requests": [{
+    "requestId": 17, "userId": "user-17", "startedAtMs": 0.9, "finishedAtMs": 570.9, "durationMs": 570.0,
+    "success": true, "result": "issued",            // issued | sold_out | retry_exhausted | error
+    "retries": 0, "oversold": false, "issueSeq": 1, "issueRowId": "1234",
+    "readIssuedCount": 0,                            // none: 읽은 카운터 값
+    // pessimistic: poolWaitMs, lockWaitMs  /  atomic: affectedRows (0이면 품절 거절)
+  }, …]
+}
+```
+
+`GET /coupons/:name/state?limit=20&offset=0` → 실제 DB의 Coupon 행, `COUNT(CouponIssue)`, 최근 발급 행(초과 발급 표시 포함).
