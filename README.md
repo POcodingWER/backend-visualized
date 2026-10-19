@@ -63,7 +63,7 @@ API Docker 이미지 빌드 (레포 루트에서): `docker build -f apps/api/Doc
 ## 로드맵
 
 - **Stage 0 — 세팅**: 모노레포, Next.js / NestJS / Prisma / MySQL, 공통 lint·format, Docker Compose ✅
-- **Stage 1 — 얇게 관통 + 배포**: SDK → API → DB → 대시보드를 최소 기능으로 끝까지 연결하고 배포 (로컬 slice ✅, 배포 ⏳)
+- **Stage 1 — 얇게 관통 + 배포**: SDK → API → DB → 대시보드를 최소 기능으로 끝까지 연결하고 배포 (로컬 slice ✅, 배포 준비 ✅ — [docs/deploy.md](docs/deploy.md): Vercel + EC2 Docker + RDS/MySQL 컨테이너)
   (web: Vercel / api: AWS EC2 Docker + RDS)
 - **Stage 2 — 미니 GA 심화**: SDK 배치·beacon·오프라인 재전송, 배치 insert, rate limit, 일별 집계 테이블+cron, SSE 실시간, 차트 대시보드, 수집 벤치마크 ✅ (세션·퍼널·리텐션은 이후)
 - **Stage 3 — 데모 (k6로 측정·시각화)**

@@ -65,6 +65,9 @@ importers:
       class-validator:
         specifier: ^0.15.1
         version: 0.15.1
+      prisma:
+        specifier: ^6.1.0
+        version: 6.19.3(typescript@5.9.3)
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
@@ -81,9 +84,6 @@ importers:
       '@types/node':
         specifier: ^20.17.10
         version: 20.19.43
-      prisma:
-        specifier: ^6.1.0
-        version: 6.19.3(typescript@5.9.3)
       tsc-watch:
         specifier: ^6.2.1
         version: 6.3.1(typescript@5.9.3)

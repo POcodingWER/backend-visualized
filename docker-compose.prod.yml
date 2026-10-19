@@ -1,0 +1,74 @@
+# EC2 운영용. 사용법은 docs/deploy.md 참고.
+#   RDS 사용:            ./deploy/compose.sh up -d --build
+#   같은 EC2의 MySQL:     ./deploy/compose.sh --profile local-db up -d --build
+# 비밀값은 deploy/production.env (git에 올리지 않음, deploy/production.env.example 복사해서 작성)
+
+name: backend-visualized
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    image: backend-visualized-api:latest
+    restart: unless-stopped
+    env_file: deploy/production.env
+    environment:
+      NODE_ENV: production
+      PORT: '4000'
+      # Caddy 한 단계 뒤에 있으므로 X-Forwarded-For의 마지막 1홉만 믿는다 (ALB를 앞에 두면 2)
+      TRUST_PROXY: ${TRUST_PROXY:-1}
+    # 포트를 밖으로 열지 않는다: 인터넷 → Caddy(443) → api:4000 만 가능 (X-Forwarded-For 위조 방지)
+    expose:
+      - '4000'
+    logging:
+      driver: json-file
+      options: { max-size: '10m', max-file: '5' }
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    environment:
+      API_DOMAIN: ${API_DOMAIN:?API_DOMAIN을 deploy/production.env에 설정하세요}
+      ACME_EMAIL: ${ACME_EMAIL:?ACME_EMAIL(인증서 알림 메일)을 deploy/production.env에 설정하세요}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    logging:
+      driver: json-file
+      options: { max-size: '10m', max-file: '5' }
+
+  # 선택: RDS 대신 같은 EC2에 MySQL 컨테이너 (--profile local-db). 포트는 외부에 열지 않는다.
+  mysql:
+    image: mysql:8.4
+    profiles: ['local-db']
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-backend_visualized}
+      MYSQL_USER: ${MYSQL_USER:-app}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-}
+    # 작은 인스턴스(2GB RAM)에 맞춘 메모리 설정
+    command: ['--innodb-buffer-pool-size=256M', '--max-connections=100', '--performance-schema=OFF']
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ['CMD-SHELL', 'mysqladmin ping -h 127.0.0.1 -uroot -p"$$MYSQL_ROOT_PASSWORD" --silent']
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    logging:
+      driver: json-file
+      options: { max-size: '10m', max-file: '3' }
+
+volumes:
+  caddy-data:
+  caddy-config:
+  mysql-data:

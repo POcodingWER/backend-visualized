@@ -39,7 +39,9 @@ describe('RefreshTokenStore rotation (MySQL)', () => {
       });
       userId = user.id;
       databaseUp = true;
-    } catch {
+    } catch (error) {
+      // CI(REQUIRE_DATABASE=true)에선 DB가 없으면 skip하지 말고 실패
+      if (process.env.REQUIRE_DATABASE === 'true') throw error;
       databaseUp = false;
     }
   });

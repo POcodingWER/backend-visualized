@@ -331,15 +331,27 @@ export default function Pipeline() {
     setAggBusy(true);
     void fly({ from: 'db', to: 'agg', label: 'Σ', kind: 'agg', ms: 600, lane: 'top' });
     try {
-      const response = await fetch(`${API_URL}/admin/aggregate`, { method: 'POST' });
+      // 공개 데모용 엔드포인트: 비밀값 없이 호출, 대신 서버 전체 쿨다운이 있다 (관리자용 /admin/aggregate는 API 키 필요)
+      const response = await fetch(`${API_URL}/demo/aggregate`, { method: 'POST' });
+      if (response.status === 429) {
+        const limited = (await response.json().catch(() => ({}))) as {
+          retryAfterSeconds?: number;
+        };
+        setAggResult(
+          `쿨다운 중 — 방금 누군가 집계를 실행했어요. ${limited.retryAfterSeconds ?? '몇'}초 후 다시 시도하세요`,
+        );
+        return;
+      }
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const aggregateResult = (await response.json()) as {
         rows: number;
         ms: number;
         from: string;
         to: string;
+        cooldownSeconds: number;
       };
       setAggResult(
-        `${aggregateResult.from} ~ ${aggregateResult.to} 롤업 완료 · upsert ${aggregateResult.rows}행 · ${aggregateResult.ms}ms`,
+        `${aggregateResult.from} ~ ${aggregateResult.to} 롤업 완료 · upsert ${aggregateResult.rows}행 · ${aggregateResult.ms}ms (다음 실행까지 ${aggregateResult.cooldownSeconds}초 쿨다운)`,
       );
       await loadStats();
     } catch (error) {
@@ -715,19 +727,9 @@ function RateLimit() {
     const worker = async () => {
       while (next < 210) {
         next++;
-        const response = await fetch(`${API_URL}/events/batch`, {
+        // DB에 쓰지 않는 체험 전용 엔드포인트 (같은 ThrottlerGuard, IP당 10초 200회)
+        const response = await fetch(`${API_URL}/demo/rate-limit-probe`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            events: [
-              {
-                name: 'ratelimit_demo',
-                properties: {},
-                sessionId: 'ratelimit-demo',
-                occurredAt: new Date().toISOString(),
-              },
-            ],
-          }),
         }).catch(() => null);
         if (response?.status === 202) counts.ok++;
         else if (response?.status === 429) counts.limited++;
@@ -744,8 +746,9 @@ function RateLimit() {
       <h2>🛡️ 레이트 리밋 체험</h2>
       <p className={styles.muted}>
         API는 IP당 10초에 200요청까지만 받습니다. 요청 210개를 몰아서 보내면 초과분은 <b>429</b>로
-        거절되고, SDK는 이런 배치를 버리지 않고 localStorage에 보관했다가 재전송합니다. (실행 후
-        10초간은 위 데모 전송도 429가 날 수 있어요)
+        거절됩니다. 수집 API(/events/batch)도 같은 방식으로 막히고, SDK는 이런 배치를 버리지 않고
+        localStorage에 보관했다가 재전송합니다. 이 버튼은 공개 서버에 쓰레기 데이터가 쌓이지 않도록
+        DB에 쓰지 않는 체험용 엔드포인트로 보냅니다.
       </p>
       <button onClick={() => void run()} disabled={busy}>
         {busy ? '보내는 중…' : '요청 210개 몰아 보내기'}
