@@ -15,7 +15,7 @@ import {
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { AccessTokenGuard, type AuthenticatedRequest } from './access-token.guard';
-import { authConfig } from './auth.config';
+import { authConfig, refreshCookieOptions } from './auth.config';
 import { LoginDto, RefreshDto } from './auth.dto';
 import { authError, AuthService, toPublicTokenRow } from './auth.service';
 
@@ -155,15 +155,12 @@ export class AuthController {
 
   private setRefreshCookie(response: Response, refreshToken: string) {
     response.cookie(authConfig.refreshCookieName, refreshToken, {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: authConfig.secureCookie,
-      path: authConfig.refreshCookiePath,
+      ...refreshCookieOptions(),
       maxAge: authConfig.refreshTokenTtlSeconds * 1000,
     });
   }
 
   private clearRefreshCookie(response: Response) {
-    response.clearCookie(authConfig.refreshCookieName, { path: authConfig.refreshCookiePath });
+    response.clearCookie(authConfig.refreshCookieName, refreshCookieOptions());
   }
 }

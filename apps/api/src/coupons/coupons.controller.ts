@@ -8,9 +8,12 @@ import {
   Param,
   Post,
   Query,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
+import type { Response } from 'express';
+import { UsageLimitsService } from '../abuse/usage-limits.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CouponStrategies, STRATEGIES, type SimulationResult } from './coupon-strategies';
 import { IssueDto, ResetDto, SimulateDto, StateQueryDto } from './coupons.dto';
@@ -19,7 +22,7 @@ import { OnModuleDestroy } from '@nestjs/common';
 
 const DEMO_COUPON_NAME = 'demo';
 
-/** Stage 3: 선착순 쿠폰 동시성 데모 (로컬 데모용, 운영에선 인증 필요) */
+/** Stage 3: 선착순 쿠폰 동시성 데모 (공개 데모: IP별 한도 + 시뮬레이션 단일 실행 + 전역 쿨다운) */
 @Controller('coupons')
 @UseGuards(ThrottlerGuard)
 export class CouponsController implements OnModuleDestroy {
@@ -32,7 +35,10 @@ export class CouponsController implements OnModuleDestroy {
     datasourceUrl: withConnectionLimit(process.env.DATABASE_URL, 1),
   });
 
-  constructor(prisma: PrismaService) {
+  constructor(
+    prisma: PrismaService,
+    private readonly usageLimits: UsageLimitsService,
+  ) {
     this.strategies = new CouponStrategies(prisma, this.sampler);
   }
 
@@ -81,8 +87,18 @@ export class CouponsController implements OnModuleDestroy {
   @Post('simulate')
   @HttpCode(200)
   @Throttle({ default: { limit: 6, ttl: 10_000 } })
-  async simulate(@Body() dto: SimulateDto): Promise<{ results: SimulationResult[] }> {
+  async simulate(
+    @Body() dto: SimulateDto,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<{ results: SimulationResult[] }> {
     if (this.running) throw new ConflictException('다른 시뮬레이션이 실행 중입니다');
+    // 전역 쿨다운: 시뮬레이션은 DB 커넥션을 많이 쓰므로 끝난 뒤에도 잠깐 쉬게 한다
+    this.usageLimits.enforce(
+      this.usageLimits.couponSimulationCooldown.tryStart(),
+      response,
+      'simulation_cooldown',
+      '방금 시뮬레이션이 끝났습니다. 잠시 후 다시 실행하세요',
+    );
     this.running = true;
     try {
       const users = dto.users ?? 500;
@@ -94,6 +110,7 @@ export class CouponsController implements OnModuleDestroy {
       return { results };
     } finally {
       this.running = false;
+      this.usageLimits.couponSimulationCooldown.restartFromNow();
     }
   }
 }

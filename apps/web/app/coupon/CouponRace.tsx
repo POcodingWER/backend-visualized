@@ -135,8 +135,17 @@ export default function CouponRace() {
           ...(runAllStrategies ? {} : { strategy }),
         }),
       });
-      if (response.status === 429)
-        throw new Error('요청이 너무 잦아요 (429). 잠시 후 다시 시도하세요.');
+      if (response.status === 429) {
+        const limited = (await response.json().catch(() => ({}))) as {
+          reason?: string;
+          retryAfterSeconds?: number;
+        };
+        throw new Error(
+          limited.reason === 'simulation_cooldown'
+            ? `방금 시뮬레이션이 끝났어요. ${limited.retryAfterSeconds ?? '몇'}초 후 다시 실행하세요 (429, 서버 전체 쿨다운).`
+            : '요청이 너무 잦아요 (429). 잠시 후 다시 시도하세요.',
+        );
+      }
       if (response.status === 409) throw new Error('다른 시뮬레이션이 실행 중이에요 (409).');
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const { results: simulationResults } = (await response.json()) as { results: Result[] };

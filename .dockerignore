@@ -1,6 +1,14 @@
 **/node_modules
 **/dist
+**/dist-test
 **/.next
 **/.turbo
 **/.env
+**/.env.*
+!**/.env.example
+**/*.log
 .git
+.github
+deploy/production.env
+load
+docs

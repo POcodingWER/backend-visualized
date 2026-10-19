@@ -1,0 +1,26 @@
+# API_DOMAIN(예: api.example.com)의 DNS A 레코드가 이 EC2의 Elastic IP를 가리키면
+# Caddy가 Let's Encrypt 인증서를 자동으로 발급·갱신한다 (80, 443 포트가 열려 있어야 함).
+{
+	email {$ACME_EMAIL}
+}
+
+{$API_DOMAIN} {
+	# SSE(text/event-stream)는 Caddy가 자동으로 즉시 flush 한다
+	reverse_proxy api:4000 {
+		# Caddy는 클라이언트가 보낸 X-Forwarded-For를 버리고 실제 접속 IP로 다시 쓴다 (기본값)
+		health_uri /health
+		health_interval 30s
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "no-referrer"
+		-Server
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}
