@@ -7,6 +7,9 @@ import { EventsModule } from './events/events.module';
 import { CouponsModule } from './coupons/coupons.module';
 import { AuthModule } from './auth/auth.module';
 import { AbuseModule } from './abuse/abuse.module';
+import { PointsModule } from './points/points.module';
+import { PaymentsModule } from './payments/payments.module';
+import { CacheDemoModule } from './cache-demo/cache-demo.module';
 
 @Module({
   imports: [
@@ -23,6 +26,9 @@ import { AbuseModule } from './abuse/abuse.module';
     EventsModule,
     CouponsModule,
     AuthModule,
+    PointsModule,
+    PaymentsModule,
+    CacheDemoModule,
   ],
   controllers: [HealthController],
 })

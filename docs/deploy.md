@@ -102,6 +102,16 @@ curl https://api.example.com/health
 curl -X POST -H "X-Admin-Api-Key: $ADMIN_API_KEY" "https://api.example.com/admin/aggregate?from=2026-10-01&to=2026-10-19"
 ```
 
+**Redis (6장 캐시)**: `docker-compose.prod.yml`에 `redis` 컨테이너가 같이 뜹니다 (redis:7.4-alpine, 포트 외부 비공개,
+디스크 저장 끔, `maxmemory 64mb` + `allkeys-lru`). `deploy/production.env`에 `REDIS_URL=redis://redis:6379/0`.
+캐시라 컨테이너가 재시작돼 비어도 다음 요청이 DB에서 다시 채웁니다. 관리형이 필요하면 ElastiCache(Valkey/Redis)를
+EC2와 같은 VPC에 만들고 보안 그룹 6379 ← EC2만 허용, `REDIS_URL=rediss://<엔드포인트>:6379` (전송 암호화 시 `rediss`).
+
+```bash
+./deploy/compose.sh exec redis redis-cli ping      # PONG
+./deploy/compose.sh exec redis redis-cli --scan    # bv:menu:* 키만 보여야 정상 (TTL 5초)
+```
+
 > 다른 머신에서 이미지를 빌드할 경우, t4g(ARM)용은 `docker buildx build --platform linux/arm64 -f apps/api/Dockerfile .`
 
 ---
@@ -181,30 +191,31 @@ AWS 공식 가격표(aws.amazon.com 가격 페이지가 쓰는 공개 가격 데
 
 ## 5. 환경 변수 표 (API, `deploy/production.env`)
 
-| 변수                                                                    |   운영 필수   | 기본값 (개발 / 운영)           | 설명                                                                                       |
-| ----------------------------------------------------------------------- | :-----------: | ------------------------------ | ------------------------------------------------------------------------------------------ |
-| `DATABASE_URL`                                                          |      ✅       | —                              | `mysql://user:password@host:3306/backend_visualized`                                       |
-| `WEB_ORIGIN`                                                            |      ✅       | `http://localhost:3000` / 없음 | CORS 허용 출처. 경로 없이, 쉼표로 여러 개. 운영은 https, `*` 금지                          |
-| `JWT_ACCESS_SECRET`                                                     |      ✅       | 개발용 공개값 / 없음           | 32자 이상, 저장소에 적힌 기본값 금지. `openssl rand -base64 48`                            |
-| `API_DOMAIN`                                                            |  ✅ (Caddy)   | —                              | Caddy가 HTTPS 인증서를 받을 도메인                                                         |
-| `ACME_EMAIL`                                                            |  ✅ (Caddy)   | —                              | Let's Encrypt 인증서 알림 메일                                                             |
-| `ADMIN_API_KEY`                                                         |     선택      | 없음                           | `/admin/*` 호출 시 `X-Admin-Api-Key` 헤더. 없으면 개발=허용, 운영=비활성. 운영은 24자 이상 |
-| `TRUST_PROXY`                                                           |       —       | `false` / compose에서 `1`      | 프록시 홉 수 또는 IP/CIDR. Caddy 뒤=1, ALB+Caddy=2. `true`는 운영에서 금지(IP 위조)        |
-| `REFRESH_COOKIE_SAME_SITE`                                              |       —       | `lax` / `none`                 | 4장 참고                                                                                   |
-| `REFRESH_COOKIE_SECURE`                                                 |       —       | `false` / `true`               | `none`이면 반드시 `true`                                                                   |
-| `REFRESH_COOKIE_PARTITIONED`                                            |       —       | SameSite=None이면 `true`       | CHIPS 파티션 쿠키                                                                          |
-| `AUTH_DEMO_ENDPOINTS`                                                   |       —       | `true` / `false`               | 토큰 탈취 시뮬레이션 등 데모 전용 API. 공개 데모 사이트라면 `true`로 명시                  |
-| `AUTH_ACCESS_TOKEN_TTL_SECONDS`                                         |       —       | `20`                           | 액세스 토큰 수명 (데모라 짧음)                                                             |
-| `AUTH_REFRESH_TOKEN_TTL_SECONDS`                                        |       —       | `86400`                        | 리프레시 토큰/쿠키 수명                                                                    |
-| `MAX_BODY_SIZE`                                                         |       —       | `200kb`                        | JSON/text 요청 본문 최대 크기 (초과 시 413)                                                |
-| `EVENTS_GLOBAL_LIMIT_PER_MINUTE`                                        |       —       | `30000`                        | 서버 전체 분당 저장 이벤트 수 (0=무제한)                                                   |
-| `RATE_LIMIT_DEMO_GLOBAL_LIMIT_PER_MINUTE`                               |       —       | `20000`                        | 레이트 리밋 체험 엔드포인트 전역 분당 한도                                                 |
-| `MAX_STREAM_CONNECTIONS`                                                |       —       | `200`                          | 동시 SSE(`/events/stream`) 연결 수                                                         |
-| `AGGREGATION_DEMO_COOLDOWN_MS`                                          |       —       | `10000`                        | 공개 "지금 집계 실행" 버튼 전역 쿨다운                                                     |
-| `COUPON_SIMULATION_COOLDOWN_MS`                                         |       —       | `3000`                         | 쿠폰 시뮬레이션 종료 후 전역 쿨다운                                                        |
-| `THROTTLE_TTL_MS` / `THROTTLE_LIMIT`                                    |       —       | `10000` / `200`                | IP별 기본 한도 (라우트별 `@Throttle`이 우선)                                               |
-| `RUN_MIGRATIONS`                                                        |       —       | `true`                         | 컨테이너 시작 시 `prisma migrate deploy` 실행 여부                                         |
-| `MYSQL_ROOT_PASSWORD`, `MYSQL_PASSWORD`, `MYSQL_USER`, `MYSQL_DATABASE` | local-db일 때 | —                              | MySQL 컨테이너 초기화용                                                                    |
+| 변수                                                                    |   운영 필수   | 기본값 (개발 / 운영)              | 설명                                                                                       |
+| ----------------------------------------------------------------------- | :-----------: | --------------------------------- | ------------------------------------------------------------------------------------------ |
+| `DATABASE_URL`                                                          |      ✅       | —                                 | `mysql://user:password@host:3306/backend_visualized`                                       |
+| `REDIS_URL`                                                             |      ✅       | `redis://127.0.0.1:6380/0` / 없음 | 6장 캐시. `redis://` 또는 `rediss://`. compose 안이면 `redis://redis:6379/0`               |
+| `WEB_ORIGIN`                                                            |      ✅       | `http://localhost:3000` / 없음    | CORS 허용 출처. 경로 없이, 쉼표로 여러 개. 운영은 https, `*` 금지                          |
+| `JWT_ACCESS_SECRET`                                                     |      ✅       | 개발용 공개값 / 없음              | 32자 이상, 저장소에 적힌 기본값 금지. `openssl rand -base64 48`                            |
+| `API_DOMAIN`                                                            |  ✅ (Caddy)   | —                                 | Caddy가 HTTPS 인증서를 받을 도메인                                                         |
+| `ACME_EMAIL`                                                            |  ✅ (Caddy)   | —                                 | Let's Encrypt 인증서 알림 메일                                                             |
+| `ADMIN_API_KEY`                                                         |     선택      | 없음                              | `/admin/*` 호출 시 `X-Admin-Api-Key` 헤더. 없으면 개발=허용, 운영=비활성. 운영은 24자 이상 |
+| `TRUST_PROXY`                                                           |       —       | `false` / compose에서 `1`         | 프록시 홉 수 또는 IP/CIDR. Caddy 뒤=1, ALB+Caddy=2. `true`는 운영에서 금지(IP 위조)        |
+| `REFRESH_COOKIE_SAME_SITE`                                              |       —       | `lax` / `none`                    | 4장 참고                                                                                   |
+| `REFRESH_COOKIE_SECURE`                                                 |       —       | `false` / `true`                  | `none`이면 반드시 `true`                                                                   |
+| `REFRESH_COOKIE_PARTITIONED`                                            |       —       | SameSite=None이면 `true`          | CHIPS 파티션 쿠키                                                                          |
+| `AUTH_DEMO_ENDPOINTS`                                                   |       —       | `true` / `false`                  | 토큰 탈취 시뮬레이션 등 데모 전용 API. 공개 데모 사이트라면 `true`로 명시                  |
+| `AUTH_ACCESS_TOKEN_TTL_SECONDS`                                         |       —       | `20`                              | 액세스 토큰 수명 (데모라 짧음)                                                             |
+| `AUTH_REFRESH_TOKEN_TTL_SECONDS`                                        |       —       | `86400`                           | 리프레시 토큰/쿠키 수명                                                                    |
+| `MAX_BODY_SIZE`                                                         |       —       | `200kb`                           | JSON/text 요청 본문 최대 크기 (초과 시 413)                                                |
+| `EVENTS_GLOBAL_LIMIT_PER_MINUTE`                                        |       —       | `30000`                           | 서버 전체 분당 저장 이벤트 수 (0=무제한)                                                   |
+| `RATE_LIMIT_DEMO_GLOBAL_LIMIT_PER_MINUTE`                               |       —       | `20000`                           | 레이트 리밋 체험 엔드포인트 전역 분당 한도                                                 |
+| `MAX_STREAM_CONNECTIONS`                                                |       —       | `200`                             | 동시 SSE(`/events/stream`) 연결 수                                                         |
+| `AGGREGATION_DEMO_COOLDOWN_MS`                                          |       —       | `10000`                           | 공개 "지금 집계 실행" 버튼 전역 쿨다운                                                     |
+| `COUPON_SIMULATION_COOLDOWN_MS`                                         |       —       | `3000`                            | 쿠폰 시뮬레이션 종료 후 전역 쿨다운                                                        |
+| `THROTTLE_TTL_MS` / `THROTTLE_LIMIT`                                    |       —       | `10000` / `200`                   | IP별 기본 한도 (라우트별 `@Throttle`이 우선)                                               |
+| `RUN_MIGRATIONS`                                                        |       —       | `true`                            | 컨테이너 시작 시 `prisma migrate deploy` 실행 여부                                         |
+| `MYSQL_ROOT_PASSWORD`, `MYSQL_PASSWORD`, `MYSQL_USER`, `MYSQL_DATABASE` | local-db일 때 | —                                 | MySQL 컨테이너 초기화용                                                                    |
 
 웹 (Vercel): `NEXT_PUBLIC_API_URL` (필수, 운영은 https).
 
@@ -212,17 +223,20 @@ AWS 공식 가격표(aws.amazon.com 가격 페이지가 쓰는 공개 가격 데
 
 ## 6. 남용 방지 요약 (공개 데모 엔드포인트)
 
-| 엔드포인트                                       | IP별 한도  | 전역 한도                                       |
-| ------------------------------------------------ | ---------- | ----------------------------------------------- |
-| `POST /events`, `/events/batch`                  | 10초 200회 | 분당 저장 이벤트 30,000개 → 429 + `Retry-After` |
-| `GET /events/stream` (SSE)                       | —          | 동시 연결 200 → 503                             |
-| `POST /demo/aggregate` (집계 버튼)               | 분당 6회   | 전역 쿨다운 10초 → 429                          |
-| `POST /demo/rate-limit-probe` (레이트 리밋 체험) | 10초 200회 | 분당 20,000회, DB에 쓰지 않음                   |
-| `POST /coupons/simulate`                         | 10초 6회   | 동시에 1개(409) + 종료 후 쿨다운 3초(429)       |
-| `POST /auth/login`                               | 분당 10회  | —                                               |
-| `POST /admin/aggregate`                          | —          | `X-Admin-Api-Key` 필요                          |
+| 엔드포인트                                          | IP별 한도  | 전역 한도                                       |
+| --------------------------------------------------- | ---------- | ----------------------------------------------- |
+| `POST /events`, `/events/batch`                     | 10초 200회 | 분당 저장 이벤트 30,000개 → 429 + `Retry-After` |
+| `GET /events/stream` (SSE)                          | —          | 동시 연결 200 → 503                             |
+| `POST /demo/aggregate` (집계 버튼)                  | 분당 6회   | 전역 쿨다운 10초 → 429                          |
+| `POST /demo/rate-limit-probe` (레이트 리밋 체험)    | 10초 200회 | 분당 20,000회, DB에 쓰지 않음                   |
+| `POST /coupons/simulate`                            | 10초 6회   | 동시에 1개(409) + 종료 후 쿨다운 3초(429)       |
+| `POST /points/simulate`                             | 10초 6회   | 동시에 1개(409) + 종료 후 쿨다운 3초(429)       |
+| `POST /payments`                                    | 10초 200회 | 데모 결제 행은 30분 뒤 자동 삭제                |
+| `POST /cache-demo/visitors`, `/cache-demo/stampede` | 10초 6회   | 동시에 1개(409) + 종료 후 쿨다운 3초(429)       |
+| `POST /auth/login`                                  | 분당 10회  | —                                               |
+| `POST /admin/aggregate`                             | —          | `X-Admin-Api-Key` 필요                          |
 
-- 전역 한도·IP별 한도는 **API 인스턴스 메모리**에 있습니다. 인스턴스를 여러 대로 늘리면 Redis 같은 공유 저장소로 옮겨야 합니다.
+- 전역 한도·IP별 한도는 **API 인스턴스 메모리**에 있습니다. 인스턴스를 여러 대로 늘리면 이미 있는 Redis로 옮겨야 합니다 (6장 캐시만 Redis를 씀).
 - IP별 한도는 `req.ip` 기준이라 `TRUST_PROXY`가 맞아야 합니다. 틀리면 모든 사용자가 Caddy IP 하나로 묶여 서로의 한도를 나눠 씁니다.
 
 ---
@@ -231,7 +245,7 @@ AWS 공식 가격표(aws.amazon.com 가격 페이지가 쓰는 공개 가격 데
 
 `.github/workflows/ci.yml` — PR과 main push마다:
 
-1. MySQL 8.4 서비스 컨테이너 → `prisma migrate deploy`
+1. MySQL 8.4 + Redis 7.4 서비스 컨테이너 → `prisma migrate deploy`
 2. `pnpm typecheck` → `pnpm lint` → `pnpm test` (DB 통합 테스트 포함, `REQUIRE_DATABASE=true`라 DB가 없으면 실패) → `pnpm build`
 3. 운영 모드로 API 실행 후 `/health`, 관리자 키 401/201 스모크 테스트
 4. API Docker 이미지 빌드 확인 (push 안 함)

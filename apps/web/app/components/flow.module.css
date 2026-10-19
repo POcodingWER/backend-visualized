@@ -1,0 +1,137 @@
+/* 4~6장 공용: 큰 무대(그림 + 옆 숫자·큰 버튼), 데이터가 움직이는 흐름 그림, 작은 DB 표 */
+.stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: var(--space-8);
+  align-items: center;
+}
+.stageSide {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
+}
+.bigNumber {
+  font-size: clamp(3rem, 2.2rem + 3.5vw, 5rem);
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.bigNumberLabel {
+  font-weight: 650;
+}
+.lanes {
+  display: grid;
+  gap: var(--space-6);
+}
+.laneTitle {
+  font-weight: 700;
+  margin-bottom: var(--space-1);
+}
+.laneTitle small {
+  font-weight: 450;
+  color: var(--ink-soft);
+}
+.flowSvg {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: var(--paper-raised);
+  border: 1.5px solid var(--ink);
+  border-radius: var(--hand-radius-soft);
+}
+.flowSvg text {
+  font-family: var(--font-body);
+}
+
+/* 한 번 지나가는 데이터 조각: --dx/--dy 만큼 이동 (transform만 써서 레이아웃을 건드리지 않음) */
+.packet {
+  animation: travel var(--duration, 600ms) ease-in-out var(--delay, 0ms) both;
+}
+@keyframes travel {
+  from {
+    transform: translate(0, 0);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  to {
+    transform: translate(var(--dx), var(--dy));
+    opacity: 0;
+  }
+}
+/* 보내는 중: 버튼과 서버 사이를 왕복 */
+.pending {
+  animation: shuttle 0.9s ease-in-out infinite alternate;
+}
+@keyframes shuttle {
+  to {
+    transform: translate(var(--dx), 0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .packet,
+  .pending {
+    animation: none;
+  }
+}
+
+.dbTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+}
+.dbTable th,
+.dbTable td {
+  text-align: left;
+  padding: 0.3rem 0.5rem;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+.dbTable th {
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+.dbTable code {
+  font-size: 0.78rem;
+}
+.tableScroll {
+  overflow-x: auto;
+  max-width: 100%;
+}
+.rowNew {
+  animation: rowFlash 1.2s ease-out;
+}
+@keyframes rowFlash {
+  from {
+    background: var(--apricot);
+  }
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: 600;
+  cursor: pointer;
+}
+.toggle input {
+  width: 1.15rem;
+  height: 1.15rem;
+  accent-color: var(--ink);
+}
+
+@media (max-width: 860px) {
+  .stage {
+    grid-template-columns: 1fr;
+  }
+  .stageSide {
+    justify-items: stretch;
+    order: -1;
+  }
+}

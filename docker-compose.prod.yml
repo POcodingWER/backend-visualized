@@ -13,6 +13,8 @@ services:
     image: backend-visualized-api:latest
     restart: unless-stopped
     env_file: deploy/production.env
+    depends_on:
+      - redis
     environment:
       NODE_ENV: production
       PORT: '4000'
@@ -44,6 +46,33 @@ services:
     logging:
       driver: json-file
       options: { max-size: '10m', max-file: '5' }
+
+  # 6장 캐시용 Redis. 캐시라 디스크에 저장하지 않고, 메모리 상한을 넘으면 오래된 키부터 버린다. 포트는 외부에 열지 않는다
+  redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    command:
+      [
+        'redis-server',
+        '--save',
+        '',
+        '--appendonly',
+        'no',
+        '--maxmemory',
+        '64mb',
+        '--maxmemory-policy',
+        'allkeys-lru',
+      ]
+    expose:
+      - '6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    logging:
+      driver: json-file
+      options: { max-size: '10m', max-file: '3' }
 
   # 선택: RDS 대신 같은 EC2에 MySQL 컨테이너 (--profile local-db). 포트는 외부에 열지 않는다.
   mysql:

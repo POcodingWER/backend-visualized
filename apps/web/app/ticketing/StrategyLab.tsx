@@ -14,7 +14,7 @@ import {
   runSimulation,
 } from './simulation';
 import type { DbState, Result, Strategy } from './types';
-import { useReplay } from './useReplay';
+import { useReplay } from '../components/useReplay';
 
 const MAX_DOTS = 36;
 

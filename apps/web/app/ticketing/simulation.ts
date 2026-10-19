@@ -5,7 +5,7 @@ export const QUANTITY = 100;
 export const DEFAULT_USERS = 500;
 
 /** 화면 갱신 주기 (매 프레임 setState 하지 않음) */
-export const TICK_MS = 100;
+export { TICK_MS } from '../components/useReplay';
 
 /** 지난 실측 기록 (public/data). 첫 화면을 빈 상태 없이 보여주기 위해 쓴다. */
 export const RECORDED_RUN_URL = '/data/ticketing-recorded-run.json';
