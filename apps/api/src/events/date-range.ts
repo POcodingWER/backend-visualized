@@ -9,35 +9,62 @@ export function parseDate(rawValue: string | undefined, field: string): Date | u
   return date;
 }
 
-/** UTC 자정으로 내림 */
-export function startOfUtcDay(date: Date): Date {
-  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+// ponytail: 한국 서비스라 날짜 경계를 KST(UTC+9, 서머타임 없음) 고정. 다른 시간대가 필요해지면 오프셋을 설정값으로.
+export const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
+
+/** 순간(UTC) → 그 순간의 KST 달력 날짜 'YYYY-MM-DD' */
+export function toKstDateKey(date: Date): string {
+  return new Date(date.getTime() + KST_OFFSET_MS).toISOString().slice(0, 10);
 }
 
+/** 'YYYY-MM-DD'(KST 날짜) → 그 날 KST 자정의 순간 */
+export function kstMidnight(dateKey: string): Date {
+  return new Date(Date.parse(`${dateKey}T00:00:00Z`) - KST_OFFSET_MS);
+}
+
+/** DATE 컬럼(Prisma는 UTC 자정 Date로 다룸) ↔ 'YYYY-MM-DD' */
 export function toDateKey(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
+/** 'YYYY-MM-DD'만 오면 그대로 KST 날짜로, 시각까지 오면 그 순간의 KST 날짜로 */
+function toKstDayKey(rawValue: string | undefined, field: string, fallback: Date): string {
+  if (rawValue && /^\d{4}-\d{2}-\d{2}$/.test(rawValue)) {
+    parseDate(rawValue, field);
+    return rawValue;
+  }
+  return toKstDateKey(parseDate(rawValue, field) ?? fallback);
+}
+
 /**
- * from~to(포함) 날짜 범위를 [start, endExclusive) UTC 자정 경계로 정규화.
- * 기본값: to=오늘, from=to-(defaultDays-1). 최대 maxDays일.
+ * from~to(포함) KST 날짜 범위.
+ * days: KST 날짜 목록, start/endExclusive: 그 범위의 KST 자정 경계(Event.createdAt 비교용 순간).
+ * 기본값: to=오늘(KST), from=to-(defaultDays-1). 최대 maxDays일.
  */
 export function resolveDayRange(
   fromStr: string | undefined,
   toStr: string | undefined,
   { defaultDays = 7, maxDays = 366, now = new Date() } = {},
 ): { start: Date; endExclusive: Date; days: string[] } {
-  const to = startOfUtcDay(parseDate(toStr, 'to') ?? now);
-  const from = startOfUtcDay(
-    parseDate(fromStr, 'from') ?? new Date(to.getTime() - (defaultDays - 1) * DAY_MS),
+  const toKey = toKstDayKey(toStr, 'to', now);
+  const fromKey = toKstDayKey(
+    fromStr,
+    'from',
+    new Date(kstMidnight(toKey).getTime() - (defaultDays - 1) * DAY_MS),
   );
-  if (from > to) throw new BadRequestException('from must be <= to');
-  const dayCount = Math.round((to.getTime() - from.getTime()) / DAY_MS) + 1;
+  const firstDay = Date.parse(fromKey);
+  const lastDay = Date.parse(toKey);
+  if (firstDay > lastDay) throw new BadRequestException('from must be <= to');
+  const dayCount = Math.round((lastDay - firstDay) / DAY_MS) + 1;
   if (dayCount > maxDays) throw new BadRequestException(`range too large (max ${maxDays} days)`);
   const days = Array.from({ length: dayCount }, (_, i) =>
-    toDateKey(new Date(from.getTime() + i * DAY_MS)),
+    toDateKey(new Date(firstDay + i * DAY_MS)),
   );
-  return { start: from, endExclusive: new Date(to.getTime() + DAY_MS), days };
+  return {
+    start: kstMidnight(fromKey),
+    endExclusive: new Date(kstMidnight(toKey).getTime() + DAY_MS),
+    days,
+  };
 }
 
 export interface DailyRow {

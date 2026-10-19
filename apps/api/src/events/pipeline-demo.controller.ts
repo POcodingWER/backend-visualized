@@ -13,7 +13,7 @@ export class PipelineDemoController {
     private readonly usageLimits: UsageLimitsService,
   ) {}
 
-  /** '지금 집계 실행' 버튼: 어제~오늘(UTC)만 재집계. 전역 쿨다운이라 여러 명이 눌러도 DB 부하는 일정 */
+  /** '지금 집계 실행' 버튼: 어제~오늘(KST)만 재집계. 전역 쿨다운이라 여러 명이 눌러도 DB 부하는 일정 */
   @Post('aggregate')
   @HttpCode(200)
   @Throttle({ default: { limit: 6, ttl: 60_000 } })

@@ -17,7 +17,7 @@ model Event {
   @@index([name, createdAt])
 }
 
-/// 일 단위 집계 (UTC 날짜 기준). 집계 잡이 Event에서 upsert.
+/// 일 단위 집계 (KST 날짜 기준). 집계 잡이 Event에서 upsert.
 model EventDailyStat {
   id             Int      @id @default(autoincrement())
   date           DateTime @db.Date

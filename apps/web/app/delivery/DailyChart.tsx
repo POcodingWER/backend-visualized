@@ -18,7 +18,7 @@ export interface Daily {
 
 const COLORS = ['#345E72', '#44633D', '#8E4F1F', '#345E72', '#A3321F', '#8E4F1F'];
 
-/** 집계 단계의 산출물: EventDailyStat 테이블(최근 7일, UTC) */
+/** 집계 단계의 산출물: EventDailyStat 테이블(최근 7일, KST) */
 export default function DailyChart({ daily }: { daily: Daily }) {
   const data = daily.series.map((point) => ({ date: point.date.slice(5), ...point.byName }));
   return (

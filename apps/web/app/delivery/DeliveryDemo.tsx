@@ -349,7 +349,7 @@ function DailyLedger() {
   const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const describe = (result: AggregateResult) =>
-    `${result.from} ~ ${result.to} 장부를 다시 정리했어요: 이벤트 종류·날짜별로 ${result.rows}줄, ${result.ms}ms.`;
+    `${result.from} ~ ${result.to}(한국 날짜) 장부를 다시 정리했어요: 이벤트 종류·날짜별로 ${result.rows}줄, ${result.ms}ms.`;
   const run = async () => {
     setIsRunning(true);
     const outcome = await runDemoAggregate();
