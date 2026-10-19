@@ -26,7 +26,7 @@ async function http(strategy: Strategy) {
       body: JSON.stringify(body),
     });
     if (!r.ok) throw new Error(`${path} ${r.status}`);
-    return (await r.json()) as { ok: boolean; reason: string; retries: number };
+    return (await r.json()) as { success: boolean; result: string; retries: number };
   };
   await post('/coupons/reset', { quantity: QTY });
   const t0 = performance.now();
@@ -41,7 +41,7 @@ async function http(strategy: Strategy) {
     counter: st?.counter ?? 0,
     oversold: st?.oversold ?? 0,
     retries: res.reduce((a, r) => a + r.retries, 0),
-    errors: res.filter((r) => r.reason === 'error' || r.reason === 'conflict').length,
+    errors: res.filter((r) => r.result === 'error' || r.result === 'retry_exhausted').length,
     durationMs,
   };
 }
@@ -55,8 +55,12 @@ async function main() {
         MODE === 'http'
           ? await http(st)
           : await s.simulate(st, USERS, QTY, `bench-${st}`).then((x) => ({
-              ...x,
-              errors: x.errors + x.conflicts,
+              issued: x.final.issueRows,
+              counter: x.final.issuedCount,
+              oversold: x.final.oversold,
+              retries: x.summary.totalRetries,
+              errors: x.summary.error + x.summary.retry_exhausted,
+              durationMs: x.durationMs,
             }));
       console.log(
         [

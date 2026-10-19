@@ -4,29 +4,8 @@ import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { API_URL } from '../../lib/api';
 import s from './coupon.module.css';
 
-type Strategy = 'none' | 'pessimistic' | 'optimistic' | 'atomic';
-interface Entry {
-  s: number;
-  e: number;
-  ok: boolean;
-  r: number;
-  o: boolean;
-  reason: 'issued' | 'sold_out' | 'conflict' | 'error';
-}
-interface Result {
-  strategy: Strategy;
-  users: number;
-  quantity: number;
-  issued: number;
-  counter: number;
-  oversold: number;
-  soldOut: number;
-  conflicts: number;
-  errors: number;
-  retries: number;
-  durationMs: number;
-  timeline: Entry[];
-}
+import { Breakdown, DbChart, DbTables, RequestLog, StrategyDetail, TruthCheck } from './DbPanels';
+import type { DbState, Result, RequestTrace, Strategy } from './types';
 
 const QTY = 100;
 /** 화면 갱신 주기 (매 프레임 setState 하지 않음) */
@@ -69,7 +48,7 @@ const INFO: Record<
 const ORDER: Strategy[] = ['none', 'pessimistic', 'optimistic', 'atomic'];
 
 /** 실제 timeline을 진행 시간 p(ms, 실측 기준)에서 잘라 본 상태 */
-function snapshot(tl: Entry[], p: number) {
+function snapshot(tl: RequestTrace[], p: number) {
   let issued = 0,
     over = 0,
     rejected = 0,
@@ -77,19 +56,18 @@ function snapshot(tl: Entry[], p: number) {
     retries = 0,
     recentRetry = 0;
   for (const t of tl) {
-    if (t.s > p) continue;
-    if (t.e <= p) {
-      if (t.ok) {
+    if (t.startedAtMs > p) continue;
+    if (t.finishedAtMs <= p) {
+      if (t.success) {
         issued++;
-        if (t.o) over++;
+        if (t.oversold) over++;
       } else rejected++;
-      retries += t.r;
+      retries += t.retries;
     } else {
       inflight++;
       // 진행 중 요청의 재시도는 경과 비율만큼 진행됐다고 근사
-      const part = (t.r * (p - t.s)) / Math.max(1, t.e - t.s);
-      retries += part;
-      recentRetry += t.r > 0 ? 1 : 0;
+      retries += (t.retries * (p - t.startedAtMs)) / Math.max(1, t.durationMs);
+      recentRetry += t.retries > 0 ? 1 : 0;
     }
   }
   return { issued, over, rejected, inflight, retries: Math.round(retries), recentRetry };
@@ -103,6 +81,17 @@ export default function CouponRace() {
   const [results, setResults] = useState<Partial<Record<Strategy, Result>>>({});
   const [replay, setReplay] = useState<Result | null>(null);
   const [p, setP] = useState(0);
+  const [dbState, setDbState] = useState<DbState | null>(null);
+  const loadState = async (name: string) => {
+    try {
+      const r = await fetch(`${API_URL}/coupons/${encodeURIComponent(name)}/state?limit=10`, {
+        cache: 'no-store',
+      });
+      setDbState(r.ok ? ((await r.json()) as DbState) : null);
+    } catch {
+      setDbState(null);
+    }
+  };
   const raf = useRef<number | null>(null);
 
   // 재생: 실측 duration을 2~6초로 스케일, rAF로 돌되 setState는 TICK_MS마다
@@ -150,6 +139,7 @@ export default function CouponRace() {
       const show = list.find((x) => x.strategy === strategy) ?? list[0];
       setP(0);
       setReplay(show ?? null);
+      if (show) void loadState(show.couponName);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -163,10 +153,14 @@ export default function CouponRace() {
     if (r) {
       setP(0);
       setReplay({ ...r });
-    } else setReplay(null);
+      void loadState(r.couponName);
+    } else {
+      setReplay(null);
+      setDbState(null);
+    }
   };
 
-  const snap = useMemo(() => (replay ? snapshot(replay.timeline, p) : null), [replay, p]);
+  const snap = useMemo(() => (replay ? snapshot(replay.requests, p) : null), [replay, p]);
   const info = INFO[strategy];
   const done = replay ? p >= replay.durationMs : false;
 
@@ -267,11 +261,11 @@ export default function CouponRace() {
               {done && (
                 <Counter
                   label="DB 카운터 issuedCount"
-                  value={replay.counter}
-                  bad={replay.counter !== replay.issued}
+                  value={replay.final.issuedCount}
+                  bad={replay.final.counterMismatch}
                   hint={
-                    replay.counter !== replay.issued
-                      ? `실제 행 ${replay.issued}개와 불일치 (lost update)`
+                    replay.final.counterMismatch
+                      ? `실제 행 ${replay.final.issueRows}개와 불일치 (lost update)`
                       : undefined
                   }
                 />
@@ -282,6 +276,19 @@ export default function CouponRace() {
           <p className={s.muted}>{busy ? '서버에서 실행 중…' : '전략을 고르고 실행해 보세요.'}</p>
         )}
       </section>
+
+      {replay && (
+        <>
+          <section className={s.dbGrid}>
+            <DbChart r={replay} p={p} />
+            <DbTables r={replay} p={p} />
+            <Breakdown r={replay} p={p} />
+            <StrategyDetail r={replay} />
+          </section>
+          <TruthCheck st={dbState} onReload={() => void loadState(replay.couponName)} />
+          <RequestLog key={`${replay.strategy}-${replay.durationMs}`} r={replay} />
+        </>
+      )}
 
       <Compare results={results} />
     </main>
@@ -451,12 +458,12 @@ const Compare = memo(function Compare({ results }: { results: Partial<Record<Str
                   {r.users}명/{r.quantity}장
                 </small>
               </td>
-              <td>{r.issued}</td>
-              <td className={r.oversold > 0 ? s.errText : s.okText}>{r.oversold}</td>
-              <td className={r.counter !== r.issued ? s.errText : ''}>{r.counter}</td>
-              <td>{r.retries.toLocaleString()}</td>
-              <td className={r.conflicts + r.errors > 0 ? s.errText : ''}>
-                {r.conflicts + r.errors}
+              <td>{r.final.issueRows}</td>
+              <td className={r.final.oversold > 0 ? s.errText : s.okText}>{r.final.oversold}</td>
+              <td className={r.final.counterMismatch ? s.errText : ''}>{r.final.issuedCount}</td>
+              <td>{r.summary.totalRetries.toLocaleString()}</td>
+              <td className={r.summary.retry_exhausted + r.summary.error > 0 ? s.errText : ''}>
+                {r.summary.retry_exhausted + r.summary.error}
               </td>
               <td>
                 <span className={s.barWrap}>
