@@ -13,6 +13,27 @@ export interface TrackerOptions {
   flushIntervalMs?: number;
   /** 오프라인 보관 최대 이벤트 수 (기본 500, 초과 시 오래된 것부터 버림) */
   maxStoredEvents?: number;
+  /**
+   * 배치 전송 1건이 끝날 때마다 호출 (시각화/모니터링용, 선택).
+   * 콜백에서 던진 예외는 SDK 동작에 영향을 주지 않는다.
+   */
+  onSend?: (info: SendInfo) => void;
+}
+
+export type FlushReason = 'size' | 'interval' | 'manual' | 'retry' | 'unload';
+
+export interface SendInfo {
+  /** 이번 요청 1건에 실린 이벤트 수 */
+  size: number;
+  /** HTTP 상태 코드 (네트워크 오류 0, beacon은 큐잉 성공 시 0) */
+  status: number;
+  /** 서버가 받았거나(2xx) 재시도 불필요로 판단해 버린 경우 true */
+  ok: boolean;
+  /** 실패해서 localStorage에 보관됐는지 */
+  stored: boolean;
+  durationMs: number;
+  transport: 'fetch' | 'beacon';
+  reason: FlushReason;
 }
 
 export interface TrackedEvent {
@@ -107,7 +128,19 @@ export function createTracker(opts: TrackerOptions): Tracker {
 
   const persist = (events: TrackedEvent[]) => saveStored([...loadStored(), ...events], maxStored);
 
-  async function send(events: TrackedEvent[]): Promise<boolean> {
+  const report = (info: SendInfo) => {
+    try {
+      opts.onSend?.(info);
+    } catch {
+      // 콜백 오류 무시
+    }
+  };
+  const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
+
+  async function send(events: TrackedEvent[], reason: FlushReason): Promise<boolean> {
+    const t0 = now();
+    let status = 0;
+    let ok = false;
     try {
       const res = await fetch(url, {
         method: 'POST',
@@ -115,14 +148,25 @@ export function createTracker(opts: TrackerOptions): Tracker {
         body: JSON.stringify({ events }),
         keepalive: true,
       });
+      status = res.status;
       // 4xx(검증 실패)는 재시도해도 소용없으므로 버림, 429/5xx는 재시도 대상
-      return res.ok || (res.status >= 400 && res.status < 500 && res.status !== 429);
+      ok = res.ok || (res.status >= 400 && res.status < 500 && res.status !== 429);
     } catch {
-      return false;
+      ok = false;
     }
+    report({
+      size: events.length,
+      status,
+      ok,
+      stored: !ok,
+      durationMs: now() - t0,
+      transport: 'fetch',
+      reason,
+    });
+    return ok;
   }
 
-  async function flush(): Promise<number> {
+  async function flush(reason: FlushReason = 'manual'): Promise<number> {
     if (inflight) await inflight;
     if (queue.length === 0) return 0;
     const batches: TrackedEvent[][] = [];
@@ -130,7 +174,7 @@ export function createTracker(opts: TrackerOptions): Tracker {
     let sent = 0;
     inflight = (async () => {
       for (const b of batches) {
-        if (await send(b)) sent += b.length;
+        if (await send(b, reason)) sent += b.length;
         else persist(b);
       }
     })();
@@ -156,12 +200,22 @@ export function createTracker(opts: TrackerOptions): Tracker {
       } catch {
         ok = false;
       }
-      if (!ok) {
+      if (ok) {
+        report({
+          size: b.length,
+          status: 0,
+          ok: true,
+          stored: false,
+          durationMs: 0,
+          transport: 'beacon',
+          reason: 'unload',
+        });
+      } else {
         // beacon 불가 → 먼저 localStorage에 보관(페이지가 곧 사라질 수 있음) 후 fetch keepalive 시도,
         // 성공하면 보관분에서 제거
         persist(b);
         const keys = new Set(b.map(eventKey));
-        void send(b).then(
+        void send(b, 'unload').then(
           (sent) =>
             sent &&
             saveStored(
@@ -179,7 +233,7 @@ export function createTracker(opts: TrackerOptions): Tracker {
     saveStored([], maxStored);
     for (let i = 0; i < stored.length; i += maxBatch) {
       const b = stored.slice(i, i + maxBatch);
-      if (!(await send(b))) persist(b);
+      if (!(await send(b, 'retry'))) persist(b);
     }
   }
 
@@ -189,7 +243,7 @@ export function createTracker(opts: TrackerOptions): Tracker {
   const onPageHide = () => flushBeacon();
   const onOnline = () => void resendStored();
 
-  const timer = setInterval(() => void flush(), interval);
+  const timer = setInterval(() => void flush('interval'), interval);
   g.addEventListener?.('pagehide', onPageHide);
   g.addEventListener?.('online', onOnline);
   g.document?.addEventListener('visibilitychange', onHidden);
@@ -199,9 +253,9 @@ export function createTracker(opts: TrackerOptions): Tracker {
     sessionId,
     track(name, properties = {}) {
       queue.push({ name, properties, sessionId, occurredAt: new Date().toISOString() });
-      if (queue.length >= maxBatch) void flush();
+      if (queue.length >= maxBatch) void flush('size');
     },
-    flush,
+    flush: () => flush('manual'),
     pending: () => queue.length,
     destroy() {
       clearInterval(timer);
