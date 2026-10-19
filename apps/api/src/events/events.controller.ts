@@ -51,7 +51,7 @@ export class EventsController {
   @Sse('stream')
   stream(): Observable<MessageEvent> {
     return merge(
-      this.bus.ingested$.pipe(map((s) => ({ type: 'ingested', data: s }))),
+      this.bus.ingested$.pipe(map((ingested) => ({ type: 'ingested', data: ingested }))),
       interval(15_000).pipe(map(() => ({ type: 'ping', data: { at: new Date().toISOString() } }))),
     );
   }

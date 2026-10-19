@@ -19,10 +19,10 @@ export class EventsService {
   ) {}
 
   async create(dto: CreateEventDto) {
-    const e = await this.prisma.event.create({ data: toRow(dto) });
+    const createdEvent = await this.prisma.event.create({ data: toRow(dto) });
     this.bus.emit(1);
     // BigInt는 JSON 직렬화 불가 → string으로 변환
-    return { ...e, id: e.id.toString() };
+    return { ...createdEvent, id: createdEvent.id.toString() };
   }
 
   /** 배치 insert: 단일 INSERT ... VALUES (...), (...) 쿼리 */
@@ -42,8 +42,8 @@ export class EventsService {
       this.prisma.event.groupBy({ by: ['name'], where, _count: { _all: true } }),
     ]);
     const byName = grouped
-      .map((g) => ({ name: g.name, count: g._count._all }))
-      .sort((a, b) => b.count - a.count);
+      .map((group) => ({ name: group.name, count: group._count._all }))
+      .sort((left, right) => right.count - left.count);
     return { total, byName };
   }
 }

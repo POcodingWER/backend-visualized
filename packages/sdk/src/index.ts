@@ -60,7 +60,7 @@ const SESSION_KEY = 'bv_session_id';
 const STORE_KEY = 'bv_pending_events';
 const MAX_SERVER_BATCH = 100;
 
-type G = {
+type BrowserGlobals = {
   crypto?: Crypto;
   sessionStorage?: Storage;
   localStorage?: Storage;
@@ -69,22 +69,22 @@ type G = {
   removeEventListener?: typeof removeEventListener;
   document?: Document;
 };
-const g = globalThis as G;
+const browserGlobals = globalThis as BrowserGlobals;
 
 function randomId(): string {
-  if (g.crypto?.randomUUID) return g.crypto.randomUUID();
+  if (browserGlobals.crypto?.randomUUID) return browserGlobals.crypto.randomUUID();
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 
 function getSessionId(): string {
   try {
-    const ss = g.sessionStorage;
-    if (ss) {
-      const existing = ss.getItem(SESSION_KEY);
+    const sessionStore = browserGlobals.sessionStorage;
+    if (sessionStore) {
+      const existing = sessionStore.getItem(SESSION_KEY);
       if (existing) return existing;
-      const id = randomId();
-      ss.setItem(SESSION_KEY, id);
-      return id;
+      const newSessionId = randomId();
+      sessionStore.setItem(SESSION_KEY, newSessionId);
+      return newSessionId;
     }
   } catch {
     // sessionStorage 접근 불가 (privacy mode 등)
@@ -94,7 +94,7 @@ function getSessionId(): string {
 
 function loadStored(): TrackedEvent[] {
   try {
-    const raw = g.localStorage?.getItem(STORE_KEY);
+    const raw = browserGlobals.localStorage?.getItem(STORE_KEY);
     const parsed: unknown = raw ? JSON.parse(raw) : [];
     return Array.isArray(parsed) ? (parsed as TrackedEvent[]) : [];
   } catch {
@@ -102,25 +102,25 @@ function loadStored(): TrackedEvent[] {
   }
 }
 
-function saveStored(events: TrackedEvent[], max: number): void {
+function saveStored(events: TrackedEvent[], maxEvents: number): void {
   try {
-    const ls = g.localStorage;
-    if (!ls) return;
-    if (events.length === 0) ls.removeItem(STORE_KEY);
-    else ls.setItem(STORE_KEY, JSON.stringify(events.slice(-max)));
+    const localStore = browserGlobals.localStorage;
+    if (!localStore) return;
+    if (events.length === 0) localStore.removeItem(STORE_KEY);
+    else localStore.setItem(STORE_KEY, JSON.stringify(events.slice(-maxEvents)));
   } catch {
     // quota 초과 등은 무시 (best effort)
   }
 }
 
-const eventKey = (e: TrackedEvent) => `${e.sessionId}|${e.occurredAt}|${e.name}`;
+const eventKey = (event: TrackedEvent) => `${event.sessionId}|${event.occurredAt}|${event.name}`;
 
-export function createTracker(opts: TrackerOptions): Tracker {
-  const base = opts.endpoint.replace(/\/+$/, '');
-  const url = `${base}/events/batch`;
-  const maxBatch = Math.min(Math.max(opts.maxBatchSize ?? 20, 1), MAX_SERVER_BATCH);
-  const interval = opts.flushIntervalMs ?? 5000;
-  const maxStored = opts.maxStoredEvents ?? 500;
+export function createTracker(options: TrackerOptions): Tracker {
+  const baseUrl = options.endpoint.replace(/\/+$/, '');
+  const url = `${baseUrl}/events/batch`;
+  const maxBatch = Math.min(Math.max(options.maxBatchSize ?? 20, 1), MAX_SERVER_BATCH);
+  const interval = options.flushIntervalMs ?? 5000;
+  const maxStored = options.maxStoredEvents ?? 500;
   const sessionId = getSessionId();
 
   let queue: TrackedEvent[] = [];
@@ -130,7 +130,7 @@ export function createTracker(opts: TrackerOptions): Tracker {
 
   const report = (info: SendInfo) => {
     try {
-      opts.onSend?.(info);
+      options.onSend?.(info);
     } catch {
       // 콜백 오류 무시
     }
@@ -138,32 +138,33 @@ export function createTracker(opts: TrackerOptions): Tracker {
   const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
   async function send(events: TrackedEvent[], reason: FlushReason): Promise<boolean> {
-    const t0 = now();
+    const sendStartedAt = now();
     let status = 0;
-    let ok = false;
+    let accepted = false;
     try {
-      const res = await fetch(url, {
+      const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ events }),
         keepalive: true,
       });
-      status = res.status;
+      status = response.status;
       // 4xx(검증 실패)는 재시도해도 소용없으므로 버림, 429/5xx는 재시도 대상
-      ok = res.ok || (res.status >= 400 && res.status < 500 && res.status !== 429);
+      accepted =
+        response.ok || (response.status >= 400 && response.status < 500 && response.status !== 429);
     } catch {
-      ok = false;
+      accepted = false;
     }
     report({
       size: events.length,
       status,
-      ok,
-      stored: !ok,
-      durationMs: now() - t0,
+      ok: accepted,
+      stored: !accepted,
+      durationMs: now() - sendStartedAt,
       transport: 'fetch',
       reason,
     });
-    return ok;
+    return accepted;
   }
 
   async function flush(reason: FlushReason = 'manual'): Promise<number> {
@@ -173,9 +174,9 @@ export function createTracker(opts: TrackerOptions): Tracker {
     while (queue.length) batches.push(queue.splice(0, maxBatch));
     let sent = 0;
     inflight = (async () => {
-      for (const b of batches) {
-        if (await send(b, reason)) sent += b.length;
-        else persist(b);
+      for (const batch of batches) {
+        if (await send(batch, reason)) sent += batch.length;
+        else persist(batch);
       }
     })();
     try {
@@ -192,17 +193,19 @@ export function createTracker(opts: TrackerOptions): Tracker {
     const events = queue;
     queue = [];
     for (let i = 0; i < events.length; i += maxBatch) {
-      const b = events.slice(i, i + maxBatch);
-      const body = JSON.stringify({ events: b });
-      let ok = false;
+      const batch = events.slice(i, i + maxBatch);
+      const body = JSON.stringify({ events: batch });
+      let beaconQueued = false;
       try {
-        ok = g.navigator?.sendBeacon?.(url, new Blob([body], { type: 'text/plain' })) ?? false;
+        beaconQueued =
+          browserGlobals.navigator?.sendBeacon?.(url, new Blob([body], { type: 'text/plain' })) ??
+          false;
       } catch {
-        ok = false;
+        beaconQueued = false;
       }
-      if (ok) {
+      if (beaconQueued) {
         report({
-          size: b.length,
+          size: batch.length,
           status: 0,
           ok: true,
           stored: false,
@@ -213,13 +216,13 @@ export function createTracker(opts: TrackerOptions): Tracker {
       } else {
         // beacon 불가 → 먼저 localStorage에 보관(페이지가 곧 사라질 수 있음) 후 fetch keepalive 시도,
         // 성공하면 보관분에서 제거
-        persist(b);
-        const keys = new Set(b.map(eventKey));
-        void send(b, 'unload').then(
+        persist(batch);
+        const keys = new Set(batch.map(eventKey));
+        void send(batch, 'unload').then(
           (sent) =>
             sent &&
             saveStored(
-              loadStored().filter((e) => !keys.has(eventKey(e))),
+              loadStored().filter((event) => !keys.has(eventKey(event))),
               maxStored,
             ),
         );
@@ -232,21 +235,21 @@ export function createTracker(opts: TrackerOptions): Tracker {
     if (stored.length === 0) return;
     saveStored([], maxStored);
     for (let i = 0; i < stored.length; i += maxBatch) {
-      const b = stored.slice(i, i + maxBatch);
-      if (!(await send(b, 'retry'))) persist(b);
+      const batch = stored.slice(i, i + maxBatch);
+      if (!(await send(batch, 'retry'))) persist(batch);
     }
   }
 
   const onHidden = () => {
-    if (g.document?.visibilityState === 'hidden') flushBeacon();
+    if (browserGlobals.document?.visibilityState === 'hidden') flushBeacon();
   };
   const onPageHide = () => flushBeacon();
   const onOnline = () => void resendStored();
 
   const timer = setInterval(() => void flush('interval'), interval);
-  g.addEventListener?.('pagehide', onPageHide);
-  g.addEventListener?.('online', onOnline);
-  g.document?.addEventListener('visibilitychange', onHidden);
+  browserGlobals.addEventListener?.('pagehide', onPageHide);
+  browserGlobals.addEventListener?.('online', onOnline);
+  browserGlobals.document?.addEventListener('visibilitychange', onHidden);
   void resendStored();
 
   return {
@@ -259,9 +262,9 @@ export function createTracker(opts: TrackerOptions): Tracker {
     pending: () => queue.length,
     destroy() {
       clearInterval(timer);
-      g.removeEventListener?.('pagehide', onPageHide);
-      g.removeEventListener?.('online', onOnline);
-      g.document?.removeEventListener('visibilitychange', onHidden);
+      browserGlobals.removeEventListener?.('pagehide', onPageHide);
+      browserGlobals.removeEventListener?.('online', onOnline);
+      browserGlobals.document?.removeEventListener('visibilitychange', onHidden);
       flushBeacon();
     },
   };

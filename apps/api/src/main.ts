@@ -20,7 +20,7 @@ async function bootstrap() {
     next();
   });
   const origin = process.env.WEB_ORIGIN ?? process.env.CORS_ORIGIN ?? 'http://localhost:3000';
-  app.enableCors({ origin: origin.split(',').map((s) => s.trim()) });
+  app.enableCors({ origin: origin.split(',').map((allowedOrigin) => allowedOrigin.trim()) });
   app.useGlobalPipes(
     new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),
   );

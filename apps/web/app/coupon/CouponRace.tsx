@@ -2,12 +2,12 @@
 
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { API_URL } from '../../lib/api';
-import s from './coupon.module.css';
+import styles from './coupon.module.css';
 
 import { Breakdown, DbChart, DbTables, RequestLog, StrategyDetail, TruthCheck } from './DbPanels';
 import type { DbState, Result, RequestTrace, Strategy } from './types';
 
-const QTY = 100;
+const QUANTITY = 100;
 /** 화면 갱신 주기 (매 프레임 setState 하지 않음) */
 const TICK_MS = 100;
 const MAX_DOTS = 36;
@@ -48,26 +48,27 @@ const INFO: Record<
 const ORDER: Strategy[] = ['none', 'pessimistic', 'optimistic', 'atomic'];
 
 /** 실제 timeline을 진행 시간 p(ms, 실측 기준)에서 잘라 본 상태 */
-function snapshot(tl: RequestTrace[], p: number) {
+function replayStateAt(requests: RequestTrace[], elapsedMs: number) {
   let issued = 0,
     over = 0,
     rejected = 0,
     inflight = 0,
     retries = 0,
     recentRetry = 0;
-  for (const t of tl) {
-    if (t.startedAtMs > p) continue;
-    if (t.finishedAtMs <= p) {
-      if (t.success) {
+  for (const request of requests) {
+    if (request.startedAtMs > elapsedMs) continue;
+    if (request.finishedAtMs <= elapsedMs) {
+      if (request.success) {
         issued++;
-        if (t.oversold) over++;
+        if (request.oversold) over++;
       } else rejected++;
-      retries += t.retries;
+      retries += request.retries;
     } else {
       inflight++;
       // 진행 중 요청의 재시도는 경과 비율만큼 진행됐다고 근사
-      retries += (t.retries * (p - t.startedAtMs)) / Math.max(1, t.durationMs);
-      recentRetry += t.retries > 0 ? 1 : 0;
+      retries +=
+        (request.retries * (elapsedMs - request.startedAtMs)) / Math.max(1, request.durationMs);
+      recentRetry += request.retries > 0 ? 1 : 0;
     }
   }
   return { issued, over, rejected, inflight, retries: Math.round(retries), recentRetry };
@@ -80,184 +81,198 @@ export default function CouponRace() {
   const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<Partial<Record<Strategy, Result>>>({});
   const [replay, setReplay] = useState<Result | null>(null);
-  const [p, setP] = useState(0);
+  const [elapsedMs, setElapsedMs] = useState(0);
   const [dbState, setDbState] = useState<DbState | null>(null);
   const loadState = async (name: string) => {
     try {
-      const r = await fetch(`${API_URL}/coupons/${encodeURIComponent(name)}/state?limit=10`, {
-        cache: 'no-store',
-      });
-      setDbState(r.ok ? ((await r.json()) as DbState) : null);
+      const response = await fetch(
+        `${API_URL}/coupons/${encodeURIComponent(name)}/state?limit=10`,
+        {
+          cache: 'no-store',
+        },
+      );
+      setDbState(response.ok ? ((await response.json()) as DbState) : null);
     } catch {
       setDbState(null);
     }
   };
-  const raf = useRef<number | null>(null);
+  const animationFrameId = useRef<number | null>(null);
 
   // 재생: 실측 duration을 2~6초로 스케일, rAF로 돌되 setState는 TICK_MS마다
   const replayMs = replay ? Math.min(6000, Math.max(2500, replay.durationMs)) : 0;
   useEffect(() => {
     if (!replay) return;
-    const start = performance.now();
-    let last = 0;
+    const replayStartedAt = performance.now();
+    let lastRenderAt = 0;
     const loop = (now: number) => {
-      const k = Math.min(1, (now - start) / replayMs);
-      if (now - last >= TICK_MS || k === 1) {
-        last = now;
-        setP(k * replay.durationMs);
+      const progress = Math.min(1, (now - replayStartedAt) / replayMs);
+      if (now - lastRenderAt >= TICK_MS || progress === 1) {
+        lastRenderAt = now;
+        setElapsedMs(progress * replay.durationMs);
       }
-      if (k < 1) raf.current = requestAnimationFrame(loop);
+      if (progress < 1) animationFrameId.current = requestAnimationFrame(loop);
     };
-    raf.current = requestAnimationFrame(loop);
+    animationFrameId.current = requestAnimationFrame(loop);
     return () => {
-      if (raf.current) cancelAnimationFrame(raf.current);
+      if (animationFrameId.current) cancelAnimationFrame(animationFrameId.current);
     };
   }, [replay, replayMs]);
 
-  const run = async (all: boolean) => {
+  const run = async (runAllStrategies: boolean) => {
     setBusy(
-      all
+      runAllStrategies
         ? '4개 전략을 순서대로 실행 중… (낙관적 락은 20초 이상 걸릴 수 있어요)'
         : `${INFO[strategy].name} 실행 중…`,
     );
     setError(null);
     try {
-      const r = await fetch(`${API_URL}/coupons/simulate`, {
+      const response = await fetch(`${API_URL}/coupons/simulate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ users, quantity: QTY, ...(all ? {} : { strategy }) }),
+        body: JSON.stringify({
+          users,
+          quantity: QUANTITY,
+          ...(runAllStrategies ? {} : { strategy }),
+        }),
       });
-      if (r.status === 429) throw new Error('요청이 너무 잦아요 (429). 잠시 후 다시 시도하세요.');
-      if (r.status === 409) throw new Error('다른 시뮬레이션이 실행 중이에요 (409).');
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      const { results: list } = (await r.json()) as { results: Result[] };
+      if (response.status === 429)
+        throw new Error('요청이 너무 잦아요 (429). 잠시 후 다시 시도하세요.');
+      if (response.status === 409) throw new Error('다른 시뮬레이션이 실행 중이에요 (409).');
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const { results: simulationResults } = (await response.json()) as { results: Result[] };
       setResults((prev) => {
         const next = { ...prev };
-        for (const x of list) next[x.strategy] = x;
+        for (const simulation of simulationResults) next[simulation.strategy] = simulation;
         return next;
       });
-      const show = list.find((x) => x.strategy === strategy) ?? list[0];
-      setP(0);
-      setReplay(show ?? null);
-      if (show) void loadState(show.couponName);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      const resultToReplay =
+        simulationResults.find((simulation) => simulation.strategy === strategy) ??
+        simulationResults[0];
+      setElapsedMs(0);
+      setReplay(resultToReplay ?? null);
+      if (resultToReplay) void loadState(resultToReplay.couponName);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : String(caught));
     } finally {
       setBusy(null);
     }
   };
 
-  const pick = (st: Strategy) => {
-    setStrategy(st);
-    const r = results[st];
-    if (r) {
-      setP(0);
-      setReplay({ ...r });
-      void loadState(r.couponName);
+  const selectStrategy = (selected: Strategy) => {
+    setStrategy(selected);
+    const previousResult = results[selected];
+    if (previousResult) {
+      setElapsedMs(0);
+      setReplay({ ...previousResult });
+      void loadState(previousResult.couponName);
     } else {
       setReplay(null);
       setDbState(null);
     }
   };
 
-  const snap = useMemo(() => (replay ? snapshot(replay.requests, p) : null), [replay, p]);
+  const replayState = useMemo(
+    () => (replay ? replayStateAt(replay.requests, elapsedMs) : null),
+    [replay, elapsedMs],
+  );
   const info = INFO[strategy];
-  const done = replay ? p >= replay.durationMs : false;
+  const done = replay ? elapsedMs >= replay.durationMs : false;
 
   return (
-    <main className={s.main}>
+    <main className={styles.main}>
       <header>
-        <p className={s.kicker}>Stage 3 · 동시성 제어</p>
+        <p className={styles.kicker}>Stage 3 · 동시성 제어</p>
         <h1>
-          쿠폰 {QTY}장에 {users}명이 동시에 몰리면?
+          쿠폰 {QUANTITY}장에 {users}명이 동시에 몰리면?
         </h1>
-        <p className={s.lead}>
+        <p className={styles.lead}>
           버튼을 누르면 서버가 실제 MySQL에 동시 요청 {users}개를 던지고, 각 요청의 시작·종료 시각을
           기록합니다. 아래 화면은 그 <b>실측 타임라인을 재생</b>한 것입니다.
         </p>
       </header>
 
-      <section className={s.tabs}>
-        {ORDER.map((st) => (
+      <section className={styles.tabs}>
+        {ORDER.map((strategyKey) => (
           <button
-            key={st}
-            className={st === strategy ? s.tabOn : s.tab}
-            style={{ '--c': INFO[st].color } as React.CSSProperties}
-            onClick={() => pick(st)}
+            key={strategyKey}
+            className={strategyKey === strategy ? styles.tabOn : styles.tab}
+            style={{ '--c': INFO[strategyKey].color } as React.CSSProperties}
+            onClick={() => selectStrategy(strategyKey)}
             disabled={!!busy}
           >
-            <span className={s.swatch} />
-            {INFO[st].name}
-            <small>{st}</small>
+            <span className={styles.swatch} />
+            {INFO[strategyKey].name}
+            <small>{strategyKey}</small>
           </button>
         ))}
       </section>
 
-      <section className={s.explain} style={{ '--c': info.color } as React.CSSProperties}>
+      <section className={styles.explain} style={{ '--c': info.color } as React.CSSProperties}>
         <p>
           <b>어떻게:</b> {info.how}
         </p>
         <p>
-          <b className={s.okText}>장점:</b> {info.pro} <b className={s.errText}>단점:</b> {info.con}
+          <b className={styles.okText}>장점:</b> {info.pro} <b className={styles.errText}>단점:</b>{' '}
+          {info.con}
         </p>
       </section>
 
-      <section className={s.controls}>
+      <section className={styles.controls}>
         <label>
           동시 사용자{' '}
           <select
             value={users}
-            onChange={(e) => setUsers(Number(e.target.value))}
+            onChange={(changeEvent) => setUsers(Number(changeEvent.target.value))}
             disabled={!!busy}
           >
-            {[200, 500, 1000].map((v) => (
-              <option key={v} value={v}>
-                {v}명
+            {[200, 500, 1000].map((userCount) => (
+              <option key={userCount} value={userCount}>
+                {userCount}명
               </option>
             ))}
           </select>
         </label>
-        <button className={s.primary} onClick={() => void run(false)} disabled={!!busy}>
+        <button className={styles.primary} onClick={() => void run(false)} disabled={!!busy}>
           ▶ {info.name}로 실행
         </button>
         <button onClick={() => void run(true)} disabled={!!busy}>
           4개 전략 모두 비교
         </button>
         {replay && (
-          <button onClick={() => (setP(0), setReplay({ ...replay }))} disabled={!!busy}>
+          <button onClick={() => (setElapsedMs(0), setReplay({ ...replay }))} disabled={!!busy}>
             ↺ 다시 재생
           </button>
         )}
-        {busy && <span className={s.busy}>{busy}</span>}
-        {error && <span className={s.errText}>{error}</span>}
+        {busy && <span className={styles.busy}>{busy}</span>}
+        {error && <span className={styles.errText}>{error}</span>}
       </section>
 
-      <section className={s.stage}>
-        {replay && snap ? (
+      <section className={styles.stage}>
+        {replay && replayState ? (
           <>
-            <div className={s.meta}>
+            <div className={styles.meta}>
               실측 {(replay.durationMs / 1000).toFixed(2)}초 → {(replayMs / 1000).toFixed(1)}초로
-              재생 · 경과 <b>{(p / 1000).toFixed(2)}s</b>
+              재생 · 경과 <b>{(elapsedMs / 1000).toFixed(2)}s</b>
             </div>
-            <div className={s.arena}>
+            <div className={styles.arena}>
               <Crowd
                 strategy={replay.strategy}
-                inflight={snap.inflight}
-                recentRetry={snap.recentRetry}
+                inflight={replayState.inflight}
+                recentRetry={replayState.recentRetry}
               />
               <Grid
                 quantity={replay.quantity}
-                issued={snap.issued}
-                over={snap.over}
+                issued={replayState.issued}
+                over={replayState.over}
                 color={INFO[replay.strategy].color}
               />
             </div>
-            <div className={s.counters}>
-              <Counter label="발급" value={snap.issued} />
-              <Counter label="초과 발급" value={snap.over} bad={snap.over > 0} />
-              <Counter label="거절(매진·재시도 초과)" value={snap.rejected} />
-              <Counter label="대기/진행 중 요청" value={snap.inflight} />
-              <Counter label="재시도" value={snap.retries} />
+            <div className={styles.counters}>
+              <Counter label="발급" value={replayState.issued} />
+              <Counter label="초과 발급" value={replayState.over} bad={replayState.over > 0} />
+              <Counter label="거절(매진·재시도 초과)" value={replayState.rejected} />
+              <Counter label="대기/진행 중 요청" value={replayState.inflight} />
+              <Counter label="재시도" value={replayState.retries} />
               {done && (
                 <Counter
                   label="DB 카운터 issuedCount"
@@ -273,20 +288,22 @@ export default function CouponRace() {
             </div>
           </>
         ) : (
-          <p className={s.muted}>{busy ? '서버에서 실행 중…' : '전략을 고르고 실행해 보세요.'}</p>
+          <p className={styles.muted}>
+            {busy ? '서버에서 실행 중…' : '전략을 고르고 실행해 보세요.'}
+          </p>
         )}
       </section>
 
       {replay && (
         <>
-          <section className={s.dbGrid}>
-            <DbChart r={replay} p={p} />
-            <DbTables r={replay} p={p} />
-            <Breakdown r={replay} p={p} />
-            <StrategyDetail r={replay} />
+          <section className={styles.dbGrid}>
+            <DbChart result={replay} elapsedMs={elapsedMs} />
+            <DbTables result={replay} elapsedMs={elapsedMs} />
+            <Breakdown result={replay} elapsedMs={elapsedMs} />
+            <StrategyDetail result={replay} />
           </section>
-          <TruthCheck st={dbState} onReload={() => void loadState(replay.couponName)} />
-          <RequestLog key={`${replay.strategy}-${replay.durationMs}`} r={replay} />
+          <TruthCheck dbState={dbState} onReload={() => void loadState(replay.couponName)} />
+          <RequestLog key={`${replay.strategy}-${replay.durationMs}`} result={replay} />
         </>
       )}
 
@@ -307,7 +324,7 @@ const Counter = memo(function Counter({
   hint?: string;
 }) {
   return (
-    <div className={`${s.counter} ${bad ? s.counterBad : ''}`}>
+    <div className={`${styles.counter} ${bad ? styles.counterBad : ''}`}>
       <span>{label}</span>
       <b>{value.toLocaleString()}</b>
       {hint && <small>{hint}</small>}
@@ -329,15 +346,15 @@ const Crowd = memo(function Crowd({
   const more = inflight - dots;
   if (strategy === 'pessimistic') {
     return (
-      <div className={s.crowd}>
-        <p className={s.crowdTitle}>🔒 락 대기열 — 한 번에 한 명만 들어감</p>
-        <div className={s.queueLine}>
+      <div className={styles.crowd}>
+        <p className={styles.crowdTitle}>🔒 락 대기열 — 한 번에 한 명만 들어감</p>
+        <div className={styles.queueLine}>
           {Array.from({ length: Math.max(0, dots - 1) }, (_, i) => (
-            <i key={i} className={s.qDot} />
+            <i key={i} className={styles.qDot} />
           ))}
-          {more > 0 && <span className={s.more}>+{more}</span>}
-          {inflight > 0 && <span className={s.lockHolder}>🔑</span>}
-          <span className={s.door} />
+          {more > 0 && <span className={styles.more}>+{more}</span>}
+          {inflight > 0 && <span className={styles.lockHolder}>🔑</span>}
+          <span className={styles.door} />
         </div>
       </div>
     );
@@ -345,51 +362,53 @@ const Crowd = memo(function Crowd({
   if (strategy === 'optimistic') {
     const bouncing = Math.min(recentRetry, MAX_DOTS);
     return (
-      <div className={s.crowd}>
-        <p className={s.crowdTitle}>↩️ version 충돌 → 튕겨나와 재시도</p>
-        <div className={s.bounceArea}>
+      <div className={styles.crowd}>
+        <p className={styles.crowdTitle}>↩️ version 충돌 → 튕겨나와 재시도</p>
+        <div className={styles.bounceArea}>
           {Array.from({ length: bouncing }, (_, i) => (
             <i
               key={i}
-              className={s.bounceDot}
+              className={styles.bounceDot}
               style={{ left: `${(i * 37) % 92}%`, animationDelay: `${(i * 113) % 600}ms` }}
             />
           ))}
-          {recentRetry - bouncing > 0 && <span className={s.more}>+{recentRetry - bouncing}</span>}
+          {recentRetry - bouncing > 0 && (
+            <span className={styles.more}>+{recentRetry - bouncing}</span>
+          )}
         </div>
-        <p className={s.muted}>재시도 중 요청 {recentRetry}개</p>
+        <p className={styles.muted}>재시도 중 요청 {recentRetry}개</p>
       </div>
     );
   }
   if (strategy === 'atomic') {
     return (
-      <div className={s.crowd}>
-        <p className={s.crowdTitle}>🚪 조건부 UPDATE 게이트 — 판단과 증가가 한 문장</p>
-        <div className={s.gateArea}>
+      <div className={styles.crowd}>
+        <p className={styles.crowdTitle}>🚪 조건부 UPDATE 게이트 — 판단과 증가가 한 문장</p>
+        <div className={styles.gateArea}>
           {Array.from({ length: Math.min(dots, 12) }, (_, i) => (
             <i
               key={i}
-              className={s.rushDot}
+              className={styles.rushDot}
               style={{ top: `${10 + ((i * 29) % 80)}%`, animationDelay: `${(i * 97) % 500}ms` }}
             />
           ))}
-          <span className={s.gate}>issued &lt; total ?</span>
+          <span className={styles.gate}>issued &lt; total ?</span>
         </div>
       </div>
     );
   }
   return (
-    <div className={s.crowd}>
-      <p className={s.crowdTitle}>🏃 모두가 동시에 &quot;아직 남았다&quot;를 읽고 통과</p>
-      <div className={s.gateArea}>
+    <div className={styles.crowd}>
+      <p className={styles.crowdTitle}>🏃 모두가 동시에 &quot;아직 남았다&quot;를 읽고 통과</p>
+      <div className={styles.gateArea}>
         {Array.from({ length: dots }, (_, i) => (
           <i
             key={i}
-            className={`${s.rushDot} ${s.rushBad}`}
+            className={`${styles.rushDot} ${styles.rushBad}`}
             style={{ top: `${5 + ((i * 23) % 90)}%`, animationDelay: `${(i * 71) % 500}ms` }}
           />
         ))}
-        {more > 0 && <span className={s.more}>+{more}</span>}
+        {more > 0 && <span className={styles.more}>+{more}</span>}
       </div>
     </div>
   );
@@ -409,20 +428,20 @@ const Grid = memo(function Grid({
 }) {
   const extra = Math.min(over, 400);
   return (
-    <div className={s.gridWrap}>
-      <p className={s.crowdTitle}>
-        🎟️ 쿠폰 {quantity}장 {over > 0 && <span className={s.errText}>+ 초과 {over}장</span>}
+    <div className={styles.gridWrap}>
+      <p className={styles.crowdTitle}>
+        🎟️ 쿠폰 {quantity}장 {over > 0 && <span className={styles.errText}>+ 초과 {over}장</span>}
       </p>
-      <div className={s.grid}>
+      <div className={styles.grid}>
         {Array.from({ length: quantity }, (_, i) => (
           <i
             key={i}
-            className={i < issued - over ? s.slotOn : s.slot}
+            className={i < issued - over ? styles.slotOn : styles.slot}
             style={{ '--c': color } as React.CSSProperties}
           />
         ))}
         {Array.from({ length: extra }, (_, i) => (
-          <i key={`x${i}`} className={s.slotOver} />
+          <i key={`x${i}`} className={styles.slotOver} />
         ))}
       </div>
     </div>
@@ -430,13 +449,15 @@ const Grid = memo(function Grid({
 });
 
 const Compare = memo(function Compare({ results }: { results: Partial<Record<Strategy, Result>> }) {
-  const list = ORDER.map((st) => results[st]).filter((r): r is Result => !!r);
-  if (list.length === 0) return null;
-  const maxMs = Math.max(...list.map((r) => r.durationMs));
+  const completedResults = ORDER.map((strategyKey) => results[strategyKey]).filter(
+    (result): result is Result => !!result,
+  );
+  if (completedResults.length === 0) return null;
+  const slowestDurationMs = Math.max(...completedResults.map((result) => result.durationMs));
   return (
-    <section className={s.card}>
+    <section className={styles.card}>
       <h2>⚖️ 전략 비교 (같은 조건의 실측 결과)</h2>
-      <table className={s.table}>
+      <table className={styles.table}>
         <thead>
           <tr>
             <th>전략</th>
@@ -449,39 +470,47 @@ const Compare = memo(function Compare({ results }: { results: Partial<Record<Str
           </tr>
         </thead>
         <tbody>
-          {list.map((r) => (
-            <tr key={r.strategy}>
+          {completedResults.map((result) => (
+            <tr key={result.strategy}>
               <td>
-                <b style={{ color: INFO[r.strategy].color }}>{INFO[r.strategy].name}</b>
-                <small className={s.muted}>
+                <b style={{ color: INFO[result.strategy].color }}>{INFO[result.strategy].name}</b>
+                <small className={styles.muted}>
                   {' '}
-                  {r.users}명/{r.quantity}장
+                  {result.users}명/{result.quantity}장
                 </small>
               </td>
-              <td>{r.final.issueRows}</td>
-              <td className={r.final.oversold > 0 ? s.errText : s.okText}>{r.final.oversold}</td>
-              <td className={r.final.counterMismatch ? s.errText : ''}>{r.final.issuedCount}</td>
-              <td>{r.summary.totalRetries.toLocaleString()}</td>
-              <td className={r.summary.retry_exhausted + r.summary.error > 0 ? s.errText : ''}>
-                {r.summary.retry_exhausted + r.summary.error}
+              <td>{result.final.issueRows}</td>
+              <td className={result.final.oversold > 0 ? styles.errText : styles.okText}>
+                {result.final.oversold}
+              </td>
+              <td className={result.final.counterMismatch ? styles.errText : ''}>
+                {result.final.issuedCount}
+              </td>
+              <td>{result.summary.totalRetries.toLocaleString()}</td>
+              <td
+                className={
+                  result.summary.retry_exhausted + result.summary.error > 0 ? styles.errText : ''
+                }
+              >
+                {result.summary.retry_exhausted + result.summary.error}
               </td>
               <td>
-                <span className={s.barWrap}>
+                <span className={styles.barWrap}>
                   <span
-                    className={s.bar}
+                    className={styles.bar}
                     style={{
-                      width: `${(r.durationMs / maxMs) * 100}%`,
-                      background: INFO[r.strategy].color,
+                      width: `${(result.durationMs / slowestDurationMs) * 100}%`,
+                      background: INFO[result.strategy].color,
                     }}
                   />
                 </span>
-                {(r.durationMs / 1000).toFixed(2)}s
+                {(result.durationMs / 1000).toFixed(2)}s
               </td>
             </tr>
           ))}
         </tbody>
       </table>
-      <p className={s.muted}>
+      <p className={styles.muted}>
         참고: docs/benchmarks/stage3-coupon.md 실측(500명 vs 100장, M1 Pro 로컬) — none 400장 초과
         발급, pessimistic ~1.7s, optimistic 재시도 ~14,000회·60장만 발급·~24s, atomic ~0.4s.
       </p>

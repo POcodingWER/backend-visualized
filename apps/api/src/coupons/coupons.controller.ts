@@ -17,13 +17,13 @@ import { IssueDto, ResetDto, SimulateDto, StateQueryDto } from './coupons.dto';
 import { PrismaClient } from '@prisma/client';
 import { OnModuleDestroy } from '@nestjs/common';
 
-const DEMO = 'demo';
+const DEMO_COUPON_NAME = 'demo';
 
 /** Stage 3: 선착순 쿠폰 동시성 데모 (로컬 데모용, 운영에선 인증 필요) */
 @Controller('coupons')
 @UseGuards(ThrottlerGuard)
 export class CouponsController implements OnModuleDestroy {
-  private readonly s: CouponStrategies;
+  private readonly strategies: CouponStrategies;
   /** 시뮬레이션은 DB 커넥션을 많이 쓰므로 동시에 하나만 */
   private running = false;
 
@@ -33,7 +33,7 @@ export class CouponsController implements OnModuleDestroy {
   });
 
   constructor(prisma: PrismaService) {
-    this.s = new CouponStrategies(prisma, this.sampler);
+    this.strategies = new CouponStrategies(prisma, this.sampler);
   }
 
   async onModuleDestroy() {
@@ -42,17 +42,17 @@ export class CouponsController implements OnModuleDestroy {
 
   /** 실제 DB 상태 확인: Coupon 행 + CouponIssue 행 수 + 최근 발급 행 (name: demo, sim-none, sim-atomic …) */
   @Get(':name/state')
-  async dbState(@Param('name') name: string, @Query() q: StateQueryDto) {
-    const st = await this.s.dbState(name, q.limit ?? 20, q.offset ?? 0);
-    if (!st) throw new NotFoundException(`coupon '${name}' not found`);
-    return st;
+  async dbState(@Param('name') name: string, @Query() query: StateQueryDto) {
+    const couponState = await this.strategies.dbState(name, query.limit ?? 20, query.offset ?? 0);
+    if (!couponState) throw new NotFoundException(`coupon '${name}' not found`);
+    return couponState;
   }
 
   @Get('demo')
   async demo() {
     return (
-      (await this.s.state(DEMO)) ?? {
-        name: DEMO,
+      (await this.strategies.state(DEMO_COUPON_NAME)) ?? {
+        name: DEMO_COUPON_NAME,
         totalQuantity: 0,
         counter: 0,
         issued: 0,
@@ -65,16 +65,16 @@ export class CouponsController implements OnModuleDestroy {
   @HttpCode(200)
   @Throttle({ default: { limit: 20, ttl: 10_000 } })
   async reset(@Body() dto: ResetDto) {
-    await this.s.reset(DEMO, dto.quantity ?? 100);
-    return this.s.state(DEMO);
+    await this.strategies.reset(DEMO_COUPON_NAME, dto.quantity ?? 100);
+    return this.strategies.state(DEMO_COUPON_NAME);
   }
 
   @Post('issue')
   @HttpCode(200)
   async issue(@Body() dto: IssueDto) {
-    const id = await this.s.couponId(DEMO);
-    if (id === null) throw new NotFoundException('먼저 POST /coupons/reset');
-    return this.s.issue(dto.strategy, id, dto.userId);
+    const couponId = await this.strategies.couponId(DEMO_COUPON_NAME);
+    if (couponId === null) throw new NotFoundException('먼저 POST /coupons/reset');
+    return this.strategies.issue(dto.strategy, couponId, dto.userId);
   }
 
   /** strategy 지정 시 하나, 없으면 4개 전략을 순서대로 같은 조건으로 실행 */
@@ -87,9 +87,10 @@ export class CouponsController implements OnModuleDestroy {
     try {
       const users = dto.users ?? 500;
       const quantity = dto.quantity ?? 100;
-      const list = dto.strategy ? [dto.strategy] : [...STRATEGIES];
+      const strategiesToRun = dto.strategy ? [dto.strategy] : [...STRATEGIES];
       const results: SimulationResult[] = [];
-      for (const st of list) results.push(await this.s.simulate(st, users, quantity));
+      for (const strategyName of strategiesToRun)
+        results.push(await this.strategies.simulate(strategyName, users, quantity));
       return { results };
     } finally {
       this.running = false;
@@ -97,9 +98,9 @@ export class CouponsController implements OnModuleDestroy {
   }
 }
 
-function withConnectionLimit(url: string | undefined, n: number): string | undefined {
+function withConnectionLimit(url: string | undefined, limit: number): string | undefined {
   if (!url) return url;
   return url.includes('connection_limit=')
     ? url
-    : `${url}${url.includes('?') ? '&' : '?'}connection_limit=${n}`;
+    : `${url}${url.includes('?') ? '&' : '?'}connection_limit=${limit}`;
 }

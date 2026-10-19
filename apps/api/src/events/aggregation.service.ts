@@ -28,8 +28,8 @@ export class AggregationService {
 
   async aggregateRange(from?: string, to?: string) {
     const { start, endExclusive, days } = resolveDayRange(from, to, { defaultDays: 2 });
-    const r = await this.aggregate(start, endExclusive);
-    return { from: days[0], to: days[days.length - 1], ...r };
+    const result = await this.aggregate(start, endExclusive);
+    return { from: days[0], to: days[days.length - 1], ...result };
   }
 
   /** 5분마다 어제~오늘(UTC) 재집계 */
@@ -39,13 +39,13 @@ export class AggregationService {
     this.running = true;
     try {
       const today = startOfUtcDay(new Date());
-      const r = await this.aggregate(
+      const result = await this.aggregate(
         new Date(today.getTime() - DAY_MS),
         new Date(today.getTime() + DAY_MS),
       );
-      this.log.log(`daily aggregate upserted (affected=${r.rows}, ${r.ms}ms)`);
-    } catch (e) {
-      this.log.error('daily aggregate failed', e as Error);
+      this.log.log(`daily aggregate upserted (affected=${result.rows}, ${result.ms}ms)`);
+    } catch (error) {
+      this.log.error('daily aggregate failed', error as Error);
     } finally {
       this.running = false;
     }
@@ -57,11 +57,11 @@ export class AggregationService {
       where: { date: { gte: start, lt: endExclusive } },
       orderBy: [{ date: 'asc' }, { name: 'asc' }],
     });
-    const rows = stats.map((s) => ({
-      date: toDateKey(s.date),
-      name: s.name,
-      count: s.count,
-      uniqueSessions: s.uniqueSessions,
+    const rows = stats.map((stat) => ({
+      date: toDateKey(stat.date),
+      name: stat.name,
+      count: stat.count,
+      uniqueSessions: stat.uniqueSessions,
     }));
     return { from: days[0], to: days[days.length - 1], rows, ...toDailySeries(days, rows) };
   }

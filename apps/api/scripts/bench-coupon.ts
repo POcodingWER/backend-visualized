@@ -10,68 +10,73 @@ import { PrismaClient } from '@prisma/client';
 import { CouponStrategies, STRATEGIES, type Strategy } from '../src/coupons/coupon-strategies';
 
 const USERS = Number(process.env.USERS ?? 500);
-const QTY = Number(process.env.QTY ?? 100);
+const QUANTITY = Number(process.env.QTY ?? 100);
 const RUNS = Number(process.env.RUNS ?? 3);
 const MODE = process.env.MODE ?? 'inproc';
 const API = (process.env.API_URL ?? 'http://localhost:4000').replace(/\/+$/, '');
 
 const prisma = new PrismaClient();
-const s = new CouponStrategies(prisma);
+const strategies = new CouponStrategies(prisma);
 
 async function http(strategy: Strategy) {
   const post = async (path: string, body: unknown) => {
-    const r = await fetch(`${API}${path}`, {
+    const response = await fetch(`${API}${path}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
-    if (!r.ok) throw new Error(`${path} ${r.status}`);
-    return (await r.json()) as { success: boolean; result: string; retries: number };
+    if (!response.ok) throw new Error(`${path} ${response.status}`);
+    return (await response.json()) as { success: boolean; result: string; retries: number };
   };
-  await post('/coupons/reset', { quantity: QTY });
+  await post('/coupons/reset', { quantity: QUANTITY });
   const t0 = performance.now();
-  const res = await Promise.all(
+  const issueResponses = await Promise.all(
     Array.from({ length: USERS }, (_, i) => post('/coupons/issue', { strategy, userId: `u-${i}` })),
   );
   const durationMs = Math.round(performance.now() - t0);
-  const st = await s.state('demo');
+  const demoState = await strategies.state('demo');
   return {
     strategy,
-    issued: st?.issued ?? 0,
-    counter: st?.counter ?? 0,
-    oversold: st?.oversold ?? 0,
-    retries: res.reduce((a, r) => a + r.retries, 0),
-    errors: res.filter((r) => r.result === 'error' || r.result === 'retry_exhausted').length,
+    issued: demoState?.issued ?? 0,
+    counter: demoState?.counter ?? 0,
+    oversold: demoState?.oversold ?? 0,
+    retries: issueResponses.reduce((sum, issueResponse) => sum + issueResponse.retries, 0),
+    errors: issueResponses.filter(
+      (issueResponse) =>
+        issueResponse.result === 'error' || issueResponse.result === 'retry_exhausted',
+    ).length,
     durationMs,
   };
 }
 
 async function main() {
-  console.log(`MODE=${MODE} USERS=${USERS} QTY=${QTY} RUNS=${RUNS}`);
+  console.log(`MODE=${MODE} USERS=${USERS} QTY=${QUANTITY} RUNS=${RUNS}`);
   console.log('strategy\trun\tissued\tcounter\toversold\tretries\terrors\tms');
-  for (const st of STRATEGIES) {
+  for (const strategy of STRATEGIES) {
     for (let run = 1; run <= RUNS; run++) {
-      const r =
+      const result =
         MODE === 'http'
-          ? await http(st)
-          : await s.simulate(st, USERS, QTY, `bench-${st}`).then((x) => ({
-              issued: x.final.issueRows,
-              counter: x.final.issuedCount,
-              oversold: x.final.oversold,
-              retries: x.summary.totalRetries,
-              errors: x.summary.error + x.summary.retry_exhausted,
-              durationMs: x.durationMs,
-            }));
+          ? await http(strategy)
+          : await strategies
+              .simulate(strategy, USERS, QUANTITY, `bench-${strategy}`)
+              .then((simulation) => ({
+                issued: simulation.final.issueRows,
+                counter: simulation.final.issuedCount,
+                oversold: simulation.final.oversold,
+                retries: simulation.summary.totalRetries,
+                errors: simulation.summary.error + simulation.summary.retry_exhausted,
+                durationMs: simulation.durationMs,
+              }));
       console.log(
         [
-          st,
+          strategy,
           run,
-          r.issued,
-          r.counter,
-          r.oversold,
-          r.retries,
-          r.errors,
-          Math.round(r.durationMs),
+          result.issued,
+          result.counter,
+          result.oversold,
+          result.retries,
+          result.errors,
+          Math.round(result.durationMs),
         ].join('\t'),
       );
     }
