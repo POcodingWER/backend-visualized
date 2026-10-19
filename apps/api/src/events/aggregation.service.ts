@@ -39,7 +39,10 @@ export class AggregationService {
     this.running = true;
     try {
       const today = startOfUtcDay(new Date());
-      const r = await this.aggregate(new Date(today.getTime() - DAY_MS), new Date(today.getTime() + DAY_MS));
+      const r = await this.aggregate(
+        new Date(today.getTime() - DAY_MS),
+        new Date(today.getTime() + DAY_MS),
+      );
       this.log.log(`daily aggregate upserted (affected=${r.rows}, ${r.ms}ms)`);
     } catch (e) {
       this.log.error('daily aggregate failed', e as Error);

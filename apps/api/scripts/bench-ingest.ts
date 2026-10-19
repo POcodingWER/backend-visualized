@@ -15,7 +15,11 @@ const CONCURRENCY = Number(process.env.CONCURRENCY ?? 10);
 const API = (process.env.API_URL ?? 'http://localhost:4000').replace(/\/+$/, '');
 
 const prisma = new PrismaClient();
-const ev = (name: string, i: number) => ({ name, sessionId: `bench-${i % 500}`, properties: { i } });
+const ev = (name: string, i: number) => ({
+  name,
+  sessionId: `bench-${i % 500}`,
+  properties: { i },
+});
 
 interface Result {
   scenario: string;
@@ -76,7 +80,8 @@ async function main() {
     await timed(`DB  createMany() ${BATCH}개씩 x ${nb} (순차)`, nb, async () => {
       for (let b = 0; b < nb; b++) {
         const data: Prisma.EventCreateManyInput[] = [];
-        for (let i = b * BATCH; i < Math.min(N, (b + 1) * BATCH); i++) data.push(ev('bench_db_batch', i));
+        for (let i = b * BATCH; i < Math.min(N, (b + 1) * BATCH); i++)
+          data.push(ev('bench_db_batch', i));
         await prisma.event.createMany({ data });
       }
     }),
@@ -91,7 +96,9 @@ async function main() {
   results.push(
     await timed(`HTTP POST /events/batch ${BATCH}개씩 (순차)`, nb, async () => {
       for (let b = 0; b < nb; b++) {
-        const events = Array.from({ length: Math.min(BATCH, N - b * BATCH) }, (_, k) => ev('bench_http_batch', b * BATCH + k));
+        const events = Array.from({ length: Math.min(BATCH, N - b * BATCH) }, (_, k) =>
+          ev('bench_http_batch', b * BATCH + k),
+        );
         await post('/events/batch', { events });
       }
     }),
@@ -100,7 +107,9 @@ async function main() {
     await timed(`HTTP POST /events/batch ${BATCH}개씩 (동시 ${CONCURRENCY})`, nb, () =>
       pool(nb, CONCURRENCY, (b) =>
         post('/events/batch', {
-          events: Array.from({ length: Math.min(BATCH, N - b * BATCH) }, (_, k) => ev('bench_http_batch_c', b * BATCH + k)),
+          events: Array.from({ length: Math.min(BATCH, N - b * BATCH) }, (_, k) =>
+            ev('bench_http_batch_c', b * BATCH + k),
+          ),
         }),
       ),
     ),

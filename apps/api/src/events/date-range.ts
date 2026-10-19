@@ -28,11 +28,15 @@ export function resolveDayRange(
   { defaultDays = 7, maxDays = 366, now = new Date() } = {},
 ): { start: Date; endExclusive: Date; days: string[] } {
   const to = startOfUtcDay(parseDate(toStr, 'to') ?? now);
-  const from = startOfUtcDay(parseDate(fromStr, 'from') ?? new Date(to.getTime() - (defaultDays - 1) * DAY_MS));
+  const from = startOfUtcDay(
+    parseDate(fromStr, 'from') ?? new Date(to.getTime() - (defaultDays - 1) * DAY_MS),
+  );
   if (from > to) throw new BadRequestException('from must be <= to');
   const n = Math.round((to.getTime() - from.getTime()) / DAY_MS) + 1;
   if (n > maxDays) throw new BadRequestException(`range too large (max ${maxDays} days)`);
-  const days = Array.from({ length: n }, (_, i) => toDateKey(new Date(from.getTime() + i * DAY_MS)));
+  const days = Array.from({ length: n }, (_, i) =>
+    toDateKey(new Date(from.getTime() + i * DAY_MS)),
+  );
   return { start: from, endExclusive: new Date(to.getTime() + DAY_MS), days };
 }
 

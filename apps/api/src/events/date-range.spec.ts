@@ -10,7 +10,10 @@ test('resolveDayRange: inclusive days, UTC midnight bounds', () => {
 });
 
 test('resolveDayRange: defaults to last N days', () => {
-  const r = resolveDayRange(undefined, undefined, { defaultDays: 7, now: new Date('2026-10-19T05:00:00Z') });
+  const r = resolveDayRange(undefined, undefined, {
+    defaultDays: 7,
+    now: new Date('2026-10-19T05:00:00Z'),
+  });
   assert.equal(r.days.length, 7);
   assert.equal(r.days[0], '2026-10-13');
   assert.equal(r.days[6], '2026-10-19');
@@ -31,6 +34,14 @@ test('toDailySeries: fills missing days with zero and sums totals', () => {
     ],
   );
   assert.deepEqual(names, ['button_click', 'page_view']);
-  assert.deepEqual(series[0], { date: '2026-10-01', total: 8, byName: { button_click: 5, page_view: 3 } });
-  assert.deepEqual(series[1], { date: '2026-10-02', total: 0, byName: { button_click: 0, page_view: 0 } });
+  assert.deepEqual(series[0], {
+    date: '2026-10-01',
+    total: 8,
+    byName: { button_click: 5, page_view: 3 },
+  });
+  assert.deepEqual(series[1], {
+    date: '2026-10-02',
+    total: 0,
+    byName: { button_click: 0, page_view: 0 },
+  });
 });

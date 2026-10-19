@@ -21,7 +21,9 @@ async function bootstrap() {
   });
   const origin = process.env.WEB_ORIGIN ?? process.env.CORS_ORIGIN ?? 'http://localhost:3000';
   app.enableCors({ origin: origin.split(',').map((s) => s.trim()) });
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
+  app.useGlobalPipes(
+    new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),
+  );
   app.enableShutdownHooks();
   const port = Number(process.env.PORT ?? 4000);
   await app.listen(port);

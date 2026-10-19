@@ -155,7 +155,12 @@ export function createTracker(opts: TrackerOptions): Tracker {
         persist(b);
         const keys = new Set(b.map(eventKey));
         void send(b).then(
-          (sent) => sent && saveStored(loadStored().filter((e) => !keys.has(eventKey(e))), maxStored),
+          (sent) =>
+            sent &&
+            saveStored(
+              loadStored().filter((e) => !keys.has(eventKey(e))),
+              maxStored,
+            ),
         );
       }
     }
