@@ -26,24 +26,6 @@
   border-color: var(--ink);
   color: var(--paper);
 }
-.main h1 {
-  font-size: 2.1rem;
-  margin: 0.2rem 0 0.6rem;
-  letter-spacing: -0.02em;
-}
-.kicker {
-  color: var(--sky-ink);
-  font-weight: 600;
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin: 0;
-}
-.lead {
-  color: var(--ink-soft);
-  max-width: 780px;
-  line-height: 1.6;
-}
 .muted {
   color: var(--ink-soft);
   font-size: 0.88rem;
@@ -515,10 +497,6 @@
   gap: var(--space-4);
   justify-items: start;
 }
-.source {
-  font-size: var(--text-sm);
-  color: var(--ink-soft);
-}
 .tally {
   margin: 0;
   display: grid;
@@ -543,84 +521,11 @@
   color: var(--ink-soft);
   letter-spacing: 0;
 }
-.tallyFail dd,
-.failText {
+.tallyFail dd {
   color: var(--fail);
-}
-.goodText {
-  color: var(--sage-ink);
-}
-.hint {
-  font-size: var(--text-sm);
-  color: var(--ink-soft);
-}
-.errorLine {
-  font-size: var(--text-sm);
-  color: var(--fail);
-  font-weight: 600;
-}
-.conclusion {
-  max-width: var(--column);
-  margin: var(--space-8) auto 0;
-  padding: var(--space-4) var(--space-6);
-  border-left: 4px solid var(--fail);
-  background: var(--fail-soft);
-  font-size: var(--text-lg);
-  font-weight: 650;
-}
-.fixes {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-6);
-}
-.fix {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  padding: var(--space-6) var(--space-4) var(--space-4);
-  border-top: 3px solid var(--ink);
-}
-.fix h3 {
-  font-size: var(--text-lg);
-}
-.fix button {
-  align-self: flex-start;
-  margin-top: auto;
-}
-.fixStats {
-  margin: 0;
-  display: grid;
-  gap: var(--space-1);
-}
-.fixStats div {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--space-3);
-  border-bottom: 1px dotted var(--line-strong);
-  padding-bottom: var(--space-1);
-}
-.fixStats dt {
-  color: var(--ink-soft);
-  font-size: var(--text-sm);
-}
-.fixStats dd {
-  margin: 0;
-  font-weight: 750;
-  font-variant-numeric: tabular-nums;
-}
-.tradeoff {
-  font-size: var(--text-sm);
-  font-weight: 600;
-}
-.devIntro {
-  display: grid;
-  gap: var(--space-3);
-  max-width: var(--column);
-  font-size: 0.95rem;
 }
 @media (max-width: 860px) {
-  .stageLayout,
-  .fixes {
+  .stageLayout {
     grid-template-columns: 1fr;
   }
   .stageSide {

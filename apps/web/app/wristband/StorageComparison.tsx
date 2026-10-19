@@ -1,16 +1,44 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import styles from './auth.module.css';
 
-const LOCAL_STORAGE_KEY = 'bv_demo_access_token';
+export const LOCAL_STORAGE_KEY = 'bv_demo_access_token';
 const FAKE_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.demo-access-token.signature';
 
-type StorageKind = 'localStorage' | 'memory' | 'httpOnlyCookie';
+export type StorageKind = 'localStorage' | 'memory' | 'httpOnlyCookie';
 
-interface AttackOutcome {
+export interface AttackOutcome {
   stolen: boolean;
   detail: string;
+}
+
+/**
+ * 주입된 스크립트가 할 수 있는 일만으로 토큰을 읽어 본다 (전역 객체와 document 접근).
+ * localStorage에는 데모용 가짜 토큰을 넣어 둔다 (StorageComparison이 페이지를 떠날 때 지움).
+ */
+export function readTokensLikeXss(): Record<StorageKind, AttackOutcome> {
+  localStorage.setItem(LOCAL_STORAGE_KEY, FAKE_TOKEN);
+  const fromLocalStorage = window.localStorage.getItem(LOCAL_STORAGE_KEY);
+  const fromGlobal = (window as unknown as Record<string, unknown>).accessToken;
+  const cookieVisible = document.cookie;
+  return {
+    localStorage: fromLocalStorage
+      ? { stolen: true, detail: `localStorage.getItem → "${fromLocalStorage.slice(0, 24)}…"` }
+      : { stolen: false, detail: '없음' },
+    memory: fromGlobal
+      ? { stolen: true, detail: 'window.accessToken 노출' }
+      : {
+          stolen: false,
+          detail: 'window.accessToken → undefined (토큰은 컴포넌트 내부 변수에만 있음)',
+        },
+    httpOnlyCookie: cookieVisible.includes('bv_refresh_token')
+      ? { stolen: true, detail: 'document.cookie에 노출됨' }
+      : {
+          stolen: false,
+          detail: `document.cookie → "${cookieVisible || '(빈 문자열)'}" — bv_refresh_token 없음`,
+        },
+  };
 }
 
 const ROWS: { kind: StorageKind; title: string; xss: string; csrf: string; note: string }[] = [
@@ -39,7 +67,6 @@ const ROWS: { kind: StorageKind; title: string; xss: string; csrf: string; note:
 
 /** "XSS 스크립트가 토큰을 읽으려 한다" — 브라우저에서 실제로 시도 */
 export default function StorageComparison() {
-  const memoryToken = useRef<string>(FAKE_TOKEN);
   const [outcomes, setOutcomes] = useState<Partial<Record<StorageKind, AttackOutcome>>>({});
 
   useEffect(() => {
@@ -47,29 +74,7 @@ export default function StorageComparison() {
     return () => localStorage.removeItem(LOCAL_STORAGE_KEY);
   }, []);
 
-  const runXss = () => {
-    // 주입된 스크립트가 할 수 있는 일만 사용: 전역 객체와 document 접근
-    const fromLocalStorage = window.localStorage.getItem(LOCAL_STORAGE_KEY);
-    const fromGlobal = (window as unknown as Record<string, unknown>).accessToken;
-    const cookieVisible = document.cookie;
-    setOutcomes({
-      localStorage: fromLocalStorage
-        ? { stolen: true, detail: `localStorage.getItem → "${fromLocalStorage.slice(0, 24)}…"` }
-        : { stolen: false, detail: '없음' },
-      memory: fromGlobal
-        ? { stolen: true, detail: 'window.accessToken 노출' }
-        : {
-            stolen: false,
-            detail: `window.accessToken → undefined (토큰은 컴포넌트 내부 변수${memoryToken.current ? '에만' : ''} 있음)`,
-          },
-      httpOnlyCookie: cookieVisible.includes('bv_refresh_token')
-        ? { stolen: true, detail: 'document.cookie에 노출됨' }
-        : {
-            stolen: false,
-            detail: `document.cookie → "${cookieVisible || '(빈 문자열)'}" — bv_refresh_token 없음`,
-          },
-    });
-  };
+  const runXss = () => setOutcomes(readTokensLikeXss());
 
   return (
     <section className={styles.card}>

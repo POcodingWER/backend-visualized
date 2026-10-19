@@ -1,7 +1,8 @@
 .main {
-  max-width: 1180px;
-  margin: 0 auto;
-  padding: 3rem 1.5rem 5rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.25rem;
+  min-width: 0;
 }
 .main button {
   font: inherit;
@@ -33,24 +34,6 @@
 }
 .main .primary:hover:not(:disabled) {
   background: var(--ink);
-}
-.header h1 {
-  font-size: 2.2rem;
-  margin: 0.2rem 0 0.6rem;
-  letter-spacing: -0.02em;
-}
-.kicker {
-  color: var(--sky-ink);
-  font-weight: 600;
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin: 0;
-}
-.lead {
-  color: var(--ink-soft);
-  max-width: 760px;
-  line-height: 1.6;
 }
 .muted {
   color: var(--ink-soft);
@@ -378,4 +361,65 @@
   height: 100%;
   border-radius: 4px;
   min-width: 3px;
+}
+
+/* ---------- 3장 본문 (그림책) ---------- */
+.truckStage {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: var(--space-8);
+  align-items: center;
+}
+.truckLanes {
+  display: grid;
+  gap: var(--space-6);
+}
+.laneTitle {
+  margin-bottom: var(--space-2);
+  font-variant-numeric: tabular-nums;
+}
+.truckSvg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.truckSide {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
+}
+.bigNumber {
+  font-size: clamp(3.5rem, 2.5rem + 4vw, 5.5rem);
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  line-height: 1;
+  color: var(--sage-ink);
+}
+.bigNumberLabel {
+  color: var(--ink-soft);
+}
+.gateRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-8);
+  margin-bottom: var(--space-3);
+}
+.gateNumber {
+  font-size: 2.4rem;
+  font-weight: 800;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 860px) {
+  .truckStage {
+    grid-template-columns: 1fr;
+  }
+  .truckSide {
+    justify-items: stretch;
+    order: -1; /* 좁은 화면에서도 65배가 첫 화면에 */
+  }
+}
+.bigTruck {
+  max-width: 22rem;
 }

@@ -16,6 +16,11 @@ import StorageComparison from './StorageComparison';
 import styles from './auth.module.css';
 import TheftDemo from './TheftDemo';
 import type { AddLogEntry, RequestLogEntry } from './types';
+import { DevDetails } from '../components/ui';
+import WristbandStory from './WristbandStory';
+
+/** 화면에 그대로 안내하는 데모 계정 */
+export const DEMO_ACCOUNT = { username: 'demo', password: 'demo1234' };
 
 const MAX_LOG_ENTRIES = 14;
 const AUTO_CALL_INTERVAL_MS = 4000;
@@ -183,6 +188,29 @@ export default function AuthDemo() {
     } else setMessage(REASON_KO[errorReason(result.body)] ?? `로그인 실패 (${result.status})`);
   };
 
+  /** 이야기 버튼용: 로그인돼 있지 않으면 데모 계정으로 먼저 들어간다 */
+  const ensureSession = useCallback(async () => {
+    if (sessionRef.current) return sessionRef.current;
+    const result = await authApi.login(
+      DEMO_ACCOUNT.username,
+      DEMO_ACCOUNT.password,
+      accessTokenTtlSeconds,
+    );
+    addLog({
+      actor: 'user',
+      label: 'POST /auth/login',
+      credential: DEMO_ACCOUNT.username,
+      status: result.status,
+      reason: errorReason(result.body),
+      durationMs: result.durationMs,
+      note: isSession(result.body) ? 'AT 발급 + RT 쿠키 설정' : undefined,
+    });
+    if (!isSession(result.body)) return null;
+    setRotationCount(0);
+    applySession(result.body);
+    return result.body;
+  }, [accessTokenTtlSeconds, addLog, applySession]);
+
   const logout = async () => {
     const result = await authApi.logout();
     addLog({
@@ -197,55 +225,60 @@ export default function AuthDemo() {
   };
 
   return (
-    <main className={styles.main}>
-      <header>
-        <p className={styles.kicker}>Stage 3 · 인증</p>
-        <h1>액세스 토큰은 짧게, 리프레시 토큰은 안전하게</h1>
-        <p className={styles.lead}>
-          액세스 토큰(JWT)은 API마다 들고 다니는 <b>짧은 수명</b>의 출입증, 리프레시 토큰은 출입증을
-          다시 발급받는 <b>긴 수명</b>의 열쇠입니다. 아래는 실제 NestJS API와 MySQL에 대해
-          동작합니다.
-        </p>
-      </header>
-
-      <section className={styles.card}>
-        <h2>① 토큰 수명 타임라인</h2>
-        {restoreState === 'restoring' && !session ? (
-          <p className={styles.muted}>쿠키의 리프레시 토큰으로 로그인 복구 중…</p>
-        ) : session ? (
-          <SessionBar
-            session={session}
-            rotationCount={rotationCount}
-            labelFor={labelFor}
-            autoCall={autoCall}
-            onToggleAutoCall={() => setAutoCall((value) => !value)}
-            onCallMe={() => void callMe()}
-            onLogout={() => void logout()}
-          />
-        ) : (
-          <LoginForm
-            ttl={accessTokenTtlSeconds}
-            onTtlChange={setAccessTokenTtlSeconds}
-            onLogin={login}
-          />
-        )}
-        {message && <p className={styles.warn}>{message}</p>}
-        <RequestTimeline log={log} />
-      </section>
-
-      <ReloadExplainer restoreState={restoreState} />
-
-      <ConcurrencyRace
+    <>
+      <WristbandStory
         session={session}
+        ensureSession={ensureSession}
         applySession={applySession}
         addLog={addLog}
         labelFor={labelFor}
         accessTokenTtlSeconds={accessTokenTtlSeconds}
+        restoreState={restoreState}
       />
-      <TheftDemo session={session} applySession={applySession} addLog={addLog} />
-      <StorageComparison />
-      <JwtDecoder accessToken={session?.accessToken ?? null} />
-    </main>
+      <section style={{ maxWidth: 'var(--wide)', margin: '0 auto' }}>
+        <DevDetails description="토큰 수명 타임라인과 로그인, 요청 기록, 동시 갱신 경주, 토큰 묶음(family) 표, JWT 디코더">
+          <div className={styles.main}>
+            <section className={styles.card}>
+              <h2>① 토큰 수명 타임라인</h2>
+              {restoreState === 'restoring' && !session ? (
+                <p className={styles.muted}>쿠키의 리프레시 토큰으로 로그인 복구 중…</p>
+              ) : session ? (
+                <SessionBar
+                  session={session}
+                  rotationCount={rotationCount}
+                  labelFor={labelFor}
+                  autoCall={autoCall}
+                  onToggleAutoCall={() => setAutoCall((value) => !value)}
+                  onCallMe={() => void callMe()}
+                  onLogout={() => void logout()}
+                />
+              ) : (
+                <LoginForm
+                  ttl={accessTokenTtlSeconds}
+                  onTtlChange={setAccessTokenTtlSeconds}
+                  onLogin={login}
+                />
+              )}
+              {message && <p className={styles.warn}>{message}</p>}
+              <RequestTimeline log={log} />
+            </section>
+
+            <ReloadExplainer restoreState={restoreState} />
+
+            <ConcurrencyRace
+              session={session}
+              applySession={applySession}
+              addLog={addLog}
+              labelFor={labelFor}
+              accessTokenTtlSeconds={accessTokenTtlSeconds}
+            />
+            <TheftDemo session={session} applySession={applySession} addLog={addLog} />
+            <StorageComparison />
+            <JwtDecoder accessToken={session?.accessToken ?? null} />
+          </div>
+        </DevDetails>
+      </section>
+    </>
   );
 }
 
