@@ -24,20 +24,20 @@ export function setup() {
 }
 
 export default function () {
-  const r = http.post(
+  const response = http.post(
     `${API}/coupons/issue`,
     JSON.stringify({ strategy: STRATEGY, userId: `k6-${__VU}` }),
     json,
   );
-  check(r, { 'status 200': (x) => x.status === 200 });
-  const body = r.json();
-  if (body.ok) issued.add(1);
+  check(response, { 'status 200': (checked) => checked.status === 200 });
+  const body = response.json();
+  if (body.success) issued.add(1);
   retries.add(body.retries || 0);
 }
 
 export function teardown() {
-  const st = http.get(`${API}/coupons/demo`).json();
+  const demoState = http.get(`${API}/coupons/demo`).json();
   console.log(
-    `issued=${st.issued} counter=${st.counter} oversold=${st.oversold} (quantity ${QTY})`,
+    `issued=${demoState.issued} counter=${demoState.counter} oversold=${demoState.oversold} (quantity ${QTY})`,
   );
 }

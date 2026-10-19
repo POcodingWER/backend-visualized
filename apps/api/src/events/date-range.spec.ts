@@ -3,20 +3,20 @@ import { test } from 'node:test';
 import { resolveDayRange, toDailySeries } from './date-range';
 
 test('resolveDayRange: inclusive days, UTC midnight bounds', () => {
-  const r = resolveDayRange('2026-10-01T15:00:00Z', '2026-10-03');
-  assert.deepEqual(r.days, ['2026-10-01', '2026-10-02', '2026-10-03']);
-  assert.equal(r.start.toISOString(), '2026-10-01T00:00:00.000Z');
-  assert.equal(r.endExclusive.toISOString(), '2026-10-04T00:00:00.000Z');
+  const range = resolveDayRange('2026-10-01T15:00:00Z', '2026-10-03');
+  assert.deepEqual(range.days, ['2026-10-01', '2026-10-02', '2026-10-03']);
+  assert.equal(range.start.toISOString(), '2026-10-01T00:00:00.000Z');
+  assert.equal(range.endExclusive.toISOString(), '2026-10-04T00:00:00.000Z');
 });
 
 test('resolveDayRange: defaults to last N days', () => {
-  const r = resolveDayRange(undefined, undefined, {
+  const range = resolveDayRange(undefined, undefined, {
     defaultDays: 7,
     now: new Date('2026-10-19T05:00:00Z'),
   });
-  assert.equal(r.days.length, 7);
-  assert.equal(r.days[0], '2026-10-13');
-  assert.equal(r.days[6], '2026-10-19');
+  assert.equal(range.days.length, 7);
+  assert.equal(range.days[0], '2026-10-13');
+  assert.equal(range.days[6], '2026-10-19');
 });
 
 test('resolveDayRange: rejects bad input', () => {

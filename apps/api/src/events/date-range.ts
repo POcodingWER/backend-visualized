@@ -2,20 +2,20 @@ import { BadRequestException } from '@nestjs/common';
 
 export const DAY_MS = 86_400_000;
 
-export function parseDate(v: string | undefined, field: string): Date | undefined {
-  if (!v) return undefined;
-  const d = new Date(v);
-  if (Number.isNaN(d.getTime())) throw new BadRequestException(`invalid ${field}`);
-  return d;
+export function parseDate(rawValue: string | undefined, field: string): Date | undefined {
+  if (!rawValue) return undefined;
+  const date = new Date(rawValue);
+  if (Number.isNaN(date.getTime())) throw new BadRequestException(`invalid ${field}`);
+  return date;
 }
 
 /** UTC 자정으로 내림 */
-export function startOfUtcDay(d: Date): Date {
-  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+export function startOfUtcDay(date: Date): Date {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
 }
 
-export function toDateKey(d: Date): string {
-  return d.toISOString().slice(0, 10);
+export function toDateKey(date: Date): string {
+  return date.toISOString().slice(0, 10);
 }
 
 /**
@@ -32,9 +32,9 @@ export function resolveDayRange(
     parseDate(fromStr, 'from') ?? new Date(to.getTime() - (defaultDays - 1) * DAY_MS),
   );
   if (from > to) throw new BadRequestException('from must be <= to');
-  const n = Math.round((to.getTime() - from.getTime()) / DAY_MS) + 1;
-  if (n > maxDays) throw new BadRequestException(`range too large (max ${maxDays} days)`);
-  const days = Array.from({ length: n }, (_, i) =>
+  const dayCount = Math.round((to.getTime() - from.getTime()) / DAY_MS) + 1;
+  if (dayCount > maxDays) throw new BadRequestException(`range too large (max ${maxDays} days)`);
+  const days = Array.from({ length: dayCount }, (_, i) =>
     toDateKey(new Date(from.getTime() + i * DAY_MS)),
   );
   return { start: from, endExclusive: new Date(to.getTime() + DAY_MS), days };
@@ -49,21 +49,21 @@ export interface DailyRow {
 
 /** 집계 행을 날짜별 시리즈로 변환 (빈 날짜는 0으로 채움) */
 export function toDailySeries(days: string[], rows: DailyRow[]) {
-  const names = [...new Set(rows.map((r) => r.name))].sort();
+  const names = [...new Set(rows.map((row) => row.name))].sort();
   const series = days.map((date) => {
     const point: { date: string; total: number; byName: Record<string, number> } = {
       date,
       total: 0,
-      byName: Object.fromEntries(names.map((n) => [n, 0])),
+      byName: Object.fromEntries(names.map((name) => [name, 0])),
     };
     return point;
   });
-  const idx = new Map(series.map((p) => [p.date, p]));
-  for (const r of rows) {
-    const p = idx.get(r.date);
-    if (!p) continue;
-    p.byName[r.name] = r.count;
-    p.total += r.count;
+  const seriesByDate = new Map(series.map((point) => [point.date, point]));
+  for (const row of rows) {
+    const point = seriesByDate.get(row.date);
+    if (!point) continue;
+    point.byName[row.name] = row.count;
+    point.total += row.count;
   }
   return { names, series };
 }

@@ -26,20 +26,20 @@ export default function Nav() {
       }}
     >
       <b style={{ marginRight: '1rem', color: '#818cf8' }}>backend-visualized</b>
-      {LINKS.map((l) => (
+      {LINKS.map((link) => (
         <Link
-          key={l.href}
-          href={l.href}
+          key={link.href}
+          href={link.href}
           style={{
-            color: path === l.href ? '#fff' : '#8b93b0',
-            background: path === l.href ? '#1f2a52' : 'transparent',
+            color: path === link.href ? '#fff' : '#8b93b0',
+            background: path === link.href ? '#1f2a52' : 'transparent',
             padding: '0.35rem 0.8rem',
             borderRadius: 8,
             textDecoration: 'none',
             fontSize: '0.9rem',
           }}
         >
-          {l.label}
+          {link.label}
         </Link>
       ))}
     </nav>
