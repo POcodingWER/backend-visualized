@@ -120,9 +120,9 @@ pnpm --filter @bv/web start                          # 터미널 2 (:3000)
   - `POST /events/batch` — `{ events: [...] }` 1~100개, 이벤트별 검증, Prisma `createMany`로 한 번에 insert → `202 { inserted }`
   - 수집 엔드포인트(`POST /events`, `/events/batch`)에 `@nestjs/throttler` rate limit (IP당 `THROTTLE_LIMIT`(기본 200)회 / `THROTTLE_TTL_MS`(기본 10초), 초과 시 429)
   - `EventDailyStat`(date, name, count, uniqueSessions, unique(date,name)) 일별 집계 테이블
-  - 집계 잡: 5분마다 cron(어제~오늘 재집계), `INSERT ... SELECT ... ON DUPLICATE KEY UPDATE`로 멱등 upsert
+  - 집계 잡: 5분마다 cron(KST 어제~오늘 재집계), `INSERT ... SELECT ... ON DUPLICATE KEY UPDATE`로 멱등 upsert
   - `POST /admin/aggregate?from=&to=` — 수동 집계(로컬 테스트용, 인증 없음 → 운영 전 보호 필요)
-  - `GET /events/stats/daily?from=&to=` — 집계 테이블에서 읽음 (기본 최근 7일, 날짜는 **UTC 기준**)
+  - `GET /events/stats/daily?from=&to=` — 집계 테이블에서 읽음 (기본 최근 7일, 날짜는 **KST(Asia/Seoul) 기준** — `createdAt`(UTC 저장)에 +9시간 후 날짜로 묶음)
   - `GET /events/stream` — SSE, 이벤트 저장 시 `event: ingested` `{ added, at }` push (프로세스 내 emitter → 단일 인스턴스 전제)
 - **Web**: 전체/이름별 카운트, 최근 7일 일별 누적 막대 차트(recharts), SSE 실시간 카운터, "일별 집계 지금 실행" 버튼, 데모 버튼(단건 / x50 / flush)
 

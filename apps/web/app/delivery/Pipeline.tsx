@@ -342,7 +342,7 @@ export default function Pipeline() {
       }
       const aggregateResult = outcome.result;
       setAggResult(
-        `${aggregateResult.from} ~ ${aggregateResult.to} 롤업 완료 · upsert ${aggregateResult.rows}행 · ${aggregateResult.ms}ms (다음 실행까지 ${aggregateResult.cooldownSeconds}초 쿨다운)`,
+        `${aggregateResult.from} ~ ${aggregateResult.to} (KST) 롤업 완료 · upsert ${aggregateResult.rows}행 · ${aggregateResult.ms}ms (다음 실행까지 ${aggregateResult.cooldownSeconds}초 쿨다운)`,
       );
       await loadStats();
     } finally {
@@ -501,7 +501,7 @@ export default function Pipeline() {
 
       <section className={styles.card}>
         <div className={styles.cardHead}>
-          <h2>집계 단계의 산출물 — 최근 7일 (UTC, EventDailyStat)</h2>
+          <h2>집계 단계의 산출물 — 최근 7일 (KST, EventDailyStat)</h2>
           <button onClick={() => void aggregate()} disabled={aggBusy}>
             {aggBusy ? '집계 중…' : '지금 집계 실행'}
           </button>
