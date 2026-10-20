@@ -114,7 +114,7 @@ cd /opt/backend-visualized && umask 077
 cp deploy/production.env.example deploy/production.env
 # 아래 값들을 채우기: hex 비밀번호는 DATABASE_URL에 그대로 넣어도 URL 인코딩이 필요 없음
 #   COMPOSE_PROFILES=local-db
-#   API_DOMAIN=13-209-4-20.sslip.io        (IP의 점을 -로: 도메인이 생기면 이 줄만 교체)
+#   API_DOMAIN=3-35-59-193.sslip.io        (IP의 점을 -로: 도메인이 생기면 이 줄만 교체)
 #   WEB_ORIGIN=http://localhost:3000   VERCEL_ORIGIN=   (Vercel 주소가 생기면 채우기)
 #   MYSQL_ROOT_PASSWORD=$(openssl rand -hex 24)   MYSQL_PASSWORD=$(openssl rand -hex 24)
 #   DATABASE_URL=mysql://app:<MYSQL_PASSWORD>@mysql:3306/backend_visualized
@@ -129,11 +129,11 @@ chmod 600 deploy/production.env
 ./deploy/compose.sh up -d --build        # COMPOSE_PROFILES=local-db 라 mysql도 같이 뜸
 ./deploy/compose.sh ps                   # api/mysql/redis (healthy), 공개 포트는 caddy 80/443 뿐
 ./deploy/compose.sh logs caddy | grep 'certificate obtained'
-curl https://13-209-4-20.sslip.io/health # {"status":"ok","db":{"status":"up",...}}
+curl https://3-35-59-193.sslip.io/health # {"status":"ok","db":{"status":"up",...}}
 ```
 
-> **도메인 없이 HTTPS**: [sslip.io](https://sslip.io)는 `13-209-4-20.sslip.io` → `13.209.4.20`으로 응답하는 공개 DNS라
-> Caddy가 Let's Encrypt 인증서를 바로 받습니다. Elastic IP가 없으면 인스턴스를 **중지/시작**할 때 공인 IP가 바뀌므로
+> **도메인 없이 HTTPS**: [sslip.io](https://sslip.io)는 `3-35-59-193.sslip.io` → `3.35.59.193`으로 응답하는 공개 DNS라
+> Caddy가 Let's Encrypt 인증서를 바로 받습니다. 현재 서버에는 Elastic IP `3.35.59.193`이 연결돼 있습니다 (2026-10-20). Elastic IP가 없으면 인스턴스를 **중지/시작**할 때 공인 IP가 바뀌므로
 > `API_DOMAIN`도 바꿔야 합니다 (재부팅은 IP 유지).
 
 ---
@@ -161,7 +161,7 @@ vi deploy/production.env   # 아래 5장 표를 보고 채우기
 curl https://api.example.com/health
 ```
 
-업데이트: `git pull && ./deploy/compose.sh up -d --build` (마이그레이션은 컨테이너 시작 시 자동 적용).
+업데이트: main에 push하면 CI 성공 후 **자동 배포**됩니다 (7-1장). 수동으로 하려면 `git pull && ./deploy/compose.sh up -d --build` (마이그레이션은 컨테이너 시작 시 자동 적용).
 
 CORS 출처 추가 (예: Vercel 배포 후): `deploy/production.env`의 `VERCEL_ORIGIN=https://<앱>.vercel.app` → `./deploy/compose.sh up -d`.
 compose가 `WEB_ORIGIN` + `,VERCEL_ORIGIN`(비어 있으면 생략)으로 합쳐 API에 넘깁니다.
@@ -212,14 +212,14 @@ EC2와 같은 VPC에 만들고 보안 그룹 6379 ← EC2만 허용, `REDIS_URL=
 
 ```bash
 # 터미널로 터널을 열 때 (Mac의 13306 → EC2의 127.0.0.1:3306). 다 쓰면 Ctrl+C
-ssh -i ~/.ssh/backend-visualized.pem -N -L 13306:127.0.0.1:3306 ubuntu@13.209.4.20
+ssh -i ~/.ssh/backend-visualized.pem -N -L 13306:127.0.0.1:3306 ubuntu@3.35.59.193
 ```
 
 또는 Workbench 내장 터널: Connection Method **Standard TCP/IP over SSH**
 
 | 항목              | 값                                                                                           |
 | ----------------- | -------------------------------------------------------------------------------------------- |
-| SSH Hostname      | `13.209.4.20:22`                                                                             |
+| SSH Hostname      | `3.35.59.193:22`                                                                             |
 | SSH Username      | `ubuntu`                                                                                     |
 | SSH Key File      | `~/.ssh/backend-visualized.pem`                                                              |
 | MySQL Hostname    | `127.0.0.1`                                                                                  |
@@ -348,13 +348,84 @@ AWS 공식 가격표(aws.amazon.com 가격 페이지가 쓰는 공개 가격 데
 
 ---
 
+## 7-1. 자동 배포 (CD): GitHub Actions → OIDC → SSM → EC2
+
+`.github/workflows/deploy.yml` — main에 push하고 CI가 **성공**하면 자동으로 EC2에 배포합니다.
+
+```
+git push origin main
+   │
+   ▼
+CI (ci.yml: typecheck · lint · test · build · Docker 이미지 빌드)
+   │  성공 (workflow_run 이벤트, conclusion=success, event=push)
+   ▼
+Deploy (deploy.yml)
+   ├─ 1) GitHub OIDC 토큰 ──▶ AWS STS AssumeRoleWithWebIdentity
+   │        role: backend-visualized-github-deploy (1시간짜리 임시 자격 증명)
+   ├─ 2) aws ssm send-command (AWS-RunShellScript, 인스턴스 i-0c7a663e814fc808d)
+   │        │
+   │        ▼   EC2의 SSM Agent가 AWS로 "바깥으로" 연결해 명령을 받아 실행 (root → sudo -u ubuntu)
+   │      cd /opt/backend-visualized
+   │      git fetch origin main && git reset --hard <CI가 검사한 SHA>
+   │      ./deploy/compose.sh up -d --build && docker image prune -f
+   ├─ 3) get-command-invocation 폴링 (Success가 아니면 job 실패, 서버 stdout/stderr 출력)
+   └─ 4) curl https://3-35-59-193.sslip.io/health 가 200일 때까지 재시도 (아니면 실패)
+```
+
+**왜 SSH가 아니라 SSM?**
+
+- SSH로 배포하려면 GitHub Actions 러너(IP가 매번 바뀜)에게 22번 포트를 열어야 하고, 개인키를 GitHub Secret에 넣어야 합니다.
+- SSM은 EC2의 에이전트가 AWS로 **나가는(outbound)** 연결만 쓰므로 인바운드 포트를 하나도 더 열 필요가 없고,
+  누가 어떤 명령을 보냈는지 CloudTrail/SSM 기록에 남습니다.
+- OIDC 덕분에 AWS Access Key 같은 장기 비밀값을 GitHub에 저장하지 않습니다. 토큰은 "이 저장소의 main 브랜치에서 돈 워크플로"만 받을 수 있습니다.
+
+**AWS 쪽 구성 (콘솔에서 1회, 최소 권한)**
+
+| 구성 요소                                      | 내용                                                                                                                                        |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| EC2 인스턴스 역할 `backend-visualized-ec2-ssm` | 관리형 정책 `AmazonSSMManagedInstanceCore`만. SSM Agent가 AWS에 등록되는 데 필요                                                            |
+| IAM OIDC 공급자                                | `token.actions.githubusercontent.com`, audience `sts.amazonaws.com`                                                                         |
+| 배포 역할 `backend-visualized-github-deploy`   | 신뢰 정책: `sub` = `repo:POcodingWER/backend-visualized:ref:refs/heads/main`, `aud` = `sts.amazonaws.com`                                   |
+| 배포 역할 인라인 정책                          | `ssm:SendCommand` → 이 인스턴스 ARN + `AWS-RunShellScript` 문서만 / `ssm:GetCommandInvocation`, `ssm:ListCommandInvocations` → `*` (조회만) |
+
+- 배포 역할은 EC2를 만들거나 지우거나, 다른 인스턴스에 명령을 보내거나, 비밀값을 읽을 수 없습니다.
+- 워크플로에 `environment:`를 붙이면 OIDC `sub`가 `repo:…:environment:<이름>`으로 바뀌어 신뢰 정책과 맞지 않습니다. 붙이려면 신뢰 정책도 같이 바꾸세요.
+
+**서버 쪽 준비**
+
+```bash
+sudo snap services amazon-ssm-agent          # Ubuntu 24.04 AMI에 기본 설치 (enabled/active)
+# 인스턴스 역할을 붙인 뒤 에이전트 재시작 → 로그에 등록 성공이 보여야 함
+sudo snap restart amazon-ssm-agent
+sudo tail -n 30 /var/log/amazon/ssm/amazon-ssm-agent.log   # "Successfully registered" / "credentials" 오류가 없어야 함
+```
+
+**`git reset --hard`를 쓰는 이유와 주의점**
+
+서버 checkout은 "main을 그대로 비추는 거울"이어야 합니다. `deploy/production.env`(비밀값)는 `.gitignore` 대상이라
+reset의 영향을 받지 않지만, **서버에서 직접 고친 추적 파일은 다음 배포 때 사라집니다.** 고칠 것은 반드시 저장소에 커밋하세요.
+(배포 전에 `git status --short`가 비어 있는지 확인해 두었습니다.)
+
+**수동 배포 / 롤백**
+
+- Actions → **Deploy** → Run workflow → `ref` 비우면 main 최신 재배포.
+- 롤백: `ref`에 예전 main 커밋 SHA를 넣고 실행 (main에 없는 커밋은 거부). **다음 main push 때 다시 최신으로 배포**되므로,
+  오래 유지할 롤백이면 `git revert <문제 커밋>` → main에 push 하는 게 정석입니다.
+- DB 마이그레이션은 되돌려지지 않습니다 (Prisma `migrate deploy`는 앞으로만). 스키마를 바꾼 커밋을 롤백할 땐 주의.
+- `up -d --build`는 api 컨테이너를 다시 만드는 몇 초 동안 Caddy가 502를 돌려줄 수 있습니다 (단일 인스턴스의 한계).
+
+---
+
 ## 8. 문제 해결
 
-| 증상                              | 확인                                                                    |
-| --------------------------------- | ----------------------------------------------------------------------- |
-| API 컨테이너가 바로 종료          | `./deploy/compose.sh logs api` 의 `[config] 환경 변수 설정 오류` 목록   |
-| 인증서 발급 실패                  | DNS A 레코드가 Elastic IP인지, 보안 그룹 80/443 열림 확인. `logs caddy` |
-| 브라우저 CORS 오류                | `WEB_ORIGIN`이 Vercel 주소와 **정확히** 같은지 (https, 끝 슬래시 없음)  |
-| 새로고침하면 로그아웃             | 4장: `none`+Secure인지, Safari면 커스텀 도메인 + `lax`                  |
-| 모든 사용자가 429                 | `TRUST_PROXY` 값 (Caddy 뒤면 1)                                         |
-| `prisma migrate deploy` 반복 실패 | RDS 보안 그룹이 EC2 보안 그룹을 허용하는지, 비밀번호 URL 인코딩         |
+| 증상                                                                                        | 확인                                                                                                     |
+| ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| API 컨테이너가 바로 종료                                                                    | `./deploy/compose.sh logs api` 의 `[config] 환경 변수 설정 오류` 목록                                    |
+| 인증서 발급 실패                                                                            | DNS A 레코드가 Elastic IP인지, 보안 그룹 80/443 열림 확인. `logs caddy`                                  |
+| 브라우저 CORS 오류                                                                          | `WEB_ORIGIN`이 Vercel 주소와 **정확히** 같은지 (https, 끝 슬래시 없음)                                   |
+| 새로고침하면 로그아웃                                                                       | 4장: `none`+Secure인지, Safari면 커스텀 도메인 + `lax`                                                   |
+| 모든 사용자가 429                                                                           | `TRUST_PROXY` 값 (Caddy 뒤면 1)                                                                          |
+| `prisma migrate deploy` 반복 실패                                                           | RDS 보안 그룹이 EC2 보안 그룹을 허용하는지, 비밀번호 URL 인코딩                                          |
+| Deploy: `Could not assume role` / `Not authorized to perform sts:AssumeRoleWithWebIdentity` | OIDC 공급자, 역할 신뢰 정책의 `sub`(main 브랜치)·`aud`                                                   |
+| Deploy: `InvalidInstanceId`                                                                 | 인스턴스에 `backend-visualized-ec2-ssm` 역할이 붙었는지, SSM Agent 재시작 후 Fleet Manager에 Online인지  |
+| Deploy: `AccessDeniedException ... ssm:SendCommand`                                         | 배포 역할 인라인 정책의 인스턴스 ARN·문서 ARN(`arn:aws:ssm:ap-northeast-2::document/AWS-RunShellScript`) |
