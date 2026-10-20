@@ -425,6 +425,14 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* 번호 붙은 짧은 설명 (예: 4장 "두 명만") */
+.steps {
+  margin: 0;
+  padding-left: 1.3rem;
+  display: grid;
+  gap: var(--space-2);
+}
+
 .tradeoff {
   font-size: var(--text-sm);
   font-weight: 600;

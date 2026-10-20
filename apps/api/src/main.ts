@@ -25,7 +25,8 @@ async function bootstrap() {
     next();
   });
   // credentials: 리프레시 토큰 httpOnly 쿠키를 주고받기 위해 필요 (그래서 정확한 출처 목록만 허용)
-  app.enableCors({ origin: appEnvironment.webOrigins, credentials: true });
+  // maxAge: JSON POST마다 붙던 사전 확인(OPTIONS)을 브라우저가 10분 기억 → Network 탭에 요청이 두 번씩 보이지 않게
+  app.enableCors({ origin: appEnvironment.webOrigins, credentials: true, maxAge: 600 });
   app.useGlobalPipes(
     new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),
   );

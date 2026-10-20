@@ -77,8 +77,8 @@ curl localhost:4000/health            # {"status":"ok"...} 이면 DB 연결 OK
 ```
 apps/web/
   app/
-    page.tsx                  첫 화면 (장 목록, 여섯 장의 선택, 만든 사람)
-    landing-content.ts        첫 화면 글: 만든 사람(AUTHOR), 장별 선택·포기·배운 것(DECISIONS). 고치면 docs/decisions.md도 같이
+    page.tsx                  첫 화면 (장 목록, 여섯 장의 선택, About me)
+    landing-content.ts        첫 화면 글: About me(AUTHOR), 장별 선택·포기·배운 것(DECISIONS). 고치면 docs/decisions.md도 같이
     layout.tsx                공통 머리말(SiteHeader)·글꼴·공유 미리보기(OG) 문구
     icon.svg                  파비콘 (손그림 버튼). Next 파일 규칙이라 따로 연결하지 않는다
     opengraph-image.png       링크 공유 미리보기 그림 1200×630 (첫 화면 그림으로 만든 정적 PNG, .alt.txt가 대체 글)
@@ -97,7 +97,7 @@ apps/web/
     useReplay.ts              실측 타임라인을 2.5~6초로 다시 재생하는 훅
     single-flight.ts          진행 중인 Promise 공유 (2장 토큰 갱신)
   public/data/*.json          "지난 실측 기록" — 첫 화면을 빈 상태 없이 보여주는 값
-  public/author.jpg           만든 사람 사진 (354×472, 촬영 정보 제거)
+  public/author.jpg           About me 사진 (354×472, 촬영 정보 제거)
 
 apps/api/src/                 폴더 = URL 첫 단어 = 모듈 (자세히: architecture.md)
   coupons/ auth/ events/ points/ payments/ cache-demo/ health/
@@ -153,7 +153,7 @@ docs/                         이 문서, architecture, deploy, auth-tokens, cha
 
 ### 4장 포인트 통장 `/ledger` — 잔액이 저절로 틀어지는 이유
 
-- 화면: `LedgerDemo.tsx`
+- 화면: `LedgerDemo.tsx`. "왜 15,000P가 아닐까요?"의 숫자는 `ledger/lost-update.ts`가 실행 결과에서 센다 (테스트: 기록 파일 숫자 = 시뮬레이션 조건)
 - `ledger/api.ts` `simulatePoints` → `POST /points/simulate` (`SimulatePointsDto`) → `PointsService.simulateBothModes`
   - 덮어쓰기(`applyByOverwrite`): 잔액을 읽고 계산해 덮어씀 → 동시 요청이 서로의 몫을 지움
   - 통장(`applyByLedger`): 한 트랜잭션 안에서 지갑 행을 잠그고(`FOR UPDATE`) → 0 미만이면 거절 → `PointEntry` 한 줄 추가 → 잔액 += 금액
@@ -163,7 +163,7 @@ docs/                         이 문서, architecture, deploy, auth-tokens, cha
 
 ### 5장 결제 버튼 두 번 `/double-pay` — 두 번 눌러도 한 번만 결제
 
-- 화면: `PaymentDemo.tsx` (연타 + 앱 자동 재시도 시나리오를 키 없이/키 있게 두 번)
+- 화면: `PaymentDemo.tsx` (연타 + 앱 자동 재시도 시나리오를 실험 A 키 없이 / 실험 B 키 있게, 버튼 한 번에 나란히). Network 탭의 `POST /payments` 8개 중 빨간(canceled) 2개는 앱이 0.6초에 끊은 첫 요청 — 정상
 - `double-pay/api.ts` `pay` → `POST /payments` (`PayDto` + `Idempotency-Key` 헤더) → `PaymentsService.pay`
   - 키가 없으면 누를 때마다 새 결제. 키가 있으면 `(idempotencyKey)` 유니크 행을 먼저 `processing`으로 INSERT → 가짜 PG 대기 → `paid`. 같은 키가 또 오면 처음 결과를 다시 돌려줌(`replayed`, `Idempotent-Replayed` 헤더), 처리 중이면 409, 같은 키로 다른 주문·금액이면 422. 동시에 같은 키가 와도 `idempotencyKey` **unique 제약**이 INSERT를 하나만 통과시킵니다
 - `listPayments` → `GET /payments?orderId=` 로 실제 생긴 행을 0.2초마다 확인
@@ -171,7 +171,7 @@ docs/                         이 문서, architecture, deploy, auth-tokens, cha
 
 ### 6장 맛집 메뉴판 `/cache` — 빠르게 보여주고, 제때 바꾸기
 
-- 화면: `CacheDemo.tsx` (손님 1000명, 메뉴 바꾸기, 몰림(stampede) 세 구역)
+- 화면: `CacheDemo.tsx` (손님 1000명, 메뉴 바꾸기, 몰림(stampede) 세 구역). 메뉴 바꾸기 지켜보기 상태는 `cache/menu-watch.ts`
 - `cache/api.ts`
   - `runVisitors` → `POST /cache-demo/visitors` → `CacheDemoService.welcomeVisitors`: DB 직접 vs 캐시 경유 DB 읽기 횟수
   - `readMenu`/`editMenu` → `GET/POST /cache-demo/menu`: `readThroughCache`(Redis `GET` → 없으면 MySQL `MenuBoard` → `SET EX 5초`), `edit(invalidate)`(DB 수정 후 `DEL` 할지 말지)

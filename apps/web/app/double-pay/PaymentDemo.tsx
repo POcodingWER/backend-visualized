@@ -211,10 +211,15 @@ export default function PaymentDemo() {
   return (
     <>
       <section className={ui.wide}>
+        <p className={ui.lead} style={{ marginBottom: 'var(--space-6)' }}>
+          아래 큰 버튼 하나로 <b>두 실험이 나란히</b> 돌아요. 두 줄 모두 똑같이 요청 4개(세 번 누름
+          + 앱의 자동 재시도)를 보내고, 주문도 줄마다 따로 하나씩이에요. 다른 건 번호표가 있느냐
+          없느냐 하나뿐이에요.
+        </p>
         <div className={flow.stage}>
           <div className={flow.lanes}>
-            <PaymentLane title="번호표 없이" run={shown.withoutKey} />
-            <PaymentLane title="번호표(Idempotency-Key)와 함께" run={shown.withKey} />
+            <PaymentLane title="실험 A · 번호표 없이" run={shown.withoutKey} />
+            <PaymentLane title="실험 B · 번호표(Idempotency-Key)와 함께" run={shown.withKey} />
           </div>
           <div className={flow.stageSide}>
             <p className={ui.source}>{sourceLabel}</p>
@@ -229,9 +234,10 @@ export default function PaymentDemo() {
               {isRunning ? '결제하는 중…' : '결제 버튼 세 번 연달아 눌러 보기'}
             </Button>
             <p className={ui.hint}>
-              실제 서버로 결제 요청을 보내요: 버튼을 0.09초 간격으로 세 번 누르고, 첫 응답이 0.6초
-              안에 안 오면 앱이 한 번 더 보내요. 결제사 승인은 0.9초 걸리게 해 뒀어요(가짜 결제,
-              돈은 안 나가요).
+              실제 서버로 결제 요청을 보내요: 실험마다 버튼을 0.09초 간격으로 세 번 누르고, 첫
+              응답이 0.6초 안에 안 오면 앱이 한 번 더 보내요. 그래서 한 번 누르면 요청은 모두
+              8개(실험마다 4개)예요. 결제사 승인은 0.9초 걸리게 해 뒀어요(가짜 결제, 돈은 안
+              나가요).
             </p>
             {error && <p className={ui.errorLine}>{error}</p>}
           </div>
@@ -304,6 +310,16 @@ export default function PaymentDemo() {
               아니라 "결제 시도"에 묶어서 만들어요. 한계(ponytail): 첫 요청이 PG 호출 중에 죽으면
               키가 processing으로 남아요. 운영에선 오래된 processing을 결제사에 조회해 정리하는 잡이
               필요해요. 데모 행은 30분 뒤 자동 삭제.
+            </p>
+            <p>
+              브라우저 개발자 도구로 보면: 큰 버튼 한 번에 <code>POST /payments</code> 8개(실험 A·B
+              각 4개, 실험마다 <code>orderId</code> 하나), 끝날 때까지 200ms마다{' '}
+              <code>GET /payments?orderId=…</code>가 두 주문을 번갈아 조회해요. 빨간(canceled) 2개는
+              실험마다 첫 요청을 앱이 0.6초 만에 <code>AbortController</code>로 끊은 것이고, 서버는
+              그 요청도 끝까지 처리해요(A에선 결제 1건, B에선 키를 먼저 잡은 쪽). 크로스 오리진 JSON
+              POST라 브라우저가 사전 확인(<code>OPTIONS</code>)을 먼저 보내는데, API가{' '}
+              <code>Access-Control-Max-Age: 600</code>을 줘서 10분 동안은 한 번이면 돼요(전에는
+              요청에 <code>cache: &apos;no-store&apos;</code>가 붙어 Chrome이 매번 다시 보냈어요).
             </p>
             <p>
               코드: <a href={CODE_URL}>payments.service.ts</a> · 문서:{' '}

@@ -7,7 +7,7 @@ import styles from './landing.module.css';
 import { buttonClassName } from './components/atoms/Button';
 import { INK, inkStroke } from './components/atoms/ink';
 import { DevDetails } from './components/molecules/DevDetails';
-import { AUTHOR, DECISIONS } from './landing-content';
+import { AUTHOR, DECISIONS, type TextLink } from './landing-content';
 
 const ink = { ...inkStroke, strokeWidth: 2.2 };
 const docLink = (file: string) => `${GITHUB_URL}/blob/main/docs/benchmarks/${file}`;
@@ -212,7 +212,7 @@ export default function Home() {
       </section>
 
       <section className={ui.wide} id="author">
-        <h2 className={ui.sectionTitle}>만든 사람</h2>
+        <h2 className={ui.sectionTitle}>About me</h2>
         <div className={styles.author}>
           <Image
             src="/author.jpg"
@@ -225,14 +225,7 @@ export default function Home() {
           <div className={styles.authorText}>
             <p className={styles.authorName}>{AUTHOR.name}</p>
             <p className={styles.authorIntro}>{AUTHOR.intro}</p>
-            {AUTHOR.story.map((paragraph) => (
-              <p key={paragraph}>{paragraph}</p>
-            ))}
-            <ul className={styles.authorMore}>
-              {AUTHOR.more.map((line) => (
-                <li key={line}>{line}</li>
-              ))}
-            </ul>
+            <p className={ui.source}>{AUTHOR.career}</p>
             <p className={styles.authorLinks}>
               {AUTHOR.resumeUrl && (
                 <a href={AUTHOR.resumeUrl} className={buttonClassName.small}>
@@ -244,8 +237,44 @@ export default function Home() {
                   {link.label}
                 </a>
               ))}
-              <a href={GITHUB_URL}>이 사이트의 저장소</a>
             </p>
+          </div>
+        </div>
+        <div className={styles.authorHighlights}>
+          <ResultNumbers
+            items={AUTHOR.highlights}
+            source={
+              <>
+                회사에서 낸 숫자예요. 출처: <a href={AUTHOR.resumeUrl}>이력서</a>
+              </>
+            }
+          />
+        </div>
+        <div className={styles.authorColumns}>
+          <div>
+            <h3>회사 경험이 이 사이트의 장으로</h3>
+            <ul className={styles.authorList}>
+              {AUTHOR.bridges.map((bridge) => (
+                <li key={bridge.text}>
+                  {bridge.text}{' '}
+                  {bridge.links.map((link) => (
+                    <TextLinkTo key={link.href} link={link} />
+                  ))}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <h3>이 사이트에서 직접 한 서버 쪽 일</h3>
+            <p>
+              {AUTHOR.builtHere} <Link href="#decisions">여섯 장의 선택 보기 →</Link>
+            </p>
+            <h3>끝까지 파고든 문제</h3>
+            <ul className={styles.authorList}>
+              {AUTHOR.ownership.map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
           </div>
         </div>
       </section>
@@ -277,7 +306,7 @@ export default function Home() {
         </ol>
         <ul className={styles.facts}>
           <li>
-            자동 테스트 65개 — API 50개(실제 MySQL·Redis로 동시성 검증 포함), 화면 13개, 이벤트 SDK
+            자동 테스트 72개 — API 51개(실제 MySQL·Redis로 동시성 검증 포함), 화면 19개, 이벤트 SDK
             2개
           </li>
           <li>
@@ -293,5 +322,19 @@ export default function Home() {
         </ul>
       </section>
     </main>
+  );
+}
+
+/** 이 사이트의 장(/…)은 Link, 바깥 주소는 a */
+function TextLinkTo({ link }: { link: TextLink }) {
+  const text = `${link.label} →`;
+  return (
+    <span className={styles.chapterLink}>
+      {link.href.startsWith('/') ? (
+        <Link href={link.href}>{text}</Link>
+      ) : (
+        <a href={link.href}>{text}</a>
+      )}
+    </span>
   );
 }

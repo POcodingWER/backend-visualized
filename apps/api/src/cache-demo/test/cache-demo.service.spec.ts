@@ -58,6 +58,26 @@ describe('menu cache stampede (Redis + MySQL)', () => {
     assert.equal(none.dbReads, 300);
   });
 
+  test('first edit on a fresh board (version 1, like the page right after an empty DB) works', async (testContext) => {
+    if (!up) return testContext.skip('DB or Redis unavailable');
+    const fresh = new CacheDemoService(prisma, redis);
+    fresh.boardName = `test-first-edit-${process.pid}`;
+    try {
+      const [direct, cached] = await Promise.all([fresh.readDirect(), fresh.readThroughCache()]);
+      assert.equal(direct.board.version, 1);
+      assert.equal(cached.board.version, 1);
+      const edited = await fresh.edit(false);
+      assert.equal(edited.board.version, 2);
+      assert.equal((await fresh.readDirect()).board.version, 2);
+      assert.equal((await fresh.readThroughCache()).board.version, 1); // 메뉴판은 TTL까지 옛 메뉴
+      await fresh.edit(true);
+      assert.equal((await fresh.readThroughCache()).board.version, 3); // 지우면 바로 새 메뉴
+    } finally {
+      await redis.del(fresh.cacheKey, fresh.lockKey);
+      await prisma.menuBoard.deleteMany({ where: { name: fresh.boardName } });
+    }
+  });
+
   test('edit without DEL serves stale until TTL; with DEL serves new at once', async (testContext) => {
     if (!up) return testContext.skip('DB or Redis unavailable');
     const before = await menu.readThroughCache();
