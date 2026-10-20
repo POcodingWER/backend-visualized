@@ -15,7 +15,8 @@ export const CONNECTION_FAILED = '서버에 연결하지 못했어요. 잠시 �
 
 /**
  * API 호출 한 번. 각 장의 api.ts만 이 함수를 쓰고, 화면 컴포넌트는 장별 api.ts 함수를 부른다.
- * - json을 주면 POST 본문(JSON)으로 보낸다. 캐시는 항상 끈다(데모 값은 매번 새로 읽어야 한다).
+ * - json을 주면 POST 본문(JSON)으로 보낸다. GET은 캐시를 끈다(데모 값은 매번 새로 읽어야 한다).
+ *   POST는 원래 캐시되지 않고, no-store를 붙이면 Chrome이 CORS 사전 확인(OPTIONS)을 기억하지 않고 매번 다시 보낸다.
  * - 4xx/5xx도 던지지 않고 status와 body를 돌려준다. 상태 코드별 문장은 장마다 다르므로 호출한 쪽이 고른다.
  * - 네트워크 오류(서버 꺼짐 등)만 FriendlyError로 던진다.
  */
@@ -27,8 +28,9 @@ export async function callApi<Body>(
   let response: Response;
   try {
     response = await fetch(`${API_URL}${path}`, {
-      cache: 'no-store',
-      ...(json !== undefined && { method: 'POST', body: JSON.stringify(json) }),
+      ...(json === undefined
+        ? { cache: 'no-store' as const }
+        : { method: 'POST', body: JSON.stringify(json) }),
       ...init,
       headers: {
         ...(json !== undefined && { 'Content-Type': 'application/json' }),

@@ -45,7 +45,7 @@ export const readMenu = (via: 'db' | 'cache') =>
   requireOk<MenuRead>(callApi(`/cache-demo/menu?via=${via}`));
 
 export const editMenu = (invalidate: boolean) =>
-  runExperiment<{ board: { version: number }; hops: Hop[] }>('/cache-demo/menu', { invalidate });
+  runExperiment<{ board: MenuRead['board']; hops: Hop[] }>('/cache-demo/menu', { invalidate });
 
 export const runVisitors = (visitors: number) =>
   runExperiment<VisitorsResult>('/cache-demo/visitors', { visitors });

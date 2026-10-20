@@ -16,13 +16,13 @@ import {
   runStampede,
   runVisitors,
   type Hop,
-  type MenuRead,
   type Node,
   type Protection,
   type RedisCommandName,
   type StampedeResult,
   type VisitorsResult,
 } from './api';
+import { emptySide, nextSide, versionLabel, watchWhileMounted, type SideState } from './menu-watch';
 
 const RECORDED_AT = '2026-10-20';
 /** 지난 실측 (로컬 API + bv-redis + MySQL 8.4). 첫 화면을 빈 상태 없이 보여주려는 값 */
@@ -342,15 +342,6 @@ function FlowNode({
 
 /* ---------- 내용을 고치면? (TTL 동안 옛 내용) ---------- */
 
-interface SideState {
-  read: MenuRead | null;
-  dbReads: number;
-  /** 수정 후 새 버전이 처음 보인 시각 (수정 기준 ms) */
-  freshAfterMs: number | null;
-  pollIndex: number;
-}
-const emptySide: SideState = { read: null, dbReads: 0, freshAfterMs: null, pollIndex: 0 };
-
 function StaleSection() {
   const [invalidate, setInvalidate] = useState(false);
   const [sides, setSides] = useState<{ db: SideState; cache: SideState }>({
@@ -358,6 +349,7 @@ function StaleSection() {
     cache: emptySide,
   });
   const [editedVersion, setEditedVersion] = useState<number | null>(null);
+  const [editedContent, setEditedContent] = useState<string | null>(null);
   const [editHops, setEditHops] = useState<Hop[]>([]);
   const [elapsedMs, setElapsedMs] = useState<number | null>(null);
   const [isWatching, setIsWatching] = useState(false);
@@ -374,9 +366,7 @@ function StaleSection() {
         }),
       )
       .catch(() => setError('서버(또는 Redis)에 연결하지 못했어요.'));
-    return () => {
-      stopRef.current = true;
-    };
+    return watchWhileMounted(stopRef);
   }, []);
 
   const editAndWatch = async () => {
@@ -387,6 +377,7 @@ function StaleSection() {
       await readMenu('cache');
       const edited = await editMenu(invalidate);
       setEditedVersion(edited.board.version);
+      setEditedContent(edited.board.content);
       setEditHops(edited.hops);
       const editedAt = performance.now();
       setSides((current) => ({
@@ -448,6 +439,14 @@ function StaleSection() {
           바꿀 때 메뉴판도 지우기 (무효화)
         </label>
       </div>
+      {editedContent && (
+        <p className={ui.goodText} style={{ marginTop: 'var(--space-3)', fontWeight: 700 }}>
+          주방(DB)에서는 바로 바뀌었어요: {editedContent}
+          {!invalidate && editedVersion !== null && sides.cache.freshAfterMs === null
+            ? ' · 오른쪽 손님은 메뉴판을 다시 확인할 때까지 옛 메뉴를 봐요'
+            : ''}
+        </p>
+      )}
       {editHops.length > 0 && (
         <HopStrip hops={editHops} runKey={`edit-${editedVersion}`} caption="메뉴 바꾸기" />
       )}
@@ -455,21 +454,12 @@ function StaleSection() {
         <Conclusion isGood={cacheFresh !== null && cacheFresh < 1000}>
           {cacheFresh === null
             ? '7초 안에 오른쪽이 바뀌지 않았어요. 다시 해 보세요.'
-            : `왼쪽은 ${(sides.db.freshAfterMs! / 1000).toFixed(1)}초, 오른쪽은 ${(cacheFresh / 1000).toFixed(1)}초 만에 새 메뉴가 보였어요. ${invalidate ? '메뉴판을 지웠더니 바로 바뀌었어요.' : '그 사이 오른쪽 손님은 옛 메뉴를 봤어요.'} 주방 간 횟수: 왼쪽 ${sides.db.dbReads}번, 오른쪽 ${sides.cache.dbReads}번.`}
+            : `왼쪽은 ${(sides.db.freshAfterMs! / 1000).toFixed(1)}초, 오른쪽은 ${(cacheFresh / 1000).toFixed(1)}초 만에 새 메뉴가 보였어요. ${invalidate ? '메뉴판을 지웠더니 바로 바뀌었어요.' : `오류가 아니라 메뉴판(5초)의 대가예요: 그 ${(cacheFresh / 1000).toFixed(1)}초 동안 오른쪽 손님은 옛 메뉴를 봤어요. "메뉴판도 지우기"를 켜고 다시 해 보세요.`} 주방 간 횟수: 왼쪽 ${sides.db.dbReads}번, 오른쪽 ${sides.cache.dbReads}번.`}
         </Conclusion>
       )}
       {error && <p className={ui.errorLine}>{error}</p>}
     </section>
   );
-}
-
-function nextSide(side: SideState, read: MenuRead, editedVersion: number, at: number): SideState {
-  return {
-    read,
-    dbReads: side.dbReads + (read.source === 'db' ? 1 : 0),
-    freshAfterMs: side.freshAfterMs ?? (read.board.version >= editedVersion ? at : null),
-    pollIndex: side.pollIndex + 1,
-  };
 }
 
 function MenuSide({
@@ -481,8 +471,7 @@ function MenuSide({
   side: SideState;
   editedVersion: number | null;
 }) {
-  const isStale =
-    editedVersion !== null && side.read !== null && side.read.board.version < editedVersion;
+  const { text: versionText, isStale } = versionLabel(side, editedVersion);
   return (
     <article className={ui.fix}>
       <h3>{title}</h3>
@@ -495,9 +484,7 @@ function MenuSide({
       <dl className={ui.fixStats}>
         <div>
           <dt>지금 보이는 판</dt>
-          <dd className={isStale ? ui.failText : ui.goodText}>
-            {side.read ? `${side.read.board.version}번째${isStale ? ' (옛 메뉴)' : ''}` : '…'}
-          </dd>
+          <dd className={isStale ? ui.failText : ui.goodText}>{versionText}</dd>
         </div>
         <div>
           <dt>주방(DB) 간 횟수</dt>

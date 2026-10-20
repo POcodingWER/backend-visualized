@@ -108,13 +108,32 @@
   font-size: 1.08rem;
   font-weight: 650;
 }
-.authorMore {
+.authorHighlights {
+  margin-top: var(--space-8);
+}
+.authorColumns {
+  margin-top: var(--space-12);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-8);
+}
+.authorColumns h3 {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-lg);
+}
+.authorColumns * + h3 {
+  margin-top: var(--space-6);
+}
+.authorList {
   margin: 0;
   padding-left: 1.2rem;
   display: grid;
-  gap: var(--space-1);
-  color: var(--ink-soft);
-  font-size: 0.95rem;
+  gap: var(--space-3);
+}
+.chapterLink {
+  white-space: nowrap;
+  margin-right: var(--space-3);
+  font-weight: 650;
 }
 .decisions {
   display: grid;
@@ -222,6 +241,9 @@
   .author {
     grid-template-columns: minmax(0, 1fr);
     gap: var(--space-4);
+  }
+  .authorColumns {
+    grid-template-columns: minmax(0, 1fr);
   }
   .photo {
     width: 6.5rem;

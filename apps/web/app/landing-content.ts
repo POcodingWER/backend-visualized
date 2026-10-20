@@ -1,31 +1,93 @@
 /**
- * 첫 화면의 "만든 사람"과 "여섯 장의 선택" 글. 숫자는 모두 docs/benchmarks, docs/chapters-4-6.md,
+ * 첫 화면의 About me와 "여섯 장의 선택" 글. 숫자는 모두 docs/benchmarks, docs/chapters-4-6.md,
  * public/data의 실측 기록과 git 기록에 있는 값만 쓴다. 같은 내용을 docs/decisions.md에도 둔다.
  */
 
+import { GITHUB_URL } from '../lib/site';
+
+/** 글 안의 링크 한 조각. href가 /로 시작하면 이 사이트의 장 */
+export interface TextLink {
+  label: string;
+  href: string;
+}
+
+/** 한 줄 + 그 줄이 가리키는 장/저장소 링크 */
+export interface LinkedLine {
+  text: string;
+  links: TextLink[];
+}
+
+/**
+ * About me. 회사 경력 숫자는 이력서(https://pocodingwer.github.io/about/)에 적힌 값만, 이 사이트 이야기는 이 저장소에 있는 것만 쓴다.
+ * 순서: 가장 센 숫자 → 회사 경험이 이 사이트의 어느 장으로 이어지는지 → 끝까지 판 문제 하나.
+ */
 export const AUTHOR = {
   name: '임철순',
   intro:
-    '화면을 만들다 인프라 비용을 88% 줄였고, 이제 서버와 데이터베이스까지 직접 재며 만드는 풀스택 개발자예요.',
+    '서비스 10개를 운영하는 회사에서 프론트엔드를 맡아 비용과 속도를 숫자로 줄여 왔고, 이 사이트에서는 서버와 데이터베이스까지 직접 만들고 쟀어요.',
+  career: '2022.06 블록체인(Solidity) 개발 → 2022.09~ 캠퍼스 B2C 모바일 앱 회사 프론트엔드',
   photoAlt: '임철순 증명사진',
   /** 비워 두면 이력서 버튼을 숨긴다 */
   resumeUrl: 'https://pocodingwer.github.io/about/',
+  highlights: [
+    {
+      value: '88%',
+      label: 'AWS 비용 절감',
+      detail:
+        '월 $1,500+ → $120, 1년에 약 $16,500. SSR → CSR 전환으로 65%, CloudFront 캐시 정책 세분화로 76% 추가 절감',
+    },
+    {
+      value: '10개 · 10개월',
+      label: 'Nuxt.js → React 전환 리드 (2인 팀)',
+      detail:
+        '충전·포인트·티켓 등 서비스 10개를 Lambda@Edge + S3 페이지 단위 배포로 하나씩 옮겼어요 (2025.01~11)',
+    },
+    {
+      value: '80%',
+      label: 'CI 빌드 시간 단축',
+      detail: 'PNPM workspace + Turborepo 모노레포로 바뀐 앱만 빌드. 배포 시간 35%, 번들 25% 감소',
+    },
+    {
+      value: '3초 → 1.2초',
+      label: '초기 로딩',
+      detail: 'CloudFront 요청 월 1,200만 → 100만, 캐시 적중률 90%',
+    },
+  ],
+  /** 회사에서 만든 화면 → 이 사이트에서 서버 쪽으로 직접 재 본 장 */
+  bridges: [
+    {
+      text: '포인트·티켓 화면을 만들며 "동시에 몰리면 서버는 어떻게 지키지?"를 직접 쟀어요',
+      links: [
+        { label: '1장 티켓팅', href: '/ticketing' },
+        { label: '4장 포인트 통장', href: '/ledger' },
+      ],
+    },
+    {
+      text: '충전·결제(문화상품권, 가상계좌) 화면 경험 → 같은 결제가 두 번 되지 않게',
+      links: [{ label: '5장 결제 버튼 두 번', href: '/double-pay' }],
+    },
+    {
+      text: 'CloudFront 캐시로 요청을 90% 줄인 경험 → 서버 쪽 캐시(Redis)에서 같은 문제를',
+      links: [{ label: '6장 맛집 메뉴판', href: '/cache' }],
+    },
+    {
+      text: '회사에서 만든 pnpm + Turborepo 모노레포 구조 그대로 이 사이트를 만들었어요',
+      links: [{ label: '이 사이트의 저장소', href: GITHUB_URL }],
+    },
+  ] satisfies LinkedLine[],
+  /** 이 사이트에서 직접 한 서버 쪽 일 (이 저장소에 있는 사실만) */
+  builtHere:
+    'NestJS + Prisma + MySQL 8 + Redis 7로 API를 만들었어요. 장마다 방법을 2~4개 실제 데이터베이스로 재서 고른 이유와 포기한 이유를 남겼고, 커밋마다 GitHub Actions가 포맷 → 타입 검사 → 린트 → 테스트 → 빌드를 돌려요.',
+  /** 끝까지 파고든 운영 문제 (이력서) */
+  ownership: [
+    '세탁기 블루투스 연결 실패(하루 40~50건 이상)를 2개월 추적: Sentry 도입을 제안·구축하고 앱 개발자와 로그 구조를 설계해 특정 기기·OS에서만 나는 걸 찾아 타임아웃·재시도를 넣었어요. 연결 실패율 80%, 고객 문의 90% 감소, 장애 대응 2시간 → 40분.',
+    'AI 코드 리뷰 하네스: PR 리뷰를 Critical/Medium/Low로 자동 분류해, 150개 파일·8,000줄 PR에서 사람이 놓치기 쉬운 Critical 버그를 머지 전에 찾아 고쳤어요.',
+  ],
   links: [
     { label: '블로그', href: 'https://pocodingwer.github.io' },
     { label: 'GitHub', href: 'https://github.com/POcodingWER' },
     { label: 'Instagram', href: 'https://www.instagram.com/lim_cuck' },
     { label: '이메일 cjftns01@gmail.com', href: 'mailto:cjftns01@gmail.com' },
-  ],
-  story: [
-    '2022년 블록체인(Solidity) 개발로 시작해, 2022년 9월부터 서비스 10개를 운영하는 캠퍼스 B2C 모바일 앱 회사에서 프론트엔드를 맡아 왔어요.',
-    '화면만 만든 건 아니었어요. 서비스 10개를 Nuxt.js에서 React로 옮기는 일을 2인 팀 리드로 10개월 동안 했고, PNPM workspace + Turborepo 모노레포로 CI 빌드 시간을 80% 줄였어요. Lambda@Edge + S3로 페이지별 점진 배포를 만들고, CloudFront 캐시를 다듬어 AWS 비용을 월 $1,500+에서 $120로(88%, 1년에 약 $16,500) 낮췄어요. 그때 요청은 월 1,200만에서 100만으로, 캐시 적중률은 90%, 로딩은 3초에서 1.2초가 됐어요.',
-    '결제·충전, 포인트, 티켓 화면을 만들 때마다 "서버는 이걸 어떻게 지키지?"가 궁금했어요. 그래서 이 사이트에서 직접 만들고 쟀어요. 티켓은 1장, 포인트는 4장, 결제는 5장, CloudFront 캐시 경험은 6장의 Redis 캐시로 이어지고, 저장소 구조는 회사에서 만든 것과 같은 pnpm + Turborepo 모노레포예요.',
-  ],
-  more: [
-    'Bluetooth IoT 연결 장애를 Sentry와 로그 설계로 추적해 연결 실패 80%, 문의 90% 감소',
-    '디자인 토큰(style-dictionary) + Storybook으로 디자인 시스템',
-    '자동화: 로케일 팩 작업 시간 70% 단축, 약관 업데이트 30분 → 3분',
-    'AI 에이전트 하네스, PR 리뷰 자동화, MCP 프로젝트로 Kakao Agentic Player 10 공모전 출품',
   ],
 };
 

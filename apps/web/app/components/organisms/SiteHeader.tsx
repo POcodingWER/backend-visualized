@@ -23,7 +23,7 @@ export default function SiteHeader() {
             <span className={styles.navNumber}>{chapter.number}</span> {chapter.title}
           </Link>
         ))}
-        <Link href="/#author">만든 사람</Link>
+        <Link href="/#author">About me</Link>
       </nav>
     </header>
   );

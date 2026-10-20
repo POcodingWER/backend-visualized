@@ -17,6 +17,7 @@ import {
   type PointMode,
   type PointSimulationResult,
 } from './api';
+import { explainLostUpdate } from './lost-update';
 
 const MODES: PointMode[] = ['overwrite', 'ledger'];
 type Results = Record<PointMode, PointSimulationResult>;
@@ -94,6 +95,7 @@ export default function LedgerDemo() {
         playCount={playCount}
         onRun={() => void run()}
       />
+      <WhyNotSection results={results} />
       <ReconcileSection results={results} entries={entries} onRecheck={loadEntries} />
       <OverdraftSection result={results?.ledger ?? null} sourceLabel={sourceLabel} />
       <section className={ui.wide}>
@@ -238,15 +240,19 @@ function LedgerStage({
           <p className={ui.source}>{sourceLabel}</p>
           <p className={`${flow.bigNumber} ${ui.failText}`}>{results ? points(lost) : '…'}</p>
           <p className={flow.bigNumberLabel}>잔액 숫자만 고쳤더니 사라진 포인트 (200건 동시에)</p>
-          <p className={ui.hint}>
-            통장 방식은 같은 200건에서 <b className={ui.goodText}>0P</b> 사라졌어요.
-          </p>
+          {results && (
+            <p className={ui.hint}>
+              있어야 할 잔액 <b>{points(results.overwrite.expectedBalance)}</b> → 실제로 남은 잔액{' '}
+              <b className={ui.failText}>{points(results.overwrite.reconciliation.balance)}</b>.
+              통장 방식은 같은 200건에서 <b className={ui.goodText}>0P</b> 사라졌어요.
+            </p>
+          )}
           <Button size="big" onClick={onRun} disabled={isRunning}>
             {isRunning ? '보내는 중…' : '적립·사용 200건 동시에 보내기'}
           </Button>
           <p className={ui.hint}>
-            실제 서버와 데이터베이스에 적립(+100P) 150건, 사용(−100P) 50건을 한꺼번에 보내요. 시작
-            잔액은 5,000P라 정상이라면 15,000P가 돼야 해요.
+            실제 서버와 데이터베이스에 보내요: 시작 5,000P에서 150명이 100P씩 적립, 50명이 100P씩
+            사용, 모두 동시에. 하나도 빠짐없이 셌다면 5,000 + 15,000 − 5,000 = 15,000P예요.
           </p>
           {error && <p className={ui.errorLine}>{error}</p>}
         </div>
@@ -254,7 +260,7 @@ function LedgerStage({
       {results && (
         <Conclusion isGood={lost <= 0}>
           {lost > 0
-            ? `내역 합계는 ${points(results.overwrite.reconciliation.entriesSum)}인데 잔액 칸은 ${points(results.overwrite.reconciliation.balance)}. 동시에 읽은 사람끼리 서로의 몫을 덮어써서 ${points(lost)}가 사라졌어요.`
+            ? `있어야 할 잔액은 ${points(results.overwrite.expectedBalance)}(내역 합계도 ${points(results.overwrite.reconciliation.entriesSum)})인데 잔액 칸은 ${points(results.overwrite.reconciliation.balance)}. 같은 옛 잔액을 읽은 사람끼리 서로의 결과를 덮어써서 ${points(lost)}가 사라졌어요.`
             : '이번엔 덮어쓰기도 운 좋게 맞았어요. 다시 눌러 보세요 — 동시에 겹치면 언제든 사라져요.'}
         </Conclusion>
       )}
@@ -414,6 +420,183 @@ const LedgerLane = memo(function LedgerLane({
     </svg>
   );
 });
+
+/** 비개발자용 설명: 두 명일 때 100P가 사라지는 걸 먼저 보이고, 같은 일을 200명으로 키운다 */
+function WhyNotSection({ results }: { results: Results | null }) {
+  const overwrite = results ? explainLostUpdate(results.overwrite) : null;
+  const ledger = results ? explainLostUpdate(results.ledger) : null;
+  const lastWriter = overwrite?.lastWriter;
+  return (
+    <section className={ui.wide}>
+      <div className={ui.column}>
+        <h2 className={ui.sectionTitle}>
+          왜 {overwrite ? points(overwrite.shouldBe) : '15,000P'}가 아니라{' '}
+          {overwrite ? points(overwrite.endedAt) : '…'}일까요?
+        </h2>
+        <p className={ui.lead}>
+          <b>있어야 할 잔액</b>은 요청을 하나도 빠짐없이 셌을 때의 값이고, <b>실제로 남은 잔액</b>은
+          끝나고 잔액 칸에 적혀 있던 값이에요. 잔액 숫자만 고치는 방식에선 여러 사람이 같은 순간에
+          같은 옛 잔액을 읽고, 각자 계산한 값을 그 위에 덮어써요. 그래서 먼저 적은 사람의 몫이
+          지워져요.
+        </p>
+      </div>
+      <div className={`${ui.fixes} ${ui.fixesTwo}`}>
+        <article className={ui.fix}>
+          <h3>먼저 두 명만</h3>
+          <TwoPeopleSketch />
+          <ol className={ui.steps}>
+            <li>가와 나가 동시에 잔액을 읽어요. 둘 다 5,000P를 봐요.</li>
+            <li>가: 5,000 + 100 = 5,100P를 적어요.</li>
+            <li>나: 5,000 + 100 = 5,100P를 적어요. 가가 적은 5,100P 위에 덮어써요.</li>
+          </ol>
+          <dl className={ui.fixStats}>
+            <div>
+              <dt>있어야 할 잔액</dt>
+              <dd>5,000 + 100 + 100 = 5,200P</dd>
+            </div>
+            <div>
+              <dt>실제로 남은 잔액</dt>
+              <dd className={ui.failText}>5,100P</dd>
+            </div>
+            <div>
+              <dt>사라진 포인트</dt>
+              <dd className={ui.failText}>100P (가의 몫)</dd>
+            </div>
+          </dl>
+        </article>
+        <article className={ui.fix}>
+          <h3>이제 {results?.overwrite.requests ?? 200}명</h3>
+          {overwrite ? (
+            <>
+              <ol className={ui.steps}>
+                <li>
+                  시작 {points(overwrite.opening)}. {overwrite.earnCount}명이{' '}
+                  {points(overwrite.pointsEach)}씩 적립하고, {overwrite.spendCount}명이{' '}
+                  {points(overwrite.pointsEach)}씩 사용해요. 모두 동시에요.
+                </li>
+                <li>
+                  {overwrite.readOpening === results!.overwrite.requests
+                    ? `${overwrite.readOpening}명 모두가`
+                    : `${results!.overwrite.requests}명 중 ${overwrite.readOpening}명이`}{' '}
+                  같은 {points(overwrite.opening)}를 읽고, 거기에 자기 몫만 더하거나 빼서 적었어요.
+                </li>
+                {lastWriter && (
+                  <li>
+                    마지막에 적은 사람은 {lastWriter.amount > 0 ? '적립' : '사용'}이었어요:{' '}
+                    {points(lastWriter.balanceSeen)} {lastWriter.amount > 0 ? '+' : '−'}{' '}
+                    {points(Math.abs(lastWriter.amount))} = {points(lastWriter.balanceWritten)}. 그
+                    앞의 몫은 전부 덮여서 사라졌어요.
+                  </li>
+                )}
+              </ol>
+              <dl className={ui.fixStats}>
+                <div>
+                  <dt>있어야 할 잔액</dt>
+                  <dd>
+                    {points(overwrite.opening)} + {points(overwrite.earned)} −{' '}
+                    {points(overwrite.spent)} = {points(overwrite.shouldBe)}
+                  </dd>
+                </div>
+                <div>
+                  <dt>실제로 남은 잔액</dt>
+                  <dd className={ui.failText}>{points(overwrite.endedAt)}</dd>
+                </div>
+                <div>
+                  <dt>사라진 포인트</dt>
+                  <dd className={ui.failText}>
+                    {points(overwrite.shouldBe)} − {points(overwrite.endedAt)} ={' '}
+                    {points(overwrite.lost)}
+                  </dd>
+                </div>
+              </dl>
+            </>
+          ) : (
+            <p>기록 불러오는 중…</p>
+          )}
+        </article>
+      </div>
+      {ledger && (
+        <Conclusion isGood>
+          통장 방식은 한 사람이 잔액을 읽고 적는 동안 다음 사람을 기다리게 해요(줄 서기). 그래서
+          200명이 차례로 더해져 {points(ledger.endedAt)}, 사라진 포인트 {points(ledger.lost)}예요.
+        </Conclusion>
+      )}
+    </section>
+  );
+}
+
+/** 두 명이 같은 5,000P를 읽고 둘 다 5,100P를 적는 그림 */
+function TwoPeopleSketch() {
+  const row = (y: number, name: string, writeX: number) => (
+    <g>
+      <text x="8" y={y + 5} fontSize="15" fontWeight="800" fill="#2b2620">
+        {name}
+      </text>
+      <rect
+        x="34"
+        y={y - 14}
+        width="104"
+        height="28"
+        rx="6"
+        fill="#bcd4e0"
+        stroke="#2b2620"
+        strokeWidth="1.5"
+      />
+      <text x="86" y={y + 5} textAnchor="middle" fontSize="13" fill="#2b2620">
+        읽음 5,000P
+      </text>
+      <path
+        d={`M140 ${y} H${writeX - 4}`}
+        stroke="#b9ac95"
+        strokeWidth="1.5"
+        strokeDasharray="4 5"
+      />
+      <rect
+        x={writeX}
+        y={y - 14}
+        width="120"
+        height="28"
+        rx="6"
+        fill="#b4c9a9"
+        stroke="#2b2620"
+        strokeWidth="1.5"
+      />
+      <text x={writeX + 60} y={y + 5} textAnchor="middle" fontSize="13" fill="#2b2620">
+        +100 → 5,100P 적음
+      </text>
+    </g>
+  );
+  return (
+    <svg
+      className={flow.flowSvg}
+      viewBox="0 0 460 130"
+      role="img"
+      aria-label="가와 나가 둘 다 5,000P를 읽고 둘 다 5,100P를 적어서, 잔액 칸은 5,200P가 아니라 5,100P"
+    >
+      {row(30, '가', 160)}
+      {row(86, '나', 196)}
+      <rect
+        x="352"
+        y="22"
+        width="100"
+        height="72"
+        rx="8"
+        fill="#f2d3c8"
+        stroke="#2b2620"
+        strokeWidth="1.8"
+      />
+      <text x="402" y="44" textAnchor="middle" fontSize="12" fill="#5e564b">
+        잔액 칸
+      </text>
+      <text x="402" y="74" textAnchor="middle" fontSize="20" fontWeight="800" fill="#a3321f">
+        5,100P
+      </text>
+      <text x="402" y="116" textAnchor="middle" fontSize="12.5" fontWeight="700" fill="#a3321f">
+        5,200P여야 해요
+      </text>
+    </svg>
+  );
+}
 
 function ReconcileSection({
   results,
