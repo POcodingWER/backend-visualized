@@ -150,7 +150,7 @@ TypeORM 스타일의 `*.entity.ts`를 따로 만들면 같은 모델을 두 번 
 | 단계         | 기준                                      | 파일                                                   |
 | ------------ | ----------------------------------------- | ------------------------------------------------------ |
 | `atoms/`     | 더 쪼갤 수 없는 요소, 상태 없음           | `Button`(big/small), `Conclusion`, `ink`(만화 먹색·선) |
-| `molecules/` | atom 몇 개 + 작은 규칙 하나               | `DevDetails`, `ResultNumbers`(출처 필수)               |
+| `molecules/` | atom 몇 개 + 작은 규칙 하나               | `DevDetails`, `DevFlow`, `ResultNumbers`(출처 필수)    |
 | `organisms/` | 페이지의 큰 덩어리, 데이터(장 목록 등) 앎 | `ChapterLayout`, `ComicStrip`, `SiteHeader`            |
 
 - 훅·함수는 컴포넌트가 아니라 `lib/`: `lib/useReplay.ts`, `lib/single-flight.ts`, `lib/api.ts`.

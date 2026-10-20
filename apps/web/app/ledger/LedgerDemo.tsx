@@ -2,9 +2,9 @@
 
 import { memo, useEffect, useMemo, useState } from 'react';
 import { seconds } from '../../lib/format';
-import { GITHUB_URL } from '../../lib/site';
 import flow from '../components/flow.module.css';
 import { DevDetails } from '../components/molecules/DevDetails';
+import { DevFlow } from '../components/molecules/DevFlow';
 import { ResultNumbers } from '../components/molecules/ResultNumbers';
 import ui from '../components/ui.module.css';
 import { useReplay } from '../../lib/useReplay';
@@ -17,13 +17,12 @@ import {
   type PointMode,
   type PointSimulationResult,
 } from './api';
+import { LEDGER_DEV_FLOW } from './dev-flow';
 import { explainLostUpdate } from './lost-update';
 
 const MODES: PointMode[] = ['overwrite', 'ledger'];
 type Results = Record<PointMode, PointSimulationResult>;
 const RECORDED_RUN_URL = '/data/ledger-recorded-run.json';
-const CODE_URL = `${GITHUB_URL}/blob/main/apps/api/src/points/points.service.ts`;
-const DOCS_URL = `${GITHUB_URL}/blob/main/docs/chapters-4-6.md#4장-포인트-통장`;
 const MODE_TITLE: Record<PointMode, string> = {
   overwrite: '잔액 숫자만 고치기',
   ledger: '통장처럼 내역 남기기',
@@ -141,26 +140,7 @@ export default function LedgerDemo() {
       </section>
       <section className={ui.wide}>
         <DevDetails description="lost update, read-modify-write, SELECT … FOR UPDATE, append-only 원장, 대사(reconciliation), 실제 DB 행">
-          <div className={ui.devIntro}>
-            <p>
-              비유 ↔ 용어: 잔액 칸 = <code>PointWallet.balance</code>, 입출금 내역 ={' '}
-              <code>PointEntry</code>(추가만 하는 원장, append-only), 덮어쓰기 = 애플리케이션에서
-              읽고 계산해서 쓰는 read-modify-write → <b>lost update</b>, 통장 방식 = 한 트랜잭션에서{' '}
-              <code>SELECT balance … FOR UPDATE</code>(행 잠금) → 0 미만 검사 →{' '}
-              <code>INSERT PointEntry</code> → <code>UPDATE balance = balance + ?</code>, 맞춰 보기
-              = 대사(reconciliation): <code>balance</code> vs <code>SUM(PointEntry.amount)</code>.
-            </p>
-            <p>
-              덮어쓰기 쪽도 내역은 남겨서, 대사가 어긋남을 잡아내는 모습을 보여줘요. 실무에선 잔액
-              칸을 아예 두지 않고 SUM으로만 계산하거나, 잔액은 캐시로 두고 매일 밤 대사 잡으로
-              검증해요. 한계: 지갑 한 행을 잠그므로 한 사람에게 요청이 몰리면 줄이 길어져요(위 시간
-              비교).
-            </p>
-            <p>
-              코드: <a href={CODE_URL}>points.service.ts</a> · 문서:{' '}
-              <a href={DOCS_URL}>docs/chapters-4-6.md</a>
-            </p>
-          </div>
+          <DevFlow content={LEDGER_DEV_FLOW} />
           <pre className={ui.source} style={{ overflowX: 'auto', margin: 0 }}>
             {`-- 통장 방식 (한 트랜잭션)
 SELECT balance FROM PointWallet WHERE name = ? FOR UPDATE;  -- 다른 요청은 여기서 대기

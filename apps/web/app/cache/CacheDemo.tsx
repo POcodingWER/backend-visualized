@@ -2,9 +2,9 @@
 
 import { memo, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { seconds } from '../../lib/format';
-import { GITHUB_URL } from '../../lib/site';
 import flow from '../components/flow.module.css';
 import { DevDetails } from '../components/molecules/DevDetails';
+import { DevFlow } from '../components/molecules/DevFlow';
 import { ResultNumbers } from '../components/molecules/ResultNumbers';
 import ui from '../components/ui.module.css';
 import { useReplay } from '../../lib/useReplay';
@@ -22,6 +22,7 @@ import {
   type StampedeResult,
   type VisitorsResult,
 } from './api';
+import { CACHE_DEV_FLOW } from './dev-flow';
 import { emptySide, nextSide, versionLabel, watchWhileMounted, type SideState } from './menu-watch';
 
 const RECORDED_AT = '2026-10-20';
@@ -68,8 +69,6 @@ const PROTECTION_TEXT: Record<Protection, string> = {
   'redis-lock':
     'Redis에 열쇠(SET NX)를 하나만 두고, 열쇠를 잡은 한 명만 주방에 가요. 나머지는 잠깐 기다렸다 메뉴판을 다시 봐요.',
 };
-const CODE_URL = `${GITHUB_URL}/blob/main/apps/api/src/cache-demo/cache-demo.service.ts`;
-const DOCS_URL = `${GITHUB_URL}/blob/main/docs/chapters-4-6.md#6장-맛집-메뉴판`;
 const POLL_MS = 500;
 const WATCH_MS = 7_000;
 
@@ -106,39 +105,7 @@ export default function CacheDemo() {
       </section>
       <section className={ui.wide}>
         <DevDetails description="cache-aside, TTL(SET EX), cache stampede, single-flight vs 분산 잠금(SET NX PX), 무효화(DEL), Redis 명령 수">
-          <div className={ui.devIntro}>
-            <p>
-              비유 ↔ 용어: 주방 = MySQL(원본 메뉴가 든 <code>MenuBoard</code> 행), 메뉴판 = Redis 키{' '}
-              <code>bv:menu:board</code>, 5초마다 새로 확인 = TTL(<code>SET key value EX 5</code>),
-              메뉴판 먼저 보고 없으면 주방 = <b>cache-aside</b>(<code>GET</code> → miss →{' '}
-              <code>SELECT</code> → <code>SET EX</code>), 비는 순간 몰림 = <b>cache stampede</b>
-              (thundering herd), 서버마다 한 명 = 프로세스 안의 single-flight(2장 토큰 갱신과 같은
-              함수), 열쇠 = 분산 잠금 <code>SET bv:menu:board:lock &lt;token&gt; NX PX 2000</code>
-              (잡은 사람만 DB → <code>SET EX</code> → 내 토큰일 때만 <code>DEL</code>하는 Lua),
-              메뉴판 지우기 = <b>무효화</b>(<code>DEL</code>).
-            </p>
-            <p>
-              위 그림의 쉬운 말 ↔ 실제 흐름: 메뉴판에 있을 때 <code>GET → hit</code>, 없을 때{' '}
-              <code>GET → miss → SELECT → 행 → SET EX 5</code>, 매번 주방에 갈 때{' '}
-              <code>SELECT → 행</code>, 메뉴 바꾸기 <code>UPDATE</code>(무효화를 켜면{' '}
-              <code>+ DEL</code>). 몰림 실험의 Redis 명령 수는 아래 표에 있어요.
-            </p>
-            <p>
-              왜 Redis인가: single-flight는 한 프로세스의 메모리 안에서만 묶여서, 서버를 여러 대로
-              늘리면 대수만큼 DB에 가요(위 3). 잠금과 메뉴판을 모든 서버가 같이 보는 곳(Redis)에
-              두면 서버 수와 상관없이 한 번이에요. 한계: 잠금을 기다리는 손님이 20ms마다 다시 GET
-              해서 GET 수가 늘어요(위 1999). 잠금 주인이 1초 넘게 늦으면 기다리던 손님은 DB에서 직접
-              읽어요(db-fallback). 무효화는 "DB 수정 후 DEL" 순서라, 그 사이 아주 짧게 옛 값이 다시
-              채워질 수 있어요(지연 이중 삭제·버전 비교로 줄임).
-            </p>
-            <p>
-              로컬 Redis: <code>docker compose up -d redis</code> → 컨테이너 <code>bv-redis</code>,
-              포트 6380(다른 Redis와 안 겹치게), 디스크 저장 끔. 운영:{' '}
-              <code>docker-compose.prod.yml</code>의 redis 컨테이너, <code>REDIS_URL</code>. 코드:{' '}
-              <a href={CODE_URL}>cache-demo.service.ts</a> · 문서:{' '}
-              <a href={DOCS_URL}>docs/chapters-4-6.md</a>
-            </p>
-          </div>
+          <DevFlow content={CACHE_DEV_FLOW} />
           <CommandTable results={RECORDED_STAMPEDE} />
         </DevDetails>
       </section>

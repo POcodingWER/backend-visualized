@@ -4,9 +4,11 @@ import { memo, useEffect, useState } from 'react';
 import { seconds } from '../../lib/format';
 import { GITHUB_URL } from '../../lib/site';
 import { DevDetails } from '../components/molecules/DevDetails';
+import { DevFlow } from '../components/molecules/DevFlow';
 import { ResultNumbers } from '../components/molecules/ResultNumbers';
 import ui from '../components/ui.module.css';
 import { runSimulation } from './api';
+import { TICKETING_DEV_FLOW } from './dev-flow';
 import styles from './coupon.module.css';
 import {
   DEFAULT_USERS,
@@ -152,33 +154,7 @@ export default function TicketingDemo() {
 
       <section className={ui.wide}>
         <DevDetails description="전략별 SQL, DB 상태 변화 차트, 요청 500개 기록, 실제 DB 행 확인">
-          <div className={ui.devIntro}>
-            <p>
-              버튼은 <code>POST /coupons/simulate</code>를 호출해요. 서버(NestJS + Prisma)가 MySQL에
-              동시 요청을 던지고, 요청마다 시작·끝 시각, 재시도, 락 대기 시간을 기록해 돌려줘요.
-              화면은 그 실측 타임라인을 2.5~6초로 늘여 재생한 거예요. 별도
-              커넥션(connection_limit=1)이 약 25ms마다 실제 행을 읽은 스냅숏도 함께 와요.
-            </p>
-            <p>
-              비유 ↔ 용어: 줄 세우기 = 비관적 락(<code>SELECT … FOR UPDATE</code>), 눈치 보고 재도전
-              = 낙관적 락(version 비교 후 재시도, 최대 30회), 한 번에 처리 = 원자적 조건부{' '}
-              <code>UPDATE … WHERE issuedCount &lt; totalQuantity</code>.
-            </p>
-            <p>
-              코드:{' '}
-              <a href={`${GITHUB_URL}/blob/main/apps/api/src/coupons/lib/coupon-strategies.ts`}>
-                coupon-strategies.ts
-              </a>{' '}
-              · 검증 테스트:{' '}
-              <a
-                href={`${GITHUB_URL}/blob/main/apps/api/src/coupons/test/coupon-strategies.spec.ts`}
-              >
-                coupon-strategies.spec.ts
-              </a>{' '}
-              (실제 MySQL에서 300명 vs 50장: 제어 없음은 초과 발급, 나머지 셋은 정확히 50장) · 남용
-              방지: 실행 후 서버 전체 3초 쿨다운, 동시 실행 1개, IP당 10초에 6번.
-            </p>
-          </div>
+          <DevFlow content={TICKETING_DEV_FLOW} />
           <StrategyLab results={results} onResults={mergeResults} />
         </DevDetails>
       </section>

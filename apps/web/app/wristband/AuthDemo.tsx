@@ -4,7 +4,9 @@ import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import type { ApiResult } from '../../lib/api';
 import { createSingleFlight } from '../../lib/single-flight';
 import { DevDetails } from '../components/molecules/DevDetails';
+import { DevFlow } from '../components/molecules/DevFlow';
 import { authApi, errorReason, isSession, REASON_KO, type Session } from './api';
+import { WRISTBAND_DEV_FLOW } from './dev-flow';
 import ConcurrencyRace from './ConcurrencyRace';
 import JwtDecoder from './JwtDecoder';
 import StorageComparison from './StorageComparison';
@@ -231,6 +233,7 @@ export default function AuthDemo() {
       />
       <section style={{ maxWidth: 'var(--wide)', margin: '0 auto' }}>
         <DevDetails description="토큰 수명 타임라인과 로그인, 요청 기록, 동시 갱신 경주, 토큰 묶음(family) 표, JWT 디코더">
+          <DevFlow content={WRISTBAND_DEV_FLOW} />
           <div className={styles.main}>
             <section className={styles.card}>
               <h2>① 토큰 수명 타임라인</h2>
