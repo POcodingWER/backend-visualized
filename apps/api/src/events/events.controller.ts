@@ -11,15 +11,17 @@ import {
   Sse,
   UseGuards,
 } from '@nestjs/common';
-import { ThrottlerGuard } from '@nestjs/throttler';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { Observable, finalize, interval, map, merge } from 'rxjs';
-import { UsageLimitsService } from '../abuse/usage-limits.service';
+import { AdminApiKeyGuard } from '../common/guards/admin-api-key.guard';
+import { UsageLimitsService } from '../common/rate-limit/usage-limits.service';
 import { AggregationService } from './aggregation.service';
-import { BatchEventsDto, CreateEventDto, StatsQueryDto } from './create-event.dto';
+import { BatchEventsDto, CreateEventDto, StatsQueryDto } from './dto/events.dto';
 import { EventBus } from './event-bus';
 import { EventsService } from './events.service';
 
+/** 3장 묶음배송: 클릭 이벤트 수집 · 통계 · 실시간 스트림 + 같은 이벤트의 데모/관리자 집계 버튼 */
 @Controller('events')
 export class EventsController {
   constructor(
@@ -79,5 +81,52 @@ export class EventsController {
       this.bus.ingested$.pipe(map((ingested) => ({ type: 'ingested', data: ingested }))),
       interval(15_000).pipe(map(() => ({ type: 'ping', data: { at: new Date().toISOString() } }))),
     ).pipe(finalize(release));
+  }
+
+  /**
+   * 파이프라인 페이지의 '지금 집계 실행' 버튼: 어제~오늘(KST)만 재집계.
+   * 비밀값 없이 호출 가능한 대신 IP별 한도 + 전역 쿨다운이라 여러 명이 눌러도 DB 부하는 일정
+   */
+  @Post('demo/aggregate')
+  @HttpCode(200)
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 6, ttl: 60_000 } })
+  async aggregateForDemo(@Res({ passthrough: true }) response: Response) {
+    this.usageLimits.enforce(
+      this.usageLimits.aggregationDemoCooldown.tryStart(),
+      response,
+      'aggregation_cooldown',
+      '방금 다른 요청이 집계를 실행했습니다. 잠시 후 다시 시도하세요',
+    );
+    const result = await this.agg.aggregateRange();
+    return {
+      ...result,
+      cooldownSeconds: Math.ceil(this.usageLimits.aggregationDemoCooldown.cooldownMs / 1000),
+    };
+  }
+
+  /**
+   * 레이트 리밋 체험 버튼: DB에 쓰지 않고 IP별 한도(10초 200회)만 체험한다.
+   * 공개 서버에서 버튼 한 번에 이벤트 수백 행이 쌓이지 않도록 /events/batch 대신 사용.
+   */
+  @Post('demo/rate-limit-probe')
+  @HttpCode(202)
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 200, ttl: 10_000 } })
+  rateLimitProbe(@Res({ passthrough: true }) response: Response) {
+    this.usageLimits.enforce(
+      this.usageLimits.rateLimitProbesPerMinute.tryConsume(),
+      response,
+      'global_demo_limit',
+      '지금 이 데모를 쓰는 사람이 많습니다. 잠시 후 다시 시도하세요',
+    );
+    return { accepted: true };
+  }
+
+  /** 관리자용 수동 집계 (임의 기간 지정 가능). X-Admin-Api-Key 헤더 필요 */
+  @Post('admin/aggregate')
+  @UseGuards(AdminApiKeyGuard)
+  aggregateForAdmin(@Query() query: StatsQueryDto) {
+    return this.agg.aggregateRange(query.from, query.to);
   }
 }

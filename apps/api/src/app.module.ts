@@ -2,11 +2,11 @@ import { Module } from '@nestjs/common';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { PrismaModule } from './prisma/prisma.module';
-import { HealthController } from './health/health.controller';
+import { HealthModule } from './health/health.module';
 import { EventsModule } from './events/events.module';
 import { CouponsModule } from './coupons/coupons.module';
 import { AuthModule } from './auth/auth.module';
-import { AbuseModule } from './abuse/abuse.module';
+import { CommonModule } from './common/common.module';
 import { PointsModule } from './points/points.module';
 import { PaymentsModule } from './payments/payments.module';
 import { CacheDemoModule } from './cache-demo/cache-demo.module';
@@ -21,8 +21,9 @@ import { CacheDemoModule } from './cache-demo/cache-demo.module';
       },
     ]),
     ScheduleModule.forRoot(),
-    AbuseModule,
+    CommonModule,
     PrismaModule,
+    HealthModule,
     EventsModule,
     CouponsModule,
     AuthModule,
@@ -30,6 +31,5 @@ import { CacheDemoModule } from './cache-demo/cache-demo.module';
     PaymentsModule,
     CacheDemoModule,
   ],
-  controllers: [HealthController],
 })
 export class AppModule {}

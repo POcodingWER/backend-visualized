@@ -328,7 +328,7 @@ export default function Pipeline() {
     setAggBusy(true);
     void fly({ from: 'db', to: 'agg', label: 'Σ', kind: 'agg', ms: 600, lane: 'top' });
     try {
-      // 공개 데모용 엔드포인트: 비밀값 없이 호출, 대신 서버 전체 쿨다운이 있다 (관리자용 /admin/aggregate는 API 키 필요)
+      // 공개 데모용 엔드포인트: 비밀값 없이 호출, 대신 서버 전체 쿨다운이 있다 (관리자용 /events/admin/aggregate는 API 키 필요)
       const outcome = await runDemoAggregate();
       if ('retryAfterSeconds' in outcome) {
         setAggResult(
@@ -631,16 +631,16 @@ export async function sendEventsBothWays(
 
 export type ProbeCounts = { ok: number; limited: number; other: number };
 
-/** 레이트 리밋 체험: DB에 쓰지 않는 /demo/rate-limit-probe로 요청 total개를 동시 15개씩 몰아 보낸다 */
+/** 레이트 리밋 체험: DB에 쓰지 않는 /events/demo/rate-limit-probe로 요청 total개를 동시 15개씩 몰아 보낸다 */
 export async function probeRateLimit(total: number, onProgress?: (counts: ProbeCounts) => void) {
   const counts: ProbeCounts = { ok: 0, limited: 0, other: 0 };
   let next = 0;
   const worker = async () => {
     while (next < total) {
       next++;
-      const response = await fetch(`${API_URL}/demo/rate-limit-probe`, { method: 'POST' }).catch(
-        () => null,
-      );
+      const response = await fetch(`${API_URL}/events/demo/rate-limit-probe`, {
+        method: 'POST',
+      }).catch(() => null);
       if (response?.status === 202) counts.ok++;
       else if (response?.status === 429) counts.limited++;
       else counts.other++;
@@ -664,7 +664,7 @@ export async function runDemoAggregate(): Promise<
   { result: AggregateResult } | { retryAfterSeconds: number | undefined } | { error: string }
 > {
   try {
-    const response = await fetch(`${API_URL}/demo/aggregate`, { method: 'POST' });
+    const response = await fetch(`${API_URL}/events/demo/aggregate`, { method: 'POST' });
     if (response.status === 429) {
       const limited = (await response.json().catch(() => ({}))) as { retryAfterSeconds?: number };
       return { retryAfterSeconds: limited.retryAfterSeconds };

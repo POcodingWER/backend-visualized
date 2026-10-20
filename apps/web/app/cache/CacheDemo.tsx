@@ -81,7 +81,7 @@ const PROTECTION_TEXT: Record<Protection, string> = {
   'redis-lock':
     'Redis에 열쇠(SET NX)를 하나만 두고, 열쇠를 잡은 한 명만 주방에 가요. 나머지는 잠깐 기다렸다 대기판을 다시 봐요.',
 };
-const CODE_URL = `${GITHUB_URL}/blob/main/apps/api/src/cache-demo/menu-cache.ts`;
+const CODE_URL = `${GITHUB_URL}/blob/main/apps/api/src/cache-demo/cache-demo.service.ts`;
 const DOCS_URL = `${GITHUB_URL}/blob/main/docs/chapters-4-6.md#6장-맛집-대기표`;
 const POLL_MS = 500;
 const WATCH_MS = 7_000;
@@ -164,7 +164,7 @@ export default function CacheDemo() {
               로컬 Redis: <code>docker compose up -d redis</code> → 컨테이너 <code>bv-redis</code>,
               포트 6380(다른 Redis와 안 겹치게), 디스크 저장 끔. 운영:{' '}
               <code>docker-compose.prod.yml</code>의 redis 컨테이너, <code>REDIS_URL</code>. 코드:{' '}
-              <a href={CODE_URL}>menu-cache.ts</a> · 문서:{' '}
+              <a href={CODE_URL}>cache-demo.service.ts</a> · 문서:{' '}
               <a href={DOCS_URL}>docs/chapters-4-6.md</a>
             </p>
           </div>

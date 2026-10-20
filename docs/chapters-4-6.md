@@ -5,7 +5,7 @@
 
 ## 4장 포인트 통장
 
-`/ledger` · 코드 `apps/api/src/points/point-ledger.ts` · `POST /points/simulate`, `GET /points/:mode/entries`
+`/ledger` · 코드 `apps/api/src/points/points.service.ts` · `POST /points/simulate`, `GET /points/:mode/entries`
 
 - 시작 잔액 5,000P, 적립 +100P × 150건 + 사용 −100P × 50건을 **동시에** → 정상이면 15,000P.
 - **덮어쓰기**(read-modify-write): `SELECT balance` → `INSERT PointEntry` → `UPDATE balance = <읽은 값 + amount>`.
@@ -26,7 +26,7 @@
 
 ## 5장 결제 버튼 두 번
 
-`/double-pay` · 코드 `apps/api/src/payments/payment-desk.ts` · `POST /payments` (`Idempotency-Key` 헤더), `GET /payments?orderId=`
+`/double-pay` · 코드 `apps/api/src/payments/payments.service.ts` · `POST /payments` (`Idempotency-Key` 헤더), `GET /payments?orderId=`
 
 - 브라우저가 실제로: 버튼 3번(0.09초 간격) + 첫 요청이 0.6초 안에 답이 없으면 자동 재시도 1번 = 요청 4개.
   서버의 가짜 결제사 승인은 0.9초.
@@ -41,13 +41,13 @@
 | 요청 4개, 같은 키              | 1번 (3번은 같은 영수증) |
 | 버튼 잠금만(1번 누름) + 재시도 | 2번                     |
 
-통합 테스트: 같은 키 5개 동시 → 행 1개, 응답 5개 모두 같은 결제 id (`payment-desk.spec.ts`).
+통합 테스트: 같은 키 5개 동시 → 행 1개, 응답 5개 모두 같은 결제 id (`payments/test/payments.service.spec.ts`).
 한계: 첫 요청이 결제사 호출 중 죽으면 키가 `processing`으로 남는다 → 운영에선 오래된 processing을 결제사에 조회해 정리하는 잡.
 데모 행은 30분 뒤 cron이 지운다.
 
 ## 6장 맛집 대기표
 
-`/cache` · 코드 `apps/api/src/cache-demo/menu-cache.ts` · `GET/POST /cache-demo/menu`, `POST /cache-demo/visitors`, `POST /cache-demo/stampede`
+`/cache` · 코드 `apps/api/src/cache-demo/cache-demo.service.ts` · `GET/POST /cache-demo/menu`, `POST /cache-demo/visitors`, `POST /cache-demo/stampede`
 
 - 진짜 Redis. cache-aside: `GET bv:menu:board` → miss면 `SELECT MenuBoard` → `SET … EX 5`.
 - 수정: `UPDATE MenuBoard`, 무효화를 켜면 `DEL bv:menu:board`.

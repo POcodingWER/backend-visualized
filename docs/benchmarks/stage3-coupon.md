@@ -62,7 +62,7 @@ k6 run -e STRATEGY=atomic -e API_URL=http://localhost:4100 load/coupon.js
   충돌이 드문(저경합) 데이터에 적합한 방식이라는 것을 보여줌.
 - **atomic**: 확인과 증가를 조건부 `UPDATE` 한 문장으로 DB가 원자적으로 처리 → 정확히 100장, 가장 빠름(약 0.4~0.6s).
   선착순 재고 차감처럼 "남은 수량 감소"가 핵심인 경우 가장 단순하고 효과적.
-- 테스트: [`coupon-strategies.spec.ts`](../../apps/api/src/coupons/coupon-strategies.spec.ts) — 300명 vs 50장에서
+- 테스트: [`coupon-strategies.spec.ts`](../../apps/api/src/coupons/test/coupon-strategies.spec.ts) — 300명 vs 50장에서
   `none`은 초과 발급, 나머지 3개는 정확히 50장임을 실제 MySQL로 검증.
 
 ## API 응답 형태 (관찰용)

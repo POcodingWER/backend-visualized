@@ -74,8 +74,8 @@ jobs:
             sleep 1
           done
           curl -fsS http://127.0.0.1:4000/health
-          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:4000/admin/aggregate)" = 401
-          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST -H 'X-Admin-Api-Key: ci-only-admin-key-0123456789' http://127.0.0.1:4000/admin/aggregate)" = 201
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:4000/events/admin/aggregate)" = 401
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST -H 'X-Admin-Api-Key: ci-only-admin-key-0123456789' http://127.0.0.1:4000/events/admin/aggregate)" = 201
       - name: API log
         if: always()
         run: cat api.log || true

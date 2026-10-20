@@ -46,7 +46,7 @@ interface EntriesResponse {
 }
 
 const RECORDED_RUN_URL = '/data/ledger-recorded-run.json';
-const CODE_URL = `${GITHUB_URL}/blob/main/apps/api/src/points/point-ledger.ts`;
+const CODE_URL = `${GITHUB_URL}/blob/main/apps/api/src/points/points.service.ts`;
 const DOCS_URL = `${GITHUB_URL}/blob/main/docs/chapters-4-6.md#4장-포인트-통장`;
 const MODE_TITLE: Record<PointMode, string> = {
   overwrite: '잔액 숫자만 고치기',
@@ -186,7 +186,7 @@ export default function LedgerDemo() {
               비교).
             </p>
             <p>
-              코드: <a href={CODE_URL}>point-ledger.ts</a> · 문서:{' '}
+              코드: <a href={CODE_URL}>points.service.ts</a> · 문서:{' '}
               <a href={DOCS_URL}>docs/chapters-4-6.md</a>
             </p>
           </div>

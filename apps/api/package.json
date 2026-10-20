@@ -15,7 +15,7 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",
-    "test": "rm -rf dist-test && tsc -p tsconfig.spec.json && node --test dist-test/**/*.spec.js",
+    "test": "rm -rf dist-test && tsc -p tsconfig.spec.json && node --test $(find dist-test -name '*.spec.js')",
     "bench": "tsx --env-file=.env scripts/bench-ingest.ts",
     "bench:coupon": "tsx --env-file=.env scripts/bench-coupon.ts"
   },

@@ -25,12 +25,14 @@
 ```
 apps/
   web/        Next.js App Router (대시보드)
-  api/        NestJS REST API + Prisma
+  api/        NestJS REST API + Prisma — 폴더 = URL = 모듈, 구조 설명: docs/architecture.md
 packages/
   sdk/        트래킹 SDK
   tsconfig/   공유 tsconfig
 docker-compose.yml   로컬 MySQL(3307) · Redis(bv-redis, 6380)
 ```
+
+API 구조와 규칙(폴더·이름·테스트 위치): [docs/architecture.md](docs/architecture.md) · AI 어시스턴트용 규칙: [.cursor/rules/architecture.mdc](.cursor/rules/architecture.mdc)
 
 ## 로컬 실행
 
@@ -123,7 +125,7 @@ pnpm --filter @bv/web start                          # 터미널 2 (:3000)
   - 수집 엔드포인트(`POST /events`, `/events/batch`)에 `@nestjs/throttler` rate limit (IP당 `THROTTLE_LIMIT`(기본 200)회 / `THROTTLE_TTL_MS`(기본 10초), 초과 시 429)
   - `EventDailyStat`(date, name, count, uniqueSessions, unique(date,name)) 일별 집계 테이블
   - 집계 잡: 5분마다 cron(KST 어제~오늘 재집계), `INSERT ... SELECT ... ON DUPLICATE KEY UPDATE`로 멱등 upsert
-  - `POST /admin/aggregate?from=&to=` — 수동 집계(로컬 테스트용, 인증 없음 → 운영 전 보호 필요)
+  - `POST /events/admin/aggregate?from=&to=` — 수동 집계 (`X-Admin-Api-Key` 필요, 개발에서 `ADMIN_API_KEY`가 없으면 키 없이 허용)
   - `GET /events/stats/daily?from=&to=` — 집계 테이블에서 읽음 (기본 최근 7일, 날짜는 **KST(Asia/Seoul) 기준** — `createdAt`(UTC 저장)에 +9시간 후 날짜로 묶음)
   - `GET /events/stream` — SSE, 이벤트 저장 시 `event: ingested` `{ added, at }` push (프로세스 내 emitter → 단일 인스턴스 전제)
 - **Web**: 전체/이름별 카운트, 최근 7일 일별 누적 막대 차트(recharts), SSE 실시간 카운터, "일별 집계 지금 실행" 버튼, 데모 버튼(단건 / x50 / flush)
@@ -131,7 +133,7 @@ pnpm --filter @bv/web start                          # 터미널 2 (:3000)
 ```bash
 curl -XPOST localhost:4000/events/batch -H 'Content-Type: application/json' \
   -d '{"events":[{"name":"page_view","sessionId":"s1"},{"name":"button_click","sessionId":"s1"}]}'
-curl -XPOST localhost:4000/admin/aggregate
+curl -XPOST localhost:4000/events/admin/aggregate
 curl localhost:4000/events/stats/daily
 curl -N localhost:4000/events/stream     # 다른 터미널에서 이벤트를 보내면 push 확인
 pnpm test                                # API 단위 테스트 (배치 검증, 날짜 범위/집계 시리즈)

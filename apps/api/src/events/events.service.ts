@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateEventDto } from './create-event.dto';
+import { CreateEventDto } from './dto/events.dto';
 import { parseDate } from './date-range';
 import { EventBus } from './event-bus';
 

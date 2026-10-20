@@ -164,7 +164,9 @@ export default function TicketingDemo() {
                 coupon-strategies.ts
               </a>{' '}
               · 검증 테스트:{' '}
-              <a href={`${GITHUB_URL}/blob/main/apps/api/src/coupons/coupon-strategies.spec.ts`}>
+              <a
+                href={`${GITHUB_URL}/blob/main/apps/api/src/coupons/test/coupon-strategies.spec.ts`}
+              >
                 coupon-strategies.spec.ts
               </a>{' '}
               (실제 MySQL에서 300명 vs 50장: 제어 없음은 초과 발급, 나머지 셋은 정확히 50장) · 남용

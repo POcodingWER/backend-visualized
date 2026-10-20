@@ -16,7 +16,7 @@ import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { AccessTokenGuard, type AuthenticatedRequest } from './access-token.guard';
 import { authConfig, refreshCookieOptions } from './auth.config';
-import { LoginDto, RefreshDto } from './auth.dto';
+import { LoginDto, RefreshDto } from './dto/auth.dto';
 import { authError, AuthService, toPublicTokenRow } from './auth.service';
 
 /** Cookie 헤더에서 값 하나 읽기 (cookie-parser 없이) */
