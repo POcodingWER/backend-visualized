@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { CHAPTERS, GITHUB_URL } from '../lib/site';
 import { ResultNumbers } from './components/molecules/ResultNumbers';
@@ -5,6 +6,9 @@ import ui from './components/ui.module.css';
 import styles from './landing.module.css';
 import { buttonClassName } from './components/atoms/Button';
 import { INK, inkStroke } from './components/atoms/ink';
+import { DevDetails } from './components/molecules/DevDetails';
+import { AUTHOR, DECISIONS } from './landing-content';
+import authorPhoto from '../public/author.jpg';
 
 const ink = { ...inkStroke, strokeWidth: 2.2 };
 const docLink = (file: string) => `${GITHUB_URL}/blob/main/docs/benchmarks/${file}`;
@@ -39,32 +43,6 @@ const TEASERS = [
     problem: '손님 1000명이 같은 메뉴를 물어보면, 데이터베이스에 몇 번 가야 할까요?',
     number: '1000번 → 1번',
     numberLabel: '데이터베이스에 간 횟수 (매번 → 메뉴판 먼저, 실측)',
-  },
-];
-
-const DECISIONS = [
-  {
-    title: '선착순 재고: 줄 세우기 대신 "남았으면 팔기"를 한 번에',
-    chose:
-      '“남았으면 1 늘리기”를 데이터베이스에 한 문장(UPDATE … WHERE issued < total)으로 맡겼어요.',
-    gave: '1인 1매 같은 복잡한 규칙은 이 한 문장에 못 담아요. 그땐 “한 사람당 한 줄” 규칙(unique 제약)을 같이 쓰거나 줄 세우기(행 잠금)로 가야 해요.',
-    because:
-      '같은 조건에서 줄 세우기(행 잠금, 1.70초)보다 약 4배 빠르고(0.41초) 초과 판매는 0장. 코드도 가장 짧았어요.',
-  },
-  {
-    title: '로그인 유지: 손목밴드는 메모리에, 재발급 영수증은 스크립트가 못 여는 쿠키에',
-    chose:
-      '금방 만료되는 액세스 토큰(손목밴드)은 자바스크립트 변수에만, 오래가는 리프레시 토큰(재발급 영수증)은 스크립트가 못 읽는 httpOnly 쿠키에 두었어요.',
-    gave: '새로고침하면 메모리가 비어서 매번 조용히 다시 받아야 해요(silent refresh). 동시에 여러 요청이 만료를 만나면 한 번만 갱신하도록 묶는 코드(single-flight)가 필요했어요.',
-    because:
-      'localStorage에 두면 페이지에 나쁜 스크립트가 한 번만 끼어들어도(XSS) 토큰이 통째로 새요. 도난 장면은 2장에서 직접 재현해요.',
-  },
-  {
-    title: '클릭 기록: 바로 저장 대신 모아서 한 번에',
-    chose:
-      '사이트에 심은 기록 도구(SDK)가 클릭 기록을 모았다가 100개가 차거나 10초가 지나면 한 번에 보내고, 서버는 한 문장(createMany)으로 저장해요.',
-    gave: '기록이 화면에 최대 10초 늦게 보여요. 한 묶음이 실패하면 100개가 함께 실패해서, SDK가 묶음 단위로 다시 보내요.',
-    because: '같은 10,000개를 보내는 데 18.7초 → 0.29초. 요청 수가 1/100로 줄었어요.',
   },
 ];
 
@@ -182,50 +160,93 @@ export default function Home() {
         />
       </section>
 
+      <section className={ui.wide} id="decisions">
+        <h2 className={ui.sectionTitle}>여섯 장의 선택</h2>
+        <p className={ui.lead}>
+          장마다 무엇을 고르고 무엇을 포기했는지, 재 보고 나서 알게 된 것까지 적었어요. 숫자는 모두
+          이 저장소의 측정 기록에 있는 값이에요.
+        </p>
+        <div className={styles.decisions}>
+          {DECISIONS.map((decision) => (
+            <article key={decision.href}>
+              <p className={styles.decisionChapter}>
+                <Link href={decision.href}>{decision.chapter}장 보기 →</Link>
+              </p>
+              <h3>{decision.title}</h3>
+              <p className={styles.decisionSummary}>{decision.summary}</p>
+              <DevDetails description="고른 것 · 포기한 것 · 배운 것">
+                <dl className={styles.decisionDetail}>
+                  <dt>선택한 방법과 이유</dt>
+                  <dd>
+                    <ul>
+                      {decision.chose.map((line) => (
+                        <li key={line}>{line}</li>
+                      ))}
+                    </ul>
+                  </dd>
+                  <dt>포기한 방법과 이유</dt>
+                  <dd>
+                    <ul>
+                      {decision.gaveUp.map((line) => (
+                        <li key={line}>{line}</li>
+                      ))}
+                    </ul>
+                  </dd>
+                  <dt>배운 것</dt>
+                  <dd>
+                    <ul>
+                      {decision.learned.map((line) => (
+                        <li key={line}>{line}</li>
+                      ))}
+                    </ul>
+                  </dd>
+                </dl>
+              </DevDetails>
+            </article>
+          ))}
+        </div>
+        <p className={ui.source}>
+          같은 내용을 저장소의{' '}
+          <a href={`${GITHUB_URL}/blob/main/docs/decisions.md`}>docs/decisions.md</a>에도 적어
+          뒀어요.
+        </p>
+      </section>
+
       <section className={ui.wide} id="author">
         <h2 className={ui.sectionTitle}>만든 사람</h2>
         <div className={styles.author}>
-          {/* TODO(author): 사진 */}
-          <div className={styles.photoPlaceholder} aria-label="사진 자리 (준비 중)">
-            사진
-          </div>
+          <Image
+            src={authorPhoto}
+            alt={AUTHOR.photoAlt}
+            className={styles.photo}
+            sizes="(max-width: 860px) 6.5rem, 8rem"
+            placeholder="blur"
+          />
           <div className={styles.authorText}>
-            {/* TODO(author): 이름 */}
-            <p className={styles.authorName}>
-              <span className={styles.todo}>이름</span>
-            </p>
-            <p>
-              4년 동안 프론트엔드 개발을 하다가, 버튼 뒤에서 무슨 일이 일어나는지 직접 만들어 보고
-              싶어 풀스택으로 넘어가는 중이에요. 이 사이트는 화면(Next.js)부터 서버(NestJS),
-              데이터베이스(MySQL), 배포 설정까지 혼자 만들었어요.
-            </p>
+            <p className={styles.authorName}>{AUTHOR.name}</p>
+            <p className={styles.authorIntro}>{AUTHOR.intro}</p>
+            {AUTHOR.story.map((paragraph) => (
+              <p key={paragraph}>{paragraph}</p>
+            ))}
+            <ul className={styles.authorMore}>
+              {AUTHOR.more.map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
             <p className={styles.authorLinks}>
-              <a href={GITHUB_URL}>GitHub 저장소</a>
-              {/* TODO(author): 이력서 링크, 연락처 */}
-              <span className={styles.todo}>이력서</span>
-              <span className={styles.todo}>연락처</span>
+              {AUTHOR.resumeUrl && (
+                <a href={AUTHOR.resumeUrl} className={buttonClassName.small}>
+                  이력서 보기
+                </a>
+              )}
+              {AUTHOR.links.map((link) => (
+                <a key={link.href} href={link.href}>
+                  {link.label}
+                </a>
+              ))}
+              <a href={GITHUB_URL}>이 사이트의 저장소</a>
             </p>
           </div>
-        </div>
-      </section>
-
-      <section className={ui.wide}>
-        <h2 className={ui.sectionTitle}>고민했던 선택 세 가지</h2>
-        <p className={ui.lead}>무엇을 얻으려고 무엇을 포기했는지.</p>
-        <div className={styles.decisions}>
-          {DECISIONS.map((decision) => (
-            <article key={decision.title}>
-              <h3>{decision.title}</h3>
-              <dl>
-                <dt>고른 것</dt>
-                <dd>{decision.chose}</dd>
-                <dt>포기한 것</dt>
-                <dd>{decision.gave}</dd>
-                <dt>그래도 고른 이유</dt>
-                <dd>{decision.because}</dd>
-              </dl>
-            </article>
-          ))}
         </div>
       </section>
 
