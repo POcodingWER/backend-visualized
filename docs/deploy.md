@@ -246,7 +246,7 @@ AWS 공식 가격표(aws.amazon.com 가격 페이지가 쓰는 공개 가격 데
 `.github/workflows/ci.yml` — PR과 main push마다:
 
 1. MySQL 8.4 + Redis 7.4 서비스 컨테이너 → `prisma migrate deploy`
-2. `pnpm typecheck` → `pnpm lint` → `pnpm test` (DB 통합 테스트 포함, `REQUIRE_DATABASE=true`라 DB가 없으면 실패) → `pnpm build`
+2. `pnpm format:check` → `pnpm typecheck` → `pnpm lint` → `pnpm test` (DB 통합 테스트 포함, `REQUIRE_DATABASE=true`라 DB가 없으면 실패) → `pnpm build`
 3. 운영 모드로 API 실행 후 `/health`, 관리자 키 401/201 스모크 테스트
 4. API Docker 이미지 빌드 확인 (push 안 함)
 

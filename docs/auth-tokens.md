@@ -1,4 +1,4 @@
-# Stage 3 — 액세스 토큰 / 리프레시 토큰 설계
+# 2장 손목밴드 — 액세스 토큰 / 리프레시 토큰 설계
 
 페이지: `/auth` · 코드: [`apps/api/src/auth`](../apps/api/src/auth), [`apps/web/app/auth`](../apps/web/app/auth)
 
