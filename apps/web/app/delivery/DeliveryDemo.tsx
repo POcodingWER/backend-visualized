@@ -1,6 +1,7 @@
 'use client';
 
 import { memo, useState } from 'react';
+import { seconds } from '../../lib/format';
 import { GITHUB_URL } from '../../lib/site';
 import { DevDetails } from '../components/molecules/DevDetails';
 import { ResultNumbers } from '../components/molecules/ResultNumbers';
@@ -29,8 +30,6 @@ const RECORDED_SEND: { single: SendResult; batch: SendResult } = {
   single: { requests: 100, ms: 123.1, rejected: 0 },
   batch: { requests: 1, ms: 25.7, rejected: 0 },
 };
-
-const seconds = (ms: number) => (ms < 1000 ? `${Math.round(ms)}ms` : `${(ms / 1000).toFixed(2)}초`);
 
 export default function DeliveryDemo() {
   return (
@@ -123,7 +122,7 @@ function TruckStage() {
       setIsLive(true);
       if (sent.single.rejected > 0)
         setError(
-          `게이트 인원 제한에 걸려 트럭 ${sent.single.rejected}대가 돌아갔어요 (10초에 200대까지). 10초쯤 뒤에 다시 눌러 주세요.`,
+          `게이트 통행 제한에 걸려 트럭 ${sent.single.rejected}대가 돌아갔어요 (10초에 200대까지). 10초쯤 뒤에 다시 눌러 주세요.`,
         );
     } catch {
       setError('서버에 연결하지 못했어요. 잠시 후 다시 눌러 주세요.');
@@ -158,7 +157,9 @@ function TruckStage() {
         </div>
         <div className={styles.truckSide}>
           <p className={ui.source}>
-            {isLive ? '방금 직접 보낸 결과' : `지난 실측 기록 (${RECORDED_AT}, 로컬 MySQL)`}
+            {isLive
+              ? '방금 실제 서버에서 실행한 결과'
+              : `지난 실측 기록 (${RECORDED_AT}, 로컬 MySQL)`}
           </p>
           <p className={styles.bigNumber}>65배</p>
           <p className={styles.bigNumberLabel}>
@@ -174,7 +175,7 @@ function TruckStage() {
             </p>
           ) : (
             <p className={ui.hint}>
-              진짜 서버로 클릭 기록 {PARCELS}개를 하나씩 한 번, 묶어서 한 번 보내요. 데이터베이스에
+              실제 서버로 클릭 기록 {PARCELS}개를 하나씩 한 번, 묶어서 한 번 보내요. 데이터베이스에
               실제로 저장돼요.
             </p>
           )}
@@ -285,7 +286,7 @@ function BigTruck({ arrived }: { arrived: boolean }) {
   );
 }
 
-/** 게이트 인원 제한: DB에 쓰지 않는 체험용 엔드포인트로 210개를 몰아 보낸다 */
+/** 게이트 통행 제한: DB에 쓰지 않는 체험용 엔드포인트로 210개를 몰아 보낸다 */
 function GateLimit() {
   const [counts, setCounts] = useState<ProbeCounts | null>(null);
   const [isRunning, setIsRunning] = useState(false);
@@ -302,7 +303,7 @@ function GateLimit() {
   };
   return (
     <section className={ui.column}>
-      <h2 className={ui.sectionTitle}>게이트 인원 제한</h2>
+      <h2 className={ui.sectionTitle}>게이트 통행 제한</h2>
       <p className={ui.lead}>
         물류센터 게이트는 한 곳에서 오는 트럭을 10초에 200대까지만 들여보내요. 누가 트럭을 한꺼번에
         쏟아부어도 창고(데이터베이스)가 멈추지 않게요. 돌려보낸 묶음은 브라우저가 버리지 않고
@@ -343,7 +344,7 @@ function DailyLedger() {
   const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const describe = (result: AggregateResult) =>
-    `${result.from} ~ ${result.to}(한국 날짜) 장부를 다시 정리했어요: 이벤트 종류·날짜별로 ${result.rows}줄, ${result.ms}ms.`;
+    `${result.from} ~ ${result.to}(한국 날짜) 장부를 다시 정리했어요: 이벤트 종류·날짜별로 ${result.rows}줄, ${seconds(result.ms)}.`;
   const run = async () => {
     setIsRunning(true);
     const outcome = await runDemoAggregate();
@@ -360,9 +361,9 @@ function DailyLedger() {
     <section className={ui.column}>
       <h2 className={ui.sectionTitle}>매일 저녁 장부 정리</h2>
       <p className={ui.lead}>
-        차트를 볼 때마다 창고의 상자를 하나하나 세면 느려요. 그래서 정해진 때마다(여기선 5분마다)
-        &quot;날짜별·종류별 몇 개&quot;를 장부에 미리 적어 두고, 차트는 장부만 읽어요. 방금 보낸
-        클릭은 다음 정리 뒤에 차트에 보여요.
+        차트를 볼 때마다 창고의 상자를 하나하나 세면 느려요. 그래서 &quot;날짜별·종류별 몇
+        개&quot;를 장부에 미리 적어 두고, 차트는 장부만 읽어요. 그림에선 매일 저녁이라고 했지만,
+        여기선 바로 확인할 수 있게 5분마다 정리해요. 방금 보낸 클릭은 다음 정리 뒤에 차트에 보여요.
       </p>
       <Button size="small" onClick={() => void run()} disabled={isRunning}>
         {isRunning ? '정리하는 중…' : '지금 장부 정리하기'}

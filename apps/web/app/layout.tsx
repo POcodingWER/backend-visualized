@@ -8,7 +8,7 @@ import styles from './components/ui.module.css';
 export const metadata: Metadata = {
   title: '버튼 하나 뒤에서 — 매일 쓰는 기능 뒤의 서버 이야기',
   description:
-    '티켓팅, 로그인 유지, 클릭 기록. 서버가 실수하는 순간을 직접 일으키고, 고친 결과를 실측 숫자로 보여주는 인터랙티브 그림책.',
+    '티켓팅, 로그인 유지, 클릭 기록, 포인트, 결제, 캐시. 서버가 실수하는 순간을 실제로 일으키고, 고친 결과를 잰 숫자로 보여주는 그림책 여섯 편.',
 };
 
 export const viewport: Viewport = { themeColor: '#f6f1e7' };

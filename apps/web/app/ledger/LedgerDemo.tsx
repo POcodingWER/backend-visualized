@@ -1,6 +1,7 @@
 'use client';
 
 import { memo, useEffect, useMemo, useState } from 'react';
+import { seconds } from '../../lib/format';
 import { GITHUB_URL } from '../../lib/site';
 import flow from '../components/flow.module.css';
 import { DevDetails } from '../components/molecules/DevDetails';
@@ -27,7 +28,6 @@ const MODE_TITLE: Record<PointMode, string> = {
   ledger: '통장처럼 내역 남기기',
 };
 const points = (value: number) => `${value.toLocaleString('ko-KR')}P`;
-const seconds = (ms: number) => `${(ms / 1000).toFixed(2)}초`;
 
 const toResults = (list: PointSimulationResult[]) =>
   Object.fromEntries(list.map((result) => [result.mode, result])) as Results;
@@ -79,7 +79,7 @@ export default function LedgerDemo() {
   };
 
   const sourceLabel = isLive
-    ? '방금 실제 서버·DB에서 실행한 결과'
+    ? '방금 실제 서버에서 실행한 결과'
     : recordedAt
       ? `지난 실측 기록 (${recordedAt}, 로컬 MySQL)`
       : '기록 불러오는 중…';
@@ -110,14 +110,14 @@ export default function LedgerDemo() {
             {
               value: results ? points(results.ledger.reconciliation.difference) : '…',
               tone: 'good',
-              label: '통장 방식의 잔액 − 내역 합계',
+              label: '통장 방식에서 어긋난 포인트 (잔액 − 내역 합계)',
               detail: results
                 ? `같은 200건. 대신 한 명씩 차례로 처리해서 ${seconds(results.overwrite.durationMs)} → ${seconds(results.ledger.durationMs)}로 느려졌어요.`
                 : undefined,
             },
             {
               value: results?.ledger.overdraft?.rejected ? '거절' : '…',
-              label: '잔액보다 많이 쓰기',
+              label: '잔액보다 많이 쓰려고 하면',
               detail: results?.ledger.overdraft
                 ? `잔액 ${points(results.ledger.reconciliation.balance)}에서 ${points(results.ledger.overdraft.attemptedAmount)} 사용 시도`
                 : undefined,
@@ -126,8 +126,13 @@ export default function LedgerDemo() {
           source={
             <>
               {sourceLabel}. 로컬 API(NestJS) + MySQL 8.4, 맥북 한 대에서 잰 값이라 실행마다
-              사라지는 양이 달라요. 기록 파일:{' '}
-              <a href={RECORDED_RUN_URL}>ledger-recorded-run.json</a>
+              사라지는 양이 달라요.
+              {!isLive && (
+                <>
+                  {' '}
+                  기록 파일: <a href={RECORDED_RUN_URL}>ledger-recorded-run.json</a>
+                </>
+              )}
             </>
           }
         />
@@ -212,7 +217,9 @@ function LedgerStage({
               <p className={flow.laneTitle}>
                 {MODE_TITLE[mode]}{' '}
                 <small>
-                  {results ? `· 실제 ${seconds(results[mode].durationMs)} 걸린 일을 천천히` : ''}
+                  {results
+                    ? `· 실제로는 ${seconds(results[mode].durationMs)} 만에 끝난 일을 천천히 보여 줘요`
+                    : ''}
                 </small>
               </p>
               {results ? (
@@ -238,7 +245,7 @@ function LedgerStage({
             {isRunning ? '보내는 중…' : '적립·사용 200건 동시에 보내기'}
           </Button>
           <p className={ui.hint}>
-            진짜 서버와 데이터베이스에 적립(+100P) 150건, 사용(−100P) 50건을 한꺼번에 보내요. 시작
+            실제 서버와 데이터베이스에 적립(+100P) 150건, 사용(−100P) 50건을 한꺼번에 보내요. 시작
             잔액은 5,000P라 정상이라면 15,000P가 돼야 해요.
           </p>
           {error && <p className={ui.errorLine}>{error}</p>}
@@ -438,7 +445,7 @@ function ReconcileSection({
         <h2 className={ui.sectionTitle}>내역이 있으면 언제든 다시 맞춰 볼 수 있어요</h2>
         <p className={ui.lead}>
           잔액 숫자만 있으면 틀려도 틀린 줄 몰라요. 입출금 내역을 한 줄씩 남겨 두면, 내역을 전부
-          더한 값과 잔액 칸을 비교해서(대사) 어긋남을 바로 잡아낼 수 있어요.
+          더한 값과 잔액 칸을 비교해서(회계 용어로 &apos;대사&apos;) 어긋남을 바로 잡아낼 수 있어요.
         </p>
       </div>
       <div className={`${ui.fixes} ${ui.fixesTwo}`}>

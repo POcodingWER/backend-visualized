@@ -31,20 +31,24 @@ type TheftStep = { title: string; outcome: string; ok: boolean };
 
 /** 처음 화면에 보여주는 지난 실측 기록 (같은 흐름을 로컬 API에 실제로 보내 받은 응답) */
 const RECORDED_THEFT: TheftStep[] = [
-  { title: '도둑이 재발급 영수증을 몰래 복사해요', outcome: '복사 성공 (손님은 모름)', ok: false },
+  {
+    title: '도둑이 재발급 영수증을 몰래 복사해요',
+    outcome: '복사 성공 (손님은 몰라요)',
+    ok: false,
+  },
   {
     title: '손님이 영수증으로 새 손목밴드를 받아요',
-    outcome: '200 · 새 밴드 + 새 영수증',
+    outcome: '통과 · 새 밴드와 새 영수증을 받음',
     ok: true,
   },
   {
     title: '도둑이 복사본으로 재발급을 시도해요',
-    outcome: '401 · 이미 쓴 영수증 → 영수증 묶음 전부 무효',
+    outcome: '거절 · 이미 쓴 영수증이라, 이 로그인으로 받은 영수증이 전부 무효',
     ok: false,
   },
   {
     title: '손님도 다음 재발급에서 막혀요',
-    outcome: '401 · 무효가 된 묶음 → 다시 로그인',
+    outcome: '거절 · 영수증이 무효가 돼서 다시 로그인해야 함',
     ok: false,
   },
 ];
@@ -68,8 +72,8 @@ export default function WristbandStory(props: StoryProps) {
                 '밴드가 바랜 순간 요청 5개가 동시에 나갈 때. 각자 가면 4개가 "이미 쓴 영수증"으로 걸려 로그인이 통째로 취소됐어요.',
             },
             {
-              value: '첫 1번',
-              label: '복사본이 들킨 시점',
+              value: '첫 사용',
+              label: '복사본이 들킨 때',
               detail:
                 '복사본이 처음 쓰인 그 요청에서 바로 걸렸고, 그 로그인의 영수증 2장이 모두 무효가 됐어요.',
             },
@@ -165,27 +169,25 @@ function CopiedReceiptStage({
 
       const attackerCaught = errorReason(attacker.body) === 'refresh_token_reuse_detected';
       setSteps([
-        { ...RECORDED_THEFT[0]!, outcome: `복사 성공 (${stolen.status}, 손님은 모름)` },
+        { ...RECORDED_THEFT[0]!, outcome: RECORDED_THEFT[0]!.outcome },
         {
           ...RECORDED_THEFT[1]!,
           ok: userRefresh.ok,
           outcome: userRefresh.ok
-            ? `${userRefresh.status} · 새 밴드 + 새 영수증`
-            : `${userRefresh.status} · 실패`,
+            ? RECORDED_THEFT[1]!.outcome
+            : `실패 (서버 응답 ${userRefresh.status})`,
         },
         {
           ...RECORDED_THEFT[2]!,
           ok: attacker.ok,
           outcome: attackerCaught
-            ? `${attacker.status} · 이미 쓴 영수증 → 영수증 묶음 전부 무효`
-            : `${attacker.status}`,
+            ? RECORDED_THEFT[2]!.outcome
+            : `예상과 다름 (서버 응답 ${attacker.status})`,
         },
         {
           ...RECORDED_THEFT[3]!,
           ok: userAgain.ok,
-          outcome: userAgain.ok
-            ? `${userAgain.status} · 통과`
-            : `${userAgain.status} · 무효가 된 묶음 → 다시 로그인`,
+          outcome: userAgain.ok ? '통과' : RECORDED_THEFT[3]!.outcome,
         },
       ]);
       setIsLive(true);
@@ -206,7 +208,9 @@ function CopiedReceiptStage({
         <BoothScene kickedOut={bothKickedOut} />
         <div className={styles.storySide}>
           <p className={ui.source}>
-            {isLive ? '방금 직접 실행한 결과' : `지난 실측 기록 (${RECORDED_AT}, 로컬 MySQL)`}
+            {isLive
+              ? '방금 실제 서버에서 실행한 결과'
+              : `지난 실측 기록 (${RECORDED_AT}, 로컬 MySQL)`}
           </p>
           <ol className={styles.storySteps}>
             {steps.map((step, index) => (
@@ -220,7 +224,7 @@ function CopiedReceiptStage({
             ))}
           </ol>
           <Button size="big" onClick={() => void run()} disabled={isRunning}>
-            {isRunning ? '영수증을 복사하는 중…' : '복사된 영수증 잡아내기'}
+            {isRunning ? '영수증을 복사하는 중…' : '영수증을 복사해서 몰래 써 보기'}
           </Button>
           {error ? (
             <p className={ui.errorLine} role="alert">
@@ -228,7 +232,7 @@ function CopiedReceiptStage({
             </p>
           ) : (
             <p className={ui.hint}>
-              진짜 서버에 네 번 요청을 보내요. 로그인돼 있지 않으면 데모 계정(아이디 demo, 비밀번호
+              실제 서버에 요청을 네 번 보내요. 로그인돼 있지 않으면 데모 계정(아이디 demo, 비밀번호
               demo1234)으로 먼저 들어가요.
             </p>
           )}
@@ -236,8 +240,9 @@ function CopiedReceiptStage({
       </div>
       {bothKickedOut && (
         <Conclusion>
-          복사본이 쓰이는 순간 창구는 누가 진짜인지 묻지 않고 그 영수증 묶음을 전부 무효로 해요.
-          그래서 도둑도 손님도 다시 로그인해야 해요.
+          같은 영수증이 두 번 오면 창구는 누가 진짜 주인인지 따지지 않고, 그 로그인으로 받은
+          영수증을 전부 무효로 해요. 그래서 도둑도 손님도 다시 로그인해야 하고, 도둑은 더 버티지
+          못해요.
         </Conclusion>
       )}
     </section>
@@ -389,8 +394,8 @@ function RefreshCrowd({
       <div className={ui.column}>
         <h2 className={ui.sectionTitle}>5명이 동시에 재발급 창구로</h2>
         <p className={ui.lead}>
-          한 화면에서 요청 다섯 개가 동시에 나가는 일은 흔해요. 그 순간 손목밴드가 바래 있으면, 다섯
-          요청이 모두 재발급이 필요해져요.
+          한 화면을 열 때 목록·알림·프로필처럼 요청 다섯 개가 동시에 나가는 일은 흔해요. 그 순간
+          손목밴드가 바래 있으면, 다섯 요청이 모두 재발급이 필요해져요.
         </p>
       </div>
       <div className={`${ui.fixes} ${ui.fixesTwo}`}>
@@ -419,7 +424,7 @@ function RefreshCrowd({
               <p className={ui.tradeoff}>{copy.tradeoff}</p>
               <p className={ui.source}>
                 {liveModes.includes(mode)
-                  ? '방금 직접 실행한 결과'
+                  ? '방금 실제 서버에서 실행한 결과'
                   : `지난 실측 기록 (${RECORDED_AT})`}
               </p>
               {mode === 'naive' && (
@@ -575,8 +580,8 @@ function StorageLockers() {
         <h2 className={ui.sectionTitle}>어디에 보관할까</h2>
         <p className={ui.lead}>
           페이지에 나쁜 스크립트가 끼어들었다고 해 볼게요. 버튼을 누르면 이 브라우저에서 그
-          스크립트가 할 수 있는 방법으로 세 곳을 실제로 뒤져요. (가방에는 연습용 가짜 토큰을 넣어
-          두었어요)
+          스크립트가 할 수 있는 방법으로 세 곳을 실제로 뒤져요. (가방에는 연습용 가짜 손목밴드를
+          넣어 두었어요)
         </p>
       </div>
       <div className={ui.fixes}>

@@ -52,6 +52,8 @@ export const DbChart = memo(function DbChart({
         viewBox={`0 0 ${chartWidth} ${chartHeight + 4}`}
         className={styles.svg}
         preserveAspectRatio="none"
+        role="img"
+        aria-label="시간에 따른 실제 발급 행 수(COUNT)와 카운터(issuedCount) 그래프"
       >
         <line
           x1={0}

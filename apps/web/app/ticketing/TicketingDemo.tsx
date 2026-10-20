@@ -1,6 +1,7 @@
 'use client';
 
 import { memo, useEffect, useState } from 'react';
+import { seconds } from '../../lib/format';
 import { GITHUB_URL } from '../../lib/site';
 import { DevDetails } from '../components/molecules/DevDetails';
 import { ResultNumbers } from '../components/molecules/ResultNumbers';
@@ -23,8 +24,6 @@ import { Conclusion } from '../components/atoms/Conclusion';
 
 const FIXES = ['pessimistic', 'optimistic', 'atomic'] as const;
 const BENCHMARK_URL = `${GITHUB_URL}/blob/main/docs/benchmarks/ticketing-coupon.md`;
-
-const seconds = (ms: number) => `${(ms / 1000).toFixed(2)}초`;
 
 export default function TicketingDemo() {
   const [recorded, setRecorded] = useState<RecordedRun | null>(null);
@@ -73,7 +72,7 @@ export default function TicketingDemo() {
 
   const sourceLabel = (strategy: Strategy) =>
     liveStrategies.includes(strategy)
-      ? '방금 직접 실행한 결과'
+      ? '방금 실제 서버에서 실행한 결과'
       : recorded
         ? `지난 실측 기록 (${recorded.recordedAt}, 로컬 MySQL)`
         : '기록 불러오는 중…';
@@ -219,13 +218,15 @@ function OversellStage({ result, sourceLabel, isRunning, isBlocked, error, onRun
                 <dt>매표소 장부에 적힌 판매 수</dt>
                 <dd>
                   {result.final.issuedCount}장{' '}
-                  <small>(실제로 나간 표 {result.final.issueRows}장)</small>
+                  <small>
+                    (실제로 나간 표는 {result.final.issueRows}장. 동시에 고쳐 쓰다 서로 덮어썼어요)
+                  </small>
                 </dd>
               </div>
             )}
           </dl>
           <Button size="big" onClick={() => onRun(play)} disabled={isBlocked}>
-            {isRunning ? '500명이 예매하는 중…' : '500명 동시에 예매 시키기'}
+            {isRunning ? '500명이 예매하는 중…' : '500명이 동시에 예매해 보기'}
           </Button>
           {error ? (
             <p className={ui.errorLine} role="alert">
@@ -233,15 +234,15 @@ function OversellStage({ result, sourceLabel, isRunning, isBlocked, error, onRun
             </p>
           ) : (
             <p className={ui.hint}>
-              진짜 서버와 데이터베이스에서 500명의 예매가 동시에 일어나요. 1초도 안 걸려요.
+              실제 서버와 데이터베이스에서 500명이 한꺼번에 예매해요. 1초도 안 걸려요.
             </p>
           )}
         </div>
       </div>
       {result && isDone && result.final.oversold > 0 && (
         <Conclusion>
-          {QUANTITY}석에 {result.final.issueRows}명이 들어왔어요. 모두가 같은 순간에 &quot;자리
-          있음&quot;을 봤기 때문이에요.
+          표는 {QUANTITY}장인데 {result.final.issueRows}장이 팔렸어요. {result.final.issueRows}명
+          모두 같은 순간에 &quot;아직 자리 있음&quot;을 봤거든요.
         </Conclusion>
       )}
     </section>

@@ -254,6 +254,7 @@
 }
 .chain {
   margin-top: 0.6rem;
+  overflow-x: auto; /* 토큰 표가 좁은 화면에서 페이지를 밀지 않게 */
 }
 .dbTable {
   width: 100%;
@@ -359,7 +360,7 @@
 }
 @media (max-width: 860px) {
   .jwtGrid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 .pre {
