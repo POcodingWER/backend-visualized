@@ -1,4 +1,4 @@
-# API 구조 (apps/api) — 프론트엔드 개발자를 위한 지도
+# 코드 구조 — 프론트엔드 개발자를 위한 지도 (API 중심, 웹은 아래 "원자 단위" 절)
 
 NestJS는 처음 보면 데코레이터와 파일이 많아 보이지만, 규칙은 몇 개 안 됩니다.
 **URL 첫 단어 = 폴더 이름 = 모듈** 이고, 폴더 안의 파일 이름만 보면 그 파일이 하는 일을 알 수 있습니다.
@@ -25,8 +25,8 @@ apps/api/src/
     auth.module.ts  auth.controller.ts  auth.service.ts
     dto/auth.dto.ts
     lib/                   access-token.guard.ts (이 모듈 전용 가드), refresh-token.store.ts,
-                           password.ts, auth.config.ts
-    test/refresh-token.store.spec.ts
+                           password.ts, cookies.ts, auth.config.ts
+    test/                  refresh-token.store.spec.ts, password.spec.ts, cookies.spec.ts
   coupons/                 /coupons/*     1장 티켓팅 (선착순 쿠폰)
     coupons.module.ts  coupons.controller.ts  coupons.service.ts
     dto/coupons.dto.ts
@@ -45,9 +45,11 @@ apps/api/src/
   redis/                   Redis 연결 하나 (RedisService, cache-demo가 import)
   common/                  여러 모듈이 같이 쓰는 것 (CommonModule, 전역)
     guards/                admin-api-key.guard.ts      관리자 키 검사
-    rate-limit/            usage-limits(.service).ts   서버 전체 한도·쿨다운 (IP별 한도는 @nestjs/throttler)
+    rate-limit/            usage-limits.ts             한도 부품 (Cooldown, SimulationGate 등, Nest 없음)
+                           usage-limits.service.ts     서버 전체 한도·쿨다운 + runSimulation (IP별 한도는 @nestjs/throttler)
     config/                environment.ts, app-environment.ts  환경 변수 검증 (시작할 때 한 번)
     utils/                 single-flight.ts            진행 중인 Promise 공유
+                           time.ts                     sleep, roundToTenth, startStopwatch
 ```
 
 ## 무엇을 어디에 두나
@@ -80,6 +82,9 @@ apps/api/src/
 
 6장 캐시는 서비스에서 한 갈래가 더 있습니다: `CacheDemoService` → `RedisService`(ioredis) → Redis(`GET`, `SET EX`, `SET NX`, `DEL`), 없을 때만 Prisma → MySQL.
 서비스나 컨트롤러가 `throw new ConflictException(...)` 같은 예외를 던지면 Nest가 알아서 JSON 에러 응답(409 등)으로 바꿉니다.
+
+시뮬레이션 버튼(1·4·6장)은 컨트롤러가 `this.usageLimits.runSimulation(this.usageLimits.pointSimulation, response, () => 서비스 호출)`로 감쌉니다. 서버 전체에서 한 번에 하나(실행 중이면 409), 끝난 뒤 쿨다운(429)이 한 곳에 있습니다.
+장마다 버튼에서 DB까지의 흐름: [handover.md 3장](handover.md#3-장별-흐름-버튼--api--db--화면)
 
 ## Nest 개념 ↔ 프론트엔드 비유
 
@@ -129,5 +134,27 @@ TypeORM 스타일의 `*.entity.ts`를 따로 만들면 같은 모델을 두 번 
    - 실행: `pnpm --filter @bv/api test` (컴파일 후 `node --test`로 모든 `*.spec.js` 실행).
    - 빌드(`tsconfig.build.json`)는 `src/**/test/**`를 빼서 `dist`에 테스트가 들어가지 않는다.
    - DB·Redis를 쓰는 테스트는 자기가 만든 행·키를 `after`에서 지운다.
+
+## "원자 단위(atomic)" 설계 — 백엔드와 웹에서 각각 무슨 뜻인가
+
+아토믹 디자인(atoms → molecules → organisms)은 원래 **UI 컴포넌트**를 쌓는 방법입니다. 그래서 두 쪽에 다르게 적용했습니다.
+
+**API (Nest)** — 새 계층을 만들지 않습니다. Nest 모듈(컨트롤러 + 서비스 + DTO)이 이미 "기능 하나 = 한 덩어리"라서 UI의 organism과 비슷하고, 그 위에 atoms/molecules 폴더를 덧씌우면 같은 코드를 두 가지 기준으로 나누게 됩니다. 대신 이 정도만 지킵니다:
+
+- **작고 한 가지 일만 하는 부품**은 `lib/`나 `common/`의 파일 하나로: `common/utils/time.ts`, `common/utils/single-flight.ts`, `auth/lib/cookies.ts`, `auth/lib/password.ts`, `common/rate-limit/usage-limits.ts`(`Cooldown`, `SimulationGate`).
+- **순수 계산은 I/O와 떼어** 테스트하기 쉽게: `events/lib/date-range.ts`(KST 날짜), `points.service.ts`의 `amountForRequest`, `readCookie`. DB·Redis를 만지는 코드는 서비스에.
+- 리포지토리 계층, 인터페이스, 배럴 `index.ts`는 만들지 않습니다 (규칙 4).
+
+**웹 (Next.js)** — 여러 장이 같이 쓰는 UI만 `app/components/` 아래 세 단계로 둡니다. 한 장에서만 쓰는 컴포넌트는 그 장 폴더에 그대로 둡니다.
+
+| 단계         | 기준                                      | 파일                                                   |
+| ------------ | ----------------------------------------- | ------------------------------------------------------ |
+| `atoms/`     | 더 쪼갤 수 없는 요소, 상태 없음           | `Button`(big/small), `Conclusion`, `ink`(만화 먹색·선) |
+| `molecules/` | atom 몇 개 + 작은 규칙 하나               | `DevDetails`, `ResultNumbers`(출처 필수)               |
+| `organisms/` | 페이지의 큰 덩어리, 데이터(장 목록 등) 앎 | `ChapterLayout`, `ComicStrip`, `SiteHeader`            |
+
+- 훅·함수는 컴포넌트가 아니라 `lib/`: `lib/useReplay.ts`, `lib/single-flight.ts`, `lib/api.ts`.
+- **API 호출은 장마다 `app/<장>/api.ts`** 한 파일. 화면 컴포넌트는 `fetch`를 직접 쓰지 않고 이 함수를 부릅니다. 공통 부분(주소, JSON, 네트워크 오류 문장)은 `lib/api.ts`의 `callApi`, 상태 코드별 한국어 안내는 장마다 다르므로 각 `api.ts`에.
+- 스타일은 공용 `components/ui.module.css`, `flow.module.css` + 장마다 자기 `*.module.css`.
 
 AI 어시스턴트용 같은 규칙: [`.cursor/rules/architecture.mdc`](../.cursor/rules/architecture.mdc)

@@ -1,12 +1,12 @@
 ---
-description: apps/api (NestJS) folder, naming and test-location rules. Follow when adding or moving API code.
-globs: apps/api/**
+description: apps/api (NestJS) and apps/web folder, naming and test-location rules. Follow when adding or moving code.
+globs: apps/**
 alwaysApply: false
 ---
 
 # API structure rules (apps/api)
 
-Full explanation (Korean, for frontend devs): docs/architecture.md
+Full explanation (Korean, for frontend devs): docs/architecture.md. Per-chapter flows and onboarding: docs/handover.md
 
 - Folder = first URL segment = module. `/points/...` lives in `src/points/` as `PointsModule`. Demo/admin routes go under their feature: `/<module>/demo/...`, `/<module>/admin/...`. No top-level `/demo` or `/admin`.
 - Module top level holds only `<name>.module.ts`, `<name>.controller.ts`, `<name>.service.ts`, `dto/`, `test/`, `lib/`. Every other module-only file (helpers, extra services, module-only guards, config, stores, strategies) goes in `<module>/lib/` (e.g. `auth/lib/password.ts`, `coupons/lib/coupon-strategies.ts`, `events/lib/aggregation.service.ts`). Never create an empty `lib/`. Class name matches file name (`points.service.ts` → `PointsService`).
@@ -19,3 +19,14 @@ Full explanation (Korean, for frontend devs): docs/architecture.md
 - Split a file only when it clearly does two jobs. No repositories, interfaces or barrel `index.ts` files.
 - Use `git mv` when moving files. If a URL changes, update apps/web, docs, load/ (k6), CI smoke test and tests in the same change.
 - Don't create `entities/`; use Prisma generated types (`@prisma/client`, from `prisma/schema.prisma`, the single source of DB models).
+- Atomic design in the API means only: small single-purpose units in `lib/` or `common/utils` (`time.ts`, `single-flight.ts`, `auth/lib/cookies.ts`) and pure functions kept apart from I/O. No atoms/molecules folders or extra layers in Nest.
+- Public simulation endpoints (one at a time + cooldown) use `usageLimits.runSimulation(gate, response, work)`; don't hand-roll running flags in controllers.
+
+# Web structure rules (apps/web)
+
+- Shared UI only in `app/components/{atoms,molecules,organisms}` (atoms: `Button`, `Conclusion`, `ink`; molecules: `DevDetails`, `ResultNumbers`; organisms: `ChapterLayout`, `ComicStrip`, `SiteHeader`). Components used by one chapter stay in that chapter folder.
+- Hooks and plain functions go in `lib/` (`useReplay.ts`, `single-flight.ts`, `api.ts`), not `components/`.
+- Every API call goes through `app/<chapter>/api.ts` (built on `callApi` from `lib/api.ts`). Components never call `fetch` for the API directly. Status-code → Korean message mapping lives in the chapter's `api.ts`.
+- Use `<Button size="big|small">` and `<Conclusion isGood>` instead of raw `ui.bigButton`/`ui.conclusion` classes. Comic SVGs use `inkStroke`/`INK` from `atoms/ink.ts`.
+- New chapter: add it to `CHAPTERS` in `lib/site.ts`; steps in docs/handover.md section 4.
+- Web tests: `lib/*.test.ts`, `app/*/*.test.ts` with `tsx --test`.
