@@ -16,15 +16,15 @@
 
 ## 0. 준비해서 알려주실 것
 
-| #   | 항목                                                                                                        | 용도                                                                                              |
-| --- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| 1   | **AWS 계정** (EC2·RDS·Elastic IP를 만들 수 있는 IAM 사용자 또는 콘솔 접근)                                  | 서버·DB                                                                                           |
-| 2   | **리전 선택** (권장: 서울 `ap-northeast-2`)                                                                 | 지연 시간                                                                                         |
-| 3   | **API 도메인** 1개 (예: `api.example.com`)와 그 DNS를 수정할 수 있는 권한 (가비아, Route 53, Cloudflare 등) | HTTPS 인증서는 도메인이 있어야 발급됩니다. IP만으로는 HTTPS 불가 → 브라우저가 Secure 쿠키를 못 씀 |
-| 4   | **Vercel 계정** + 이 GitHub 저장소 접근 연결                                                                | 웹 배포                                                                                           |
-| 5   | DB 방식 선택: **RDS** 또는 **EC2 안의 MySQL 컨테이너**                                                      | 비용/관리 트레이드오프 (아래 3장)                                                                 |
-| 6   | (선택) 웹 커스텀 도메인 (예: `app.example.com`)                                                             | 쿠키를 같은 사이트로 만들어 Safari 등에서도 로그인 유지가 확실해짐 (4장)                          |
-| 7   | Let's Encrypt 알림용 이메일 (`ACME_EMAIL`)                                                                  | 인증서 만료 경고 수신                                                                             |
+| #   | 항목                                                                                                        | 용도                                                                                                                   |
+| --- | ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| 1   | **AWS 계정** (EC2·RDS·Elastic IP를 만들 수 있는 IAM 사용자 또는 콘솔 접근)                                  | 서버·DB                                                                                                                |
+| 2   | **리전 선택** (권장: 서울 `ap-northeast-2`)                                                                 | 지연 시간                                                                                                              |
+| 3   | **API 도메인** 1개 (예: `api.example.com`)와 그 DNS를 수정할 수 있는 권한 (가비아, Route 53, Cloudflare 등) | HTTPS 인증서는 도메인이 있어야 발급됩니다. 도메인이 아직 없으면 `<IP를-로>.sslip.io`로 임시 HTTPS 가능 (1장 Ubuntu 절) |
+| 4   | **Vercel 계정** + 이 GitHub 저장소 접근 연결                                                                | 웹 배포                                                                                                                |
+| 5   | DB 방식 선택: **RDS** 또는 **EC2 안의 MySQL 컨테이너**                                                      | 비용/관리 트레이드오프 (아래 3장)                                                                                      |
+| 6   | (선택) 웹 커스텀 도메인 (예: `app.example.com`)                                                             | 쿠키를 같은 사이트로 만들어 Safari 등에서도 로그인 유지가 확실해짐 (4장)                                               |
+| 7   | Let's Encrypt 알림용 이메일 (`ACME_EMAIL`)                                                                  | 인증서 만료 경고 수신                                                                                                  |
 
 비밀값(`JWT_ACCESS_SECRET`, `ADMIN_API_KEY`, DB 비밀번호)은 EC2에서 직접 생성하면 되므로 따로 전달하지 않아도 됩니다.
 
@@ -69,6 +69,73 @@ sudo dd if=/dev/zero of=/swapfile bs=1M count=2048 && sudo chmod 600 /swapfile
 sudo mkswap /swapfile && sudo swapon /swapfile && echo '/swapfile swap swap defaults 0 0' | sudo tee -a /etc/fstab
 ```
 
+### EC2에 Docker 설치 (Ubuntu 24.04, 실제 배포에 쓴 순서)
+
+2026-10-20 `t4g.small`(arm64) + Ubuntu 24.04 + 같은 EC2의 MySQL 컨테이너 + sslip.io로 배포할 때 실행한 그대로입니다.
+
+```bash
+ssh -i ~/.ssh/<key>.pem ubuntu@<EC2 IP>   # 키 권한이 넓으면 거부됨: chmod 400 ~/.ssh/<key>.pem
+
+# 1) 패키지 최신화
+sudo DEBIAN_FRONTEND=noninteractive apt-get update
+sudo DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold upgrade
+
+# 2) 스왑 2GB (fstab에 등록해 재부팅 후에도 유지) + swappiness 10
+sudo fallocate -l 2G /swapfile && sudo chmod 600 /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+echo 'vm.swappiness=10' | sudo tee /etc/sysctl.d/99-swappiness.conf && sudo sysctl -p /etc/sysctl.d/99-swappiness.conf
+
+# 3) 시간대 + 자동 보안 업데이트
+sudo timedatectl set-timezone Asia/Seoul
+sudo apt-get install -y unattended-upgrades
+printf 'APT::Periodic::Update-Package-Lists "1";\nAPT::Periodic::Unattended-Upgrade "1";\n' | sudo tee /etc/apt/apt.conf.d/20auto-upgrades
+
+# 4) Docker Engine + compose/buildx 플러그인 (공식 저장소)
+sudo apt-get install -y ca-certificates curl git
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo $VERSION_CODENAME) stable" \
+  | sudo tee /etc/apt/sources.list.d/docker.list
+sudo apt-get update
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+sudo usermod -aG docker ubuntu          # 다시 로그인하면 sudo 없이 docker 사용
+sudo systemctl enable --now docker containerd
+
+# 5) 코드
+sudo mkdir -p /opt/backend-visualized && sudo chown ubuntu:ubuntu /opt/backend-visualized
+git clone https://github.com/POcodingWER/backend-visualized.git /opt/backend-visualized
+```
+
+`deploy/production.env`는 서버에서 비밀값을 직접 생성해서 만듭니다 (값을 화면에 출력하지 않음):
+
+```bash
+cd /opt/backend-visualized && umask 077
+cp deploy/production.env.example deploy/production.env
+# 아래 값들을 채우기: hex 비밀번호는 DATABASE_URL에 그대로 넣어도 URL 인코딩이 필요 없음
+#   COMPOSE_PROFILES=local-db
+#   API_DOMAIN=13-209-4-20.sslip.io        (IP의 점을 -로: 도메인이 생기면 이 줄만 교체)
+#   WEB_ORIGIN=http://localhost:3000   VERCEL_ORIGIN=   (Vercel 주소가 생기면 채우기)
+#   MYSQL_ROOT_PASSWORD=$(openssl rand -hex 24)   MYSQL_PASSWORD=$(openssl rand -hex 24)
+#   DATABASE_URL=mysql://app:<MYSQL_PASSWORD>@mysql:3306/backend_visualized
+#   JWT_ACCESS_SECRET=$(openssl rand -base64 48)  ADMIN_API_KEY=$(openssl rand -hex 32)
+vi deploy/production.env
+chmod 600 deploy/production.env
+```
+
+빌드·실행 (t4g.small + 스왑 2GB에서 서버 빌드 약 2분, OOM 없음):
+
+```bash
+./deploy/compose.sh up -d --build        # COMPOSE_PROFILES=local-db 라 mysql도 같이 뜸
+./deploy/compose.sh ps                   # api/mysql/redis (healthy), 공개 포트는 caddy 80/443 뿐
+./deploy/compose.sh logs caddy | grep 'certificate obtained'
+curl https://13-209-4-20.sslip.io/health # {"status":"ok","db":{"status":"up",...}}
+```
+
+> **도메인 없이 HTTPS**: [sslip.io](https://sslip.io)는 `13-209-4-20.sslip.io` → `13.209.4.20`으로 응답하는 공개 DNS라
+> Caddy가 Let's Encrypt 인증서를 바로 받습니다. Elastic IP가 없으면 인스턴스를 **중지/시작**할 때 공인 IP가 바뀌므로
+> `API_DOMAIN`도 바꿔야 합니다 (재부팅은 IP 유지).
+
 ---
 
 ## 2. API 배포 (EC2)
@@ -95,6 +162,9 @@ curl https://api.example.com/health
 ```
 
 업데이트: `git pull && ./deploy/compose.sh up -d --build` (마이그레이션은 컨테이너 시작 시 자동 적용).
+
+CORS 출처 추가 (예: Vercel 배포 후): `deploy/production.env`의 `VERCEL_ORIGIN=https://<앱>.vercel.app` → `./deploy/compose.sh up -d`.
+compose가 `WEB_ORIGIN` + `,VERCEL_ORIGIN`(비어 있으면 생략)으로 합쳐 API에 넘깁니다.
 
 관리자 API (임의 기간 재집계):
 
@@ -196,6 +266,8 @@ AWS 공식 가격표(aws.amazon.com 가격 페이지가 쓰는 공개 가격 데
 | `DATABASE_URL`                                                          |      ✅       | —                                 | `mysql://user:password@host:3306/backend_visualized`                                              |
 | `REDIS_URL`                                                             |      ✅       | `redis://127.0.0.1:6380/0` / 없음 | 6장 캐시. `redis://` 또는 `rediss://`. compose 안이면 `redis://redis:6379/0`                      |
 | `WEB_ORIGIN`                                                            |      ✅       | `http://localhost:3000` / 없음    | CORS 허용 출처. 경로 없이, 쉼표로 여러 개. 운영은 https, `*` 금지                                 |
+| `VERCEL_ORIGIN`                                                         |       —       | 없음                              | compose가 `WEB_ORIGIN` 뒤에 쉼표로 붙임 (Vercel 주소용 자리)                                      |
+| `COMPOSE_PROFILES`                                                      |       —       | 없음                              | `local-db`면 `--profile local-db` 없이 mysql 컨테이너도 같이 실행                                 |
 | `JWT_ACCESS_SECRET`                                                     |      ✅       | 개발용 공개값 / 없음              | 32자 이상, 저장소에 적힌 기본값 금지. `openssl rand -base64 48`                                   |
 | `API_DOMAIN`                                                            |  ✅ (Caddy)   | —                                 | Caddy가 HTTPS 인증서를 받을 도메인                                                                |
 | `ACME_EMAIL`                                                            |  ✅ (Caddy)   | —                                 | Let's Encrypt 인증서 알림 메일                                                                    |
