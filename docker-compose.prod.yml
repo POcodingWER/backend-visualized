@@ -1,6 +1,7 @@
 # EC2 운영용. 사용법은 docs/deploy.md 참고.
 #   RDS 사용:            ./deploy/compose.sh up -d --build
 #   같은 EC2의 MySQL:     ./deploy/compose.sh --profile local-db up -d --build
+#                         (또는 deploy/production.env에 COMPOSE_PROFILES=local-db 를 넣으면 --profile 생략 가능)
 # 비밀값은 deploy/production.env (git에 올리지 않음, deploy/production.env.example 복사해서 작성)
 
 name: backend-visualized
@@ -14,10 +15,17 @@ services:
     restart: unless-stopped
     env_file: deploy/production.env
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
+      # local-db 프로필(같은 EC2의 MySQL)일 때만 기다린다. RDS면 mysql 서비스가 없으므로 required: false
+      mysql:
+        condition: service_healthy
+        required: false
     environment:
       NODE_ENV: production
       PORT: '4000'
+      # CORS 허용 출처 = WEB_ORIGIN + (있으면) VERCEL_ORIGIN. 둘 다 deploy/production.env에서 바꾼다
+      WEB_ORIGIN: ${WEB_ORIGIN:?WEB_ORIGIN을 deploy/production.env에 설정하세요}${VERCEL_ORIGIN:+,${VERCEL_ORIGIN}}
       # Caddy 한 단계 뒤에 있으므로 X-Forwarded-For의 마지막 1홉만 믿는다 (ALB를 앞에 두면 2)
       TRUST_PROXY: ${TRUST_PROXY:-1}
     # 포트를 밖으로 열지 않는다: 인터넷 → Caddy(443) → api:4000 만 가능 (X-Forwarded-For 위조 방지)
