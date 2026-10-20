@@ -16,19 +16,11 @@ import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { AccessTokenGuard, type AuthenticatedRequest } from './lib/access-token.guard';
 import { authConfig, refreshCookieOptions } from './lib/auth.config';
+import { readCookie } from './lib/cookies';
 import { LoginDto, RefreshDto } from './dto/auth.dto';
 import { authError, AuthService, toPublicTokenRow } from './auth.service';
 
-/** Cookie 헤더에서 값 하나 읽기 (cookie-parser 없이) */
-export function readCookie(cookieHeader: string | undefined, name: string): string | undefined {
-  for (const part of (cookieHeader ?? '').split(';')) {
-    const [key, ...valueParts] = part.trim().split('=');
-    if (key === name) return decodeURIComponent(valueParts.join('='));
-  }
-  return undefined;
-}
-
-/** Stage 3: 액세스/리프레시 토큰 데모 */
+/** 2장 손목밴드: 액세스/리프레시 토큰 데모. 쿠키 읽기·쓰기는 여기서, 토큰 판단은 AuthService에서 */
 @Controller('auth')
 @UseGuards(ThrottlerGuard)
 export class AuthController {
@@ -104,13 +96,7 @@ export class AuthController {
   async logout(@Req() request: Request, @Res({ passthrough: true }) response: Response) {
     const rawToken = readCookie(request.headers.cookie, authConfig.refreshCookieName);
     this.clearRefreshCookie(response);
-    if (!rawToken) return { revokedTokens: 0 };
-    const token = await this.auth.refreshTokens.findActive(rawToken);
-    if (!token) return { revokedTokens: 0 };
-    return {
-      familyId: token.familyId,
-      revokedTokens: await this.auth.refreshTokens.revokeFamily(token.familyId, 'logout'),
-    };
+    return this.auth.logout(rawToken);
   }
 
   /** 한 로그인(패밀리)의 회전 체인. familyId는 추측 불가능한 UUID (데모용 공개 조회) */
@@ -128,7 +114,7 @@ export class AuthController {
   async stealRefreshToken(@Req() request: Request) {
     if (!authConfig.demoEndpointsEnabled) throw new ForbiddenException();
     const rawToken = readCookie(request.headers.cookie, authConfig.refreshCookieName);
-    const token = rawToken ? await this.auth.refreshTokens.findActive(rawToken) : null;
+    const token = await this.auth.findActiveRefreshToken(rawToken);
     if (!rawToken || !token)
       throw authError('refresh_token_missing', '훔칠 활성 리프레시 토큰이 없습니다');
     return { stolenRefreshTokenValue: rawToken, refreshToken: toPublicTokenRow(token) };
@@ -141,16 +127,7 @@ export class AuthController {
   async expiredAccessToken(@Req() request: Request) {
     if (!authConfig.demoEndpointsEnabled) throw new ForbiddenException();
     const rawToken = readCookie(request.headers.cookie, authConfig.refreshCookieName);
-    const token = rawToken ? await this.auth.refreshTokens.findActive(rawToken) : null;
-    if (!token) throw authError('refresh_token_missing', '로그인이 필요합니다');
-    const user = await this.auth.findUser(token.userId);
-    return {
-      accessToken: await this.auth.signExpiredAccessToken({
-        sub: user.id,
-        username: user.username,
-        familyId: token.familyId,
-      }),
-    };
+    return { accessToken: await this.auth.expiredAccessTokenFor(rawToken) };
   }
 
   private setRefreshCookie(response: Response, refreshToken: string) {

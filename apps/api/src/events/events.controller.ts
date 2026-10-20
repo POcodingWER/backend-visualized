@@ -26,7 +26,7 @@ import { EventsService } from './events.service';
 export class EventsController {
   constructor(
     private readonly events: EventsService,
-    private readonly agg: AggregationService,
+    private readonly aggregation: AggregationService,
     private readonly bus: EventBus,
     private readonly usageLimits: UsageLimitsService,
   ) {}
@@ -57,13 +57,13 @@ export class EventsController {
   }
 
   @Get('stats')
-  stats(@Query() q: StatsQueryDto) {
-    return this.events.stats(q.from, q.to);
+  stats(@Query() query: StatsQueryDto) {
+    return this.events.stats(query.from, query.to);
   }
 
   @Get('stats/daily')
-  daily(@Query() q: StatsQueryDto) {
-    return this.agg.daily(q.from, q.to);
+  daily(@Query() query: StatsQueryDto) {
+    return this.aggregation.daily(query.from, query.to);
   }
 
   /** SSE: 새 이벤트가 저장될 때마다 {added, at} push, 15초마다 ping */
@@ -98,7 +98,7 @@ export class EventsController {
       'aggregation_cooldown',
       '방금 다른 요청이 집계를 실행했습니다. 잠시 후 다시 시도하세요',
     );
-    const result = await this.agg.aggregateRange();
+    const result = await this.aggregation.aggregateRange();
     return {
       ...result,
       cooldownSeconds: Math.ceil(this.usageLimits.aggregationDemoCooldown.cooldownMs / 1000),
@@ -127,6 +127,6 @@ export class EventsController {
   @Post('admin/aggregate')
   @UseGuards(AdminApiKeyGuard)
   aggregateForAdmin(@Query() query: StatsQueryDto) {
-    return this.agg.aggregateRange(query.from, query.to);
+    return this.aggregation.aggregateRange(query.from, query.to);
   }
 }

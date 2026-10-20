@@ -24,7 +24,8 @@ export interface UsageLimitSettings {
   /** 공개 집계 버튼(POST /events/demo/aggregate) 전역 쿨다운 */
   aggregationCooldownMs: number;
   /** 쿠폰 시뮬레이션이 끝난 뒤 다음 실행까지 전역 쿨다운 */
-  couponSimulationCooldownMs: number;
+  /** 1장·4장·6장 시뮬레이션 공통 쿨다운 (env 이름은 1장 때 정해져 COUPON_ 으로 시작) */
+  simulationCooldownMs: number;
 }
 
 export interface AppEnvironment {
@@ -222,7 +223,7 @@ export function loadEnvironment(env: NodeJS.ProcessEnv): AppEnvironment {
       rateLimitProbePerMinuteGlobal: integer('RATE_LIMIT_DEMO_GLOBAL_LIMIT_PER_MINUTE', 20_000),
       maxStreamConnections: integer('MAX_STREAM_CONNECTIONS', 200),
       aggregationCooldownMs: integer('AGGREGATION_DEMO_COOLDOWN_MS', 10_000),
-      couponSimulationCooldownMs: integer('COUPON_SIMULATION_COOLDOWN_MS', 3_000),
+      simulationCooldownMs: integer('COUPON_SIMULATION_COOLDOWN_MS', 3_000),
     },
     warnings,
   };

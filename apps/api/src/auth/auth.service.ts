@@ -22,7 +22,7 @@ export const authError = (reason: string, message: string, extra: Record<string,
 
 @Injectable()
 export class AuthService implements OnModuleInit {
-  readonly refreshTokens: RefreshTokenStore;
+  private readonly refreshTokens: RefreshTokenStore;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -131,8 +131,31 @@ export class AuthService implements OnModuleInit {
     }
   }
 
-  async findUser(userId: number) {
-    return this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
+  /** 쿠키 값이 아직 쓸 수 있는 리프레시 토큰이면 그 행, 아니면 null */
+  async findActiveRefreshToken(rawRefreshToken: string | undefined) {
+    return rawRefreshToken ? this.refreshTokens.findActive(rawRefreshToken) : null;
+  }
+
+  /** 로그아웃: 이 로그인(패밀리)의 토큰을 모두 폐기. 쿠키가 없거나 이미 끝난 토큰이면 0개 */
+  async logout(rawRefreshToken: string | undefined) {
+    const token = await this.findActiveRefreshToken(rawRefreshToken);
+    if (!token) return { revokedTokens: 0 };
+    return {
+      familyId: token.familyId,
+      revokedTokens: await this.refreshTokens.revokeFamily(token.familyId, 'logout'),
+    };
+  }
+
+  /** 데모: 지금 로그인한 사용자 이름으로 서명은 맞지만 이미 만료된 액세스 토큰 */
+  async expiredAccessTokenFor(rawRefreshToken: string | undefined) {
+    const token = await this.findActiveRefreshToken(rawRefreshToken);
+    if (!token) throw authError('refresh_token_missing', '로그인이 필요합니다');
+    const user = await this.prisma.user.findUniqueOrThrow({ where: { id: token.userId } });
+    return this.signExpiredAccessToken({
+      sub: user.id,
+      username: user.username,
+      familyId: token.familyId,
+    });
   }
 
   async familyChain(familyId: string) {

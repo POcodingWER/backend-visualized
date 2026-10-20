@@ -79,6 +79,32 @@ export class Cooldown {
   }
 }
 
+/**
+ * 무거운 시뮬레이션(DB 커넥션을 많이 씀): 서버 전체에서 동시에 하나만 + 끝난 시점부터 쿨다운.
+ * 실제 거절(409/429)은 UsageLimitsService.runSimulation이 한다.
+ */
+export class SimulationGate {
+  private running = false;
+  readonly cooldown: Cooldown;
+
+  constructor(cooldownMs: number, now: Clock = Date.now) {
+    this.cooldown = new Cooldown(cooldownMs, now);
+  }
+
+  /** 'running': 다른 실행이 아직 안 끝남. 아니면 쿨다운 판정 (허용되면 실행 중으로 표시) */
+  tryStart(): 'running' | LimitDecision {
+    if (this.running) return 'running';
+    const decision = this.cooldown.tryStart();
+    if (decision.allowed) this.running = true;
+    return decision;
+  }
+
+  finish() {
+    this.running = false;
+    this.cooldown.restartFromNow();
+  }
+}
+
 /** 동시에 열린 연결 수 제한. tryAcquire()가 돌려준 release를 연결이 끝날 때 꼭 호출 */
 export class ConcurrencyLimit {
   private active = 0;
