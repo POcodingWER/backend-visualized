@@ -36,7 +36,7 @@ apps/api/src/
     points.module.ts  points.controller.ts  points.service.ts  dto/  test/
   payments/                /payments      5장 결제 버튼 두 번 (Idempotency-Key)
     payments.module.ts  payments.controller.ts  payments.service.ts  dto/  test/
-  cache-demo/              /cache-demo/*  6장 맛집 대기표 (Redis 캐시)
+  cache-demo/              /cache-demo/*  6장 맛집 메뉴판 (Redis 캐시)
     cache-demo.module.ts  cache-demo.controller.ts  cache-demo.service.ts  dto/  test/
   health/                  /health        DB 연결 확인 (로직이 쿼리 한 줄이라 서비스 없음)
     health.module.ts  health.controller.ts

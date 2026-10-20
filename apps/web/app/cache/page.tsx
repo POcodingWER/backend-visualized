@@ -4,7 +4,7 @@ import CacheDemo from './CacheDemo';
 import { INK, inkStroke } from '../components/atoms/ink';
 
 export const metadata = {
-  title: '6장 맛집 대기표: 빠르게 보여주고, 제때 바꾸기 — 버튼 하나 뒤에서',
+  title: '6장 맛집 메뉴판: 빠르게 보여주고, 제때 바꾸기 — 버튼 하나 뒤에서',
 };
 
 function Kitchen({ x, y, busy = false }: { x: number; y: number; busy?: boolean }) {
@@ -84,7 +84,7 @@ const PANELS = [
   },
   {
     caption:
-      '그래서 대기 줄 앞에 오늘 메뉴를 적은 판(대기판)을 걸어요. 손님은 판만 보고, 직원이 5초마다 주방에 다시 물어 적어요.',
+      '그래서 대기 줄 앞에 오늘 메뉴를 적은 판(메뉴판)을 걸어요. 손님은 판만 보고, 직원이 5초마다 주방에 다시 물어 적어요.',
     art: (
       <g>
         <Kitchen x={160} y={90} />
@@ -96,7 +96,7 @@ const PANELS = [
     ),
   },
   {
-    caption: '메뉴가 바뀌어도, 대기판을 다시 확인하기 전까지는 옛 메뉴가 보여요.',
+    caption: '메뉴가 바뀌어도, 메뉴판을 다시 확인하기 전까지는 옛 메뉴가 보여요.',
     art: (
       <g>
         <Board x={14} y={40} text="김치찌개" stale />
@@ -112,7 +112,7 @@ const PANELS = [
     ),
   },
   {
-    caption: '대기판이 비는 순간 다 같이 주방으로 몰리지 않게, 열쇠를 쥔 한 명만 확인하러 가요.',
+    caption: '메뉴판이 비는 순간 다 같이 주방으로 몰리지 않게, 열쇠를 쥔 한 명만 확인하러 가요.',
     art: (
       <g>
         <Kitchen x={160} y={70} />
@@ -131,11 +131,11 @@ export default function CachePage() {
   return (
     <ChapterLayout
       chapterNumber={6}
-      title="맛집 대기표"
+      title="맛집 메뉴판"
       question="손님 1000명이 같은 걸 물어볼 때마다 데이터베이스에 다녀와야 할까요? 미리 적어 둔 답을 보여주면 무엇이 빨라지고, 무엇이 늦어질까요?"
     >
       <section style={{ maxWidth: 'var(--wide)', margin: '0 auto var(--space-16)' }}>
-        <ComicStrip label="4컷 만화: 맛집 대기판으로 보는 캐시 이야기" panels={PANELS} />
+        <ComicStrip label="4컷 만화: 맛집 메뉴판으로 보는 캐시 이야기" panels={PANELS} />
       </section>
       <CacheDemo />
     </ChapterLayout>

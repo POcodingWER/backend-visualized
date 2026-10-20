@@ -124,7 +124,7 @@ model Payment {
   @@index([orderId])
 }
 
-/// 6장: 맛집 대기판 (캐시할 원본 데이터).
+/// 6장: 맛집 메뉴판 (캐시할 원본 데이터).
 model MenuBoard {
   id        Int      @id @default(autoincrement())
   name      String   @unique @db.VarChar(64)

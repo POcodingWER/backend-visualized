@@ -58,12 +58,12 @@ export const emptyStats = (): CacheStats => ({
 });
 
 /**
- * 6장 맛집 대기표: 진짜 Redis(cache-aside, TTL 5초)와 MySQL.
+ * 6장 맛집 메뉴판: 진짜 Redis(cache-aside, TTL 5초)와 MySQL.
  * ponytail: single-flight는 이 프로세스 안에서만 묶는다. 서버가 여러 대면 Redis 잠금(SET NX PX)이 필요하다는 게 이 장의 요점.
  */
 @Injectable()
 export class CacheDemoService {
-  /** 대기판(MenuBoard) 행 이름. 테스트에서만 바꾼다 */
+  /** 주방의 원본 메뉴(MenuBoard) 행 이름. 테스트에서만 바꾼다 */
   boardName = 'board';
 
   constructor(
@@ -89,7 +89,7 @@ export class CacheDemoService {
   }
 
   /**
-   * 새 DB라 대기판 행이 없을 때 한 번 만든다. 손님 1000명이 동시에 "없다"를 보고 만들러 와도
+   * 새 DB라 원본 메뉴(MenuBoard) 행이 없을 때 한 번 만든다. 손님 1000명이 동시에 "없다"를 보고 만들러 와도
    * unique(name) 제약에 막힌 쪽(P2002)은 먼저 만든 행을 다시 읽으면 된다 (upsert도 이 경쟁에선 P2002를 낸다)
    */
   private async createBoard() {

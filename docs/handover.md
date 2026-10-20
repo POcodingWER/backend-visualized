@@ -78,7 +78,9 @@ curl localhost:4000/health            # {"status":"ok"...} 이면 DB 연결 OK
 apps/web/
   app/
     page.tsx                  첫 화면 (장 목록, 만든 사람)
-    layout.tsx                공통 머리말(SiteHeader)·글꼴·손그림 필터
+    layout.tsx                공통 머리말(SiteHeader)·글꼴·손그림 필터·공유 미리보기(OG) 문구
+    icon.svg                  파비콘 (손그림 버튼). Next 파일 규칙이라 따로 연결하지 않는다
+    opengraph-image.png       링크 공유 미리보기 그림 1200×630 (첫 화면 그림으로 만든 정적 PNG, .alt.txt가 대체 글)
     <장>/page.tsx             장 하나: 4컷 만화 + 데모 컴포넌트 (ticketing, wristband, delivery, ledger, double-pay, cache)
     <장>/api.ts               그 장이 부르는 API 함수 + 응답 타입 (화면 컴포넌트는 fetch를 직접 쓰지 않는다)
     <장>/*Demo.tsx, ...       그 장에서만 쓰는 컴포넌트·CSS는 장 폴더 안에
@@ -165,7 +167,7 @@ docs/                         이 문서, architecture, deploy, auth-tokens, cha
 - `listPayments` → `GET /payments?orderId=` 로 실제 생긴 행을 0.2초마다 확인
 - 테이블: `Payment` (오래된 데모 행은 서비스가 정리)
 
-### 6장 맛집 대기표 `/cache` — 빠르게 보여주고, 제때 바꾸기
+### 6장 맛집 메뉴판 `/cache` — 빠르게 보여주고, 제때 바꾸기
 
 - 화면: `CacheDemo.tsx` (손님 1000명, 메뉴 바꾸기, 몰림(stampede) 세 구역)
 - `cache/api.ts`
