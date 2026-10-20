@@ -22,7 +22,7 @@ import { INK } from '../components/atoms/ink';
 const PARCELS = 100;
 const PROBE_TOTAL = 210;
 const RECORDED_AT = '2026-10-19';
-const BENCHMARK_URL = `${GITHUB_URL}/blob/main/docs/benchmarks/stage2-ingest.md`;
+const BENCHMARK_URL = `${GITHUB_URL}/blob/main/docs/benchmarks/delivery-batching.md`;
 
 /** 지난 실측 기록: 로컬 API에 클릭 100개를 두 방식으로 보낸 결과 (첫 화면을 빈 상태 없이) */
 const RECORDED_SEND: { single: SendResult; batch: SendResult } = {
@@ -62,8 +62,8 @@ export default function DeliveryDemo() {
           ]}
           source={
             <>
-              출처: <a href={BENCHMARK_URL}>docs/benchmarks/stage2-ingest.md</a> — 맥북(M1 Pro) 한
-              대에서 Docker MySQL로 측정한 상대 비교라 실행마다 ±30% 정도 흔들려요. 위 그림의
+              출처: <a href={BENCHMARK_URL}>docs/benchmarks/delivery-batching.md</a> — 맥북(M1 Pro)
+              한 대에서 Docker MySQL로 측정한 상대 비교라 실행마다 ±30% 정도 흔들려요. 위 그림의
               100개짜리 기록은 양이 적어서 차이가 덜 보여요.
             </>
           }

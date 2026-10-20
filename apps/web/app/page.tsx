@@ -174,9 +174,9 @@ export default function Home() {
           ]}
           source={
             <>
-              출처: <a href={docLink('stage3-coupon.md')}>stage3-coupon.md</a> ·{' '}
-              <a href={docLink('stage2-ingest.md')}>stage2-ingest.md</a> (맥북 M1 Pro, MySQL 8.4,
-              2026-10-19 측정)
+              출처: <a href={docLink('ticketing-coupon.md')}>ticketing-coupon.md</a> ·{' '}
+              <a href={docLink('delivery-batching.md')}>delivery-batching.md</a> (맥북 M1 Pro, MySQL
+              8.4, 2026-10-19 측정)
             </>
           }
         />

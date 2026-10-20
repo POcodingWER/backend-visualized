@@ -398,8 +398,8 @@ const Compare = memo(function Compare({ results }: { results: Partial<Record<Str
         </tbody>
       </table>
       <p className={styles.muted}>
-        참고: docs/benchmarks/stage3-coupon.md 실측(500명 vs 100장, M1 Pro 로컬) — none 400장 초과
-        발급, pessimistic ~1.7s, optimistic 재시도 ~14,000회·60장만 발급·~24s, atomic ~0.4s.
+        참고: docs/benchmarks/ticketing-coupon.md 실측(500명 vs 100장, M1 Pro 로컬) — none 400장
+        초과 발급, pessimistic ~1.7s, optimistic 재시도 ~14,000회·60장만 발급·~24s, atomic ~0.4s.
       </p>
     </section>
   );

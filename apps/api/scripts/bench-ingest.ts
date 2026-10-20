@@ -1,5 +1,5 @@
 /**
- * 3장 묶음배송(이벤트 수집) 벤치마크 (docs/benchmarks/stage2-ingest.md): 단건 vs 배치 insert
+ * 3장 묶음배송(이벤트 수집) 벤치마크 (docs/benchmarks/delivery-batching.md): 단건 vs 배치 insert
  *
  *   pnpm --filter @bv/api bench               # API가 http://localhost:4000 에 떠 있어야 함
  *   N=10000 BATCH=100 CONCURRENCY=10 API_URL=... pnpm --filter @bv/api bench
