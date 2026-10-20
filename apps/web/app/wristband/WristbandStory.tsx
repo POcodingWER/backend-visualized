@@ -297,7 +297,7 @@ function BoothScene({ kickedOut }: { kickedOut: boolean }) {
         kickedOut ? '손님과 도둑이 모두 쫓겨난 재발급 창구' : '재발급 창구 앞의 손님과 도둑'
       }
     >
-      <g filter="url(#hand-wobble)">
+      <g>
         <rect
           x="130"
           y="40"

@@ -92,7 +92,6 @@ export default function Home() {
           role="img"
           aria-label="휴대폰 버튼 아래로 서버와 데이터베이스가 이어진 그림"
           fill="none"
-          filter="url(#hand-wobble)"
         >
           <rect x="105" y="10" width="110" height="150" rx="16" fill="#fbf8f2" {...ink} />
           <rect x="125" y="96" width="70" height="30" rx="8" fill="#f2c7a2" {...ink} />

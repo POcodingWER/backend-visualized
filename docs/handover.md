@@ -78,7 +78,7 @@ curl localhost:4000/health            # {"status":"ok"...} 이면 DB 연결 OK
 apps/web/
   app/
     page.tsx                  첫 화면 (장 목록, 만든 사람)
-    layout.tsx                공통 머리말(SiteHeader)·글꼴·손그림 필터·공유 미리보기(OG) 문구
+    layout.tsx                공통 머리말(SiteHeader)·글꼴·공유 미리보기(OG) 문구
     icon.svg                  파비콘 (손그림 버튼). Next 파일 규칙이라 따로 연결하지 않는다
     opengraph-image.png       링크 공유 미리보기 그림 1200×630 (첫 화면 그림으로 만든 정적 PNG, .alt.txt가 대체 글)
     <장>/page.tsx             장 하나: 4컷 만화 + 데모 컴포넌트 (ticketing, wristband, delivery, ledger, double-pay, cache)

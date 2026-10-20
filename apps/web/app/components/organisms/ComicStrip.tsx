@@ -14,7 +14,7 @@ export function ComicStrip({
       <ol>
         {panels.map((panel, index) => (
           <li key={index}>
-            <svg viewBox="0 0 240 180" aria-hidden="true" fill="none" filter="url(#hand-wobble)">
+            <svg viewBox="0 0 240 180" aria-hidden="true" fill="none">
               {panel.art}
             </svg>
             <p>
