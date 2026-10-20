@@ -49,15 +49,15 @@ curl localhost:4000/health            # {"status":"ok"...} 이면 DB 연결 OK
 
 ### 환경 변수
 
-| 파일                  | 변수                            | 뜻                                                                                       |
-| --------------------- | ------------------------------- | ---------------------------------------------------------------------------------------- |
-| `apps/api/.env`       | `DATABASE_URL`                  | MySQL 주소. **필수**                                                                     |
-|                       | `REDIS_URL`                     | 생략하면 `redis://127.0.0.1:6380/0` (bv-redis)                                           |
-|                       | `WEB_ORIGIN`                    | CORS 허용 주소 (`http://localhost:3000`)                                                 |
-|                       | `JWT_ACCESS_SECRET`, `AUTH_*`   | 2장 토큰 설정. 개발용 기본값이 있어 비워도 된다                                          |
-|                       | `ADMIN_API_KEY`                 | `/events/admin/*` 키. 개발에선 비우면 키 없이 허용                                       |
-|                       | `COUPON_SIMULATION_COOLDOWN_MS` | 1·4·6장 시뮬레이션 공용 쿨다운 (이름은 1장 시절 그대로, 코드에선 `simulationCooldownMs`) |
-| `apps/web/.env.local` | `NEXT_PUBLIC_API_URL`           | API 주소. 기본 `http://localhost:4000`                                                   |
+| 파일                  | 변수                          | 뜻                                                 |
+| --------------------- | ----------------------------- | -------------------------------------------------- |
+| `apps/api/.env`       | `DATABASE_URL`                | MySQL 주소. **필수**                               |
+|                       | `REDIS_URL`                   | 생략하면 `redis://127.0.0.1:6380/0` (bv-redis)     |
+|                       | `WEB_ORIGIN`                  | CORS 허용 주소 (`http://localhost:3000`)           |
+|                       | `JWT_ACCESS_SECRET`, `AUTH_*` | 2장 토큰 설정. 개발용 기본값이 있어 비워도 된다    |
+|                       | `ADMIN_API_KEY`               | `/events/admin/*` 키. 개발에선 비우면 키 없이 허용 |
+|                       | `SIMULATION_COOLDOWN_MS`      | 1·4·6장 시뮬레이션 공용 쿨다운 (ms, 기본 3000)     |
+| `apps/web/.env.local` | `NEXT_PUBLIC_API_URL`         | API 주소. 기본 `http://localhost:4000`             |
 
 운영 환경 변수 전체 표: [deploy.md 5장](deploy.md). 운영 모드(`NODE_ENV=production`)에서는 위험한 기본값이면 API가 아예 시작하지 않습니다 (`common/config/environment.ts`).
 
@@ -121,7 +121,7 @@ docs/                         이 문서, architecture, deploy, auth-tokens, cha
   - 쿠폰 행을 리셋하고 가상 사용자 N명이 동시에 `issue(strategy)`: `none`(읽고 쓰기, 초과 발급), `pessimistic`(`SELECT … FOR UPDATE`), `optimistic`(version 비교 + 재시도), `atomic`(`UPDATE … WHERE issuedCount < totalQuantity` 한 줄)
   - 테이블: `Coupon`, `CouponIssue` (쿠폰 이름 `sim-<전략>`)
 - 응답 `results[]`(요청마다 시작·끝 시각 timeline) → `useReplay`로 다시 재생, `GET /coupons/:name/state`로 DB 패널
-- 벤치마크: [benchmarks/stage3-coupon.md](benchmarks/stage3-coupon.md)
+- 벤치마크: [benchmarks/ticketing-coupon.md](benchmarks/ticketing-coupon.md)
 
 ### 2장 손목밴드 `/wristband` — 로그인이 유지되는 원리
 
@@ -145,7 +145,7 @@ docs/                         이 문서, architecture, deploy, auth-tokens, cha
   - `runDemoAggregate`: `POST /events/demo/aggregate` → `events/lib/aggregation.service.ts` (`INSERT … SELECT … ON DUPLICATE KEY UPDATE`로 KST 날짜별 `EventDailyStat` 갱신, 5분 cron도 같은 함수)
   - `loadStoredTotal`/`loadDailyStats`: `GET /events/stats`, `/events/stats/daily`
 - 날짜 계산(KST)은 순수 함수 `events/lib/date-range.ts`
-- 벤치마크: [benchmarks/stage2-ingest.md](benchmarks/stage2-ingest.md)
+- 벤치마크: [benchmarks/delivery-batching.md](benchmarks/delivery-batching.md)
 
 ### 4장 포인트 통장 `/ledger` — 잔액이 저절로 틀어지는 이유
 
@@ -216,5 +216,4 @@ docs/                         이 문서, architecture, deploy, auth-tokens, cha
 - **single-flight 코드가 두 벌**: `apps/api/src/common/utils/single-flight.ts`와 `apps/web/lib/single-flight.ts`(같은 내용, 각자 테스트). 공유 패키지로 뺄 만큼 크지 않아 그대로 둡니다.
 - **"지난 실측 기록"**(`public/data/*.json`, 각 Demo의 `RECORDED_*`)은 손으로 갱신합니다. 측정 환경은 맥북 M1 Pro 로컬.
 - 첫 화면의 만든 사람 정보는 `TODO(author)` 자리표시(사진·이름·이력서)로 남아 있습니다.
-- 벤치마크 파일 이름(`stage2-ingest.md`, `stage3-coupon.md`)은 예전 단계 이름입니다(링크가 많아 유지).
 - 웹 `next dev`가 "workspace root" 경고를 띄울 수 있습니다(상위 폴더에 다른 lockfile이 있을 때). 동작에는 영향 없음.

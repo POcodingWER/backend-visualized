@@ -616,7 +616,7 @@ function Compare() {
       />
       <div className={styles.bench}>
         <p>
-          <b>벤치마크 (docs/benchmarks/stage2-ingest.md, 10,000 이벤트, 로컬 M1 Pro)</b>
+          <b>벤치마크 (docs/benchmarks/delivery-batching.md, 10,000 이벤트, 로컬 M1 Pro)</b>
         </p>
         <div className={styles.benchRow}>
           <span>HTTP 단건 POST /events × 10,000</span>

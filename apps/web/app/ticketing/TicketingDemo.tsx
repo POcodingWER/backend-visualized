@@ -22,7 +22,7 @@ import { Button } from '../components/atoms/Button';
 import { Conclusion } from '../components/atoms/Conclusion';
 
 const FIXES = ['pessimistic', 'optimistic', 'atomic'] as const;
-const BENCHMARK_URL = `${GITHUB_URL}/blob/main/docs/benchmarks/stage3-coupon.md`;
+const BENCHMARK_URL = `${GITHUB_URL}/blob/main/docs/benchmarks/ticketing-coupon.md`;
 
 const seconds = (ms: number) => `${(ms / 1000).toFixed(2)}초`;
 
@@ -138,8 +138,8 @@ export default function TicketingDemo() {
           ]}
           source={
             <>
-              출처: <a href={BENCHMARK_URL}>docs/benchmarks/stage3-coupon.md</a> — 맥북(M1 Pro) 한
-              대에서 Docker MySQL로 측정. 같은 기계에서 서버·DB를 함께 돌린 상대 비교라 실행마다
+              출처: <a href={BENCHMARK_URL}>docs/benchmarks/ticketing-coupon.md</a> — 맥북(M1 Pro)
+              한 대에서 Docker MySQL로 측정. 같은 기계에서 서버·DB를 함께 돌린 상대 비교라 실행마다
               ±30% 정도 흔들려요. 위 그림의 재생 기록은 다른 날·다른 DB 설정이라 시간이 다를 수
               있어요(예: 그 기록에선 재도전이 9,015번 만에 모두 성공).
             </>

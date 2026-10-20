@@ -35,7 +35,7 @@ pnpm dev                                         # web :3000 · api :4000
 - [docs/architecture.md](docs/architecture.md) — 폴더·이름 규칙, Nest 개념 ↔ 프론트 비유, 원자 단위 설계
 - [docs/deploy.md](docs/deploy.md) — Vercel + EC2 Docker + RDS/MySQL 배포
 - [docs/auth-tokens.md](docs/auth-tokens.md) — 2장 토큰 설계 · [docs/chapters-4-6.md](docs/chapters-4-6.md) — 4~6장 설명
-- [docs/benchmarks/](docs/benchmarks/) — 1장 쿠폰(`stage3-coupon.md`), 3장 수집(`stage2-ingest.md`) 실측
+- [docs/benchmarks/](docs/benchmarks/) — 1장 쿠폰(`ticketing-coupon.md`), 3장 수집(`delivery-batching.md`) 실측
 - AI 어시스턴트 규칙: [.cursor/rules/](.cursor/rules/)
 
 ## 명령

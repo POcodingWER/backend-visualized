@@ -212,7 +212,7 @@ AWS 공식 가격표(aws.amazon.com 가격 페이지가 쓰는 공개 가격 데
 | `RATE_LIMIT_DEMO_GLOBAL_LIMIT_PER_MINUTE`                               |       —       | `20000`                           | 레이트 리밋 체험 엔드포인트 전역 분당 한도                                                        |
 | `MAX_STREAM_CONNECTIONS`                                                |       —       | `200`                             | 동시 SSE(`/events/stream`) 연결 수                                                                |
 | `AGGREGATION_DEMO_COOLDOWN_MS`                                          |       —       | `10000`                           | 공개 "지금 집계 실행" 버튼 전역 쿨다운                                                            |
-| `COUPON_SIMULATION_COOLDOWN_MS`                                         |       —       | `3000`                            | 쿠폰 시뮬레이션 종료 후 전역 쿨다운                                                               |
+| `SIMULATION_COOLDOWN_MS`                                                |       —       | `3000`                            | 1·4·6장 시뮬레이션 종료 후 전역 쿨다운 (ms)                                                       |
 | `THROTTLE_TTL_MS` / `THROTTLE_LIMIT`                                    |       —       | `10000` / `200`                   | IP별 기본 한도 (라우트별 `@Throttle`이 우선)                                                      |
 | `RUN_MIGRATIONS`                                                        |       —       | `true`                            | 컨테이너 시작 시 `prisma migrate deploy` 실행 여부                                                |
 | `MYSQL_ROOT_PASSWORD`, `MYSQL_PASSWORD`, `MYSQL_USER`, `MYSQL_DATABASE` | local-db일 때 | —                                 | MySQL 컨테이너 초기화용                                                                           |
