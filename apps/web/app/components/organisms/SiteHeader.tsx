@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { CHAPTERS } from '../../lib/site';
-import styles from './ui.module.css';
+import { CHAPTERS } from '../../../lib/site';
+import styles from '../ui.module.css';
 
 export default function SiteHeader() {
   const pathname = usePathname();
@@ -12,7 +12,7 @@ export default function SiteHeader() {
       <Link href="/" className={styles.wordmark}>
         버튼 하나 뒤에서
       </Link>
-      {/* 모바일에선 가로 스크롤 */}
+      {/* 좁은 화면에선 장 링크가 여러 줄로 접힌다 (ui.module.css .nav) */}
       <nav aria-label="이야기 목록" className={styles.nav}>
         {CHAPTERS.map((chapter) => (
           <Link

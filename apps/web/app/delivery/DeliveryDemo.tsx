@@ -2,23 +2,27 @@
 
 import { memo, useState } from 'react';
 import { GITHUB_URL } from '../../lib/site';
-import { DevDetails, ResultNumbers } from '../components/ui';
+import { DevDetails } from '../components/molecules/DevDetails';
+import { ResultNumbers } from '../components/molecules/ResultNumbers';
 import ui from '../components/ui.module.css';
-import Pipeline, {
+import {
   probeRateLimit,
   runDemoAggregate,
   sendEventsBothWays,
   type AggregateResult,
   type ProbeCounts,
   type SendResult,
-} from './Pipeline';
+} from './api';
+import Pipeline from './Pipeline';
 import styles from './pipeline.module.css';
+import { Button } from '../components/atoms/Button';
+import { Conclusion } from '../components/atoms/Conclusion';
+import { INK } from '../components/atoms/ink';
 
 const PARCELS = 100;
 const PROBE_TOTAL = 210;
 const RECORDED_AT = '2026-10-19';
 const BENCHMARK_URL = `${GITHUB_URL}/blob/main/docs/benchmarks/stage2-ingest.md`;
-const INK = '#2b2620';
 
 /** 지난 실측 기록: 로컬 API에 클릭 100개를 두 방식으로 보낸 결과 (첫 화면을 빈 상태 없이) */
 const RECORDED_SEND: { single: SendResult; batch: SendResult } = {
@@ -161,14 +165,9 @@ function TruckStage() {
             클릭 기록 10,000개를 묶어 보냈을 때 빨라진 정도 (18.7초 → 0.29초,{' '}
             <a href={BENCHMARK_URL}>측정 기록</a>)
           </p>
-          <button
-            type="button"
-            className={ui.bigButton}
-            onClick={() => void run()}
-            disabled={isRunning}
-          >
+          <Button size="big" onClick={() => void run()} disabled={isRunning}>
             {isRunning ? '트럭이 달리는 중…' : `클릭 ${PARCELS}개 두 가지로 보내기`}
-          </button>
+          </Button>
           {error ? (
             <p className={ui.errorLine} role="alert">
               {error}
@@ -182,11 +181,11 @@ function TruckStage() {
         </div>
       </div>
       {!isRunning && (
-        <p className={`${ui.conclusion} ${ui.conclusionGood}`}>
+        <Conclusion isGood>
           같은 {PARCELS}개를 옮기는 데 트럭 {result.single.requests}대와 {result.batch.requests}대.
           이번엔 묶어서 보낸 쪽이 {speedup.toFixed(1)}배 빨랐어요. 양이 많을수록 차이가 커져서,
           10,000개면 65배예요.
-        </p>
+        </Conclusion>
       )}
     </section>
   );
@@ -324,14 +323,9 @@ function GateLimit() {
             </div>
           </>
         )}
-        <button
-          type="button"
-          className={ui.smallButton}
-          onClick={() => void run()}
-          disabled={isRunning}
-        >
+        <Button size="small" onClick={() => void run()} disabled={isRunning}>
           {isRunning ? '보내는 중…' : `트럭 ${PROBE_TOTAL}대 한꺼번에 보내기`}
-        </button>
+        </Button>
       </div>
       <p className={ui.hint}>
         체험용 트럭은 빈 트럭이라 데이터베이스에 아무것도 남기지 않아요.
@@ -370,14 +364,9 @@ function DailyLedger() {
         &quot;날짜별·종류별 몇 개&quot;를 장부에 미리 적어 두고, 차트는 장부만 읽어요. 방금 보낸
         클릭은 다음 정리 뒤에 차트에 보여요.
       </p>
-      <button
-        type="button"
-        className={ui.smallButton}
-        onClick={() => void run()}
-        disabled={isRunning}
-      >
+      <Button size="small" onClick={() => void run()} disabled={isRunning}>
         {isRunning ? '정리하는 중…' : '지금 장부 정리하기'}
-      </button>
+      </Button>
       {message && (
         <p className={`${ui.hint} ${message.ok ? ui.goodText : ui.failText}`}>{message.text}</p>
       )}

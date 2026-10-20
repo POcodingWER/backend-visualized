@@ -1,11 +1,10 @@
-import { API_URL } from '../../lib/api';
 import type { RequestTrace, Result, Strategy } from './types';
 
 export const QUANTITY = 100;
 export const DEFAULT_USERS = 500;
 
 /** 화면 갱신 주기 (매 프레임 setState 하지 않음) */
-export { TICK_MS } from '../components/useReplay';
+export { TICK_MS } from '../../lib/useReplay';
 
 /** 지난 실측 기록 (public/data). 첫 화면을 빈 상태 없이 보여주기 위해 쓴다. */
 export const RECORDED_RUN_URL = '/data/ticketing-recorded-run.json';
@@ -74,43 +73,6 @@ export const FIX_ANALOGY: Record<
     tradeoff: '가장 빠르고 정확해요. 조건이 단순할 때 쓸 수 있어요.',
   },
 };
-
-/** 화면용 쉬운 오류 문장 */
-export class FriendlyError extends Error {}
-
-export async function runSimulation(body: {
-  users: number;
-  quantity: number;
-  strategy?: Strategy;
-}): Promise<Result[]> {
-  let response: Response;
-  try {
-    response = await fetch(`${API_URL}/coupons/simulate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-  } catch {
-    throw new FriendlyError('서버에 연결하지 못했어요. 잠시 후 다시 눌러 주세요.');
-  }
-  if (response.status === 429) {
-    const limited = (await response.json().catch(() => ({}))) as {
-      reason?: string;
-      retryAfterSeconds?: number;
-    };
-    throw new FriendlyError(
-      limited.reason === 'simulation_cooldown'
-        ? `방금 다른 실험이 끝났어요. ${limited.retryAfterSeconds ?? '몇'}초 뒤에 다시 눌러 주세요.`
-        : '너무 자주 눌렀어요. 10초쯤 쉬었다가 다시 눌러 주세요.',
-    );
-  }
-  if (response.status === 409) {
-    throw new FriendlyError('지금 다른 사람이 실험을 돌리고 있어요. 몇 초 뒤에 다시 눌러 주세요.');
-  }
-  if (!response.ok) throw new FriendlyError(`실험이 실패했어요 (서버 응답 ${response.status}).`);
-  const { results } = (await response.json()) as { results: Result[] };
-  return results;
-}
 
 /** 실측 timeline을 경과 시각 elapsedMs에서 잘라 본 상태 */
 export function replayStateAt(requests: RequestTrace[], elapsedMs: number) {

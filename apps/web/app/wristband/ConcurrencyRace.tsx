@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { authApi, errorReason, isSession, REASON_KO, type Session } from '../../lib/auth-api';
+import { authApi, errorReason, isSession, REASON_KO, type Session } from './api';
 import { createSingleFlight } from '../../lib/single-flight';
 import styles from './auth.module.css';
 import type { AddLogEntry } from './types';

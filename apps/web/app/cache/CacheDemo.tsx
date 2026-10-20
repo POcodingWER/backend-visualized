@@ -1,41 +1,27 @@
 'use client';
 
 import { memo, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import { API_URL } from '../../lib/api';
 import { GITHUB_URL } from '../../lib/site';
 import flow from '../components/flow.module.css';
-import { DevDetails, ResultNumbers } from '../components/ui';
+import { DevDetails } from '../components/molecules/DevDetails';
+import { ResultNumbers } from '../components/molecules/ResultNumbers';
 import ui from '../components/ui.module.css';
-import { useReplay } from '../components/useReplay';
-
-type Node = 'api' | 'redis' | 'db';
-interface Hop {
-  from: Node;
-  to: Node;
-  label: string;
-}
-interface MenuRead {
-  board: { content: string; version: number };
-  source: 'db' | 'cache';
-  hops: Hop[];
-  ttlLeftMs: number | null;
-}
-interface VisitorsResult {
-  direct: { visitors: number; dbReads: number; ms: number };
-  cached: { visitors: number; dbReads: number; ms: number };
-}
-type Protection = 'none' | 'single-flight' | 'redis-lock';
-type VisitorPath = 'cache' | 'db' | 'waited' | 'db-fallback';
-type RedisCommandName = 'GET' | 'SET EX' | 'SET NX' | 'DEL';
-interface StampedeResult {
-  protection: Protection;
-  visitors: number;
-  instances: number;
-  durationMs: number;
-  dbReads: number;
-  commands: Record<RedisCommandName, number>;
-  traces?: { instance: number; startedAtMs: number; finishedAtMs: number; path: VisitorPath }[];
-}
+import { useReplay } from '../../lib/useReplay';
+import { Button } from '../components/atoms/Button';
+import { Conclusion } from '../components/atoms/Conclusion';
+import {
+  editMenu,
+  readMenu,
+  runStampede,
+  runVisitors,
+  type Hop,
+  type MenuRead,
+  type Node,
+  type Protection,
+  type RedisCommandName,
+  type StampedeResult,
+  type VisitorsResult,
+} from './api';
 
 const RECORDED_AT = '2026-10-20';
 /** 지난 실측 (로컬 API + bv-redis + MySQL 8.4). 첫 화면을 빈 상태 없이 보여주려는 값 */
@@ -88,25 +74,6 @@ const WATCH_MS = 7_000;
 
 const ms = (value: number) =>
   value < 1000 ? `${Math.round(value)}ms` : `${(value / 1000).toFixed(2)}초`;
-
-async function postJson<T>(path: string, body: unknown): Promise<T> {
-  const response = await fetch(`${API_URL}${path}`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-  if (response.status === 429 || response.status === 409)
-    throw new Error('방금 누가 실행했어요. 몇 초 뒤에 다시 눌러 주세요.');
-  if (!response.ok)
-    throw new Error(`서버 오류 (${response.status}). Redis가 켜져 있는지 확인해 주세요.`);
-  return (await response.json()) as T;
-}
-
-const readMenu = async (via: 'db' | 'cache'): Promise<MenuRead> => {
-  const response = await fetch(`${API_URL}/cache-demo/menu?via=${via}`, { cache: 'no-store' });
-  if (!response.ok) throw new Error(`서버 오류 (${response.status})`);
-  return (await response.json()) as MenuRead;
-};
 
 export default function CacheDemo() {
   return (
@@ -188,7 +155,7 @@ function VisitorsStage() {
     setIsRunning(true);
     setError(null);
     try {
-      setResult(await postJson<VisitorsResult>('/cache-demo/visitors', { visitors: 1000 }));
+      setResult(await runVisitors(1000));
       setIsLive(true);
       setRunCount((count) => count + 1);
     } catch (caught) {
@@ -234,14 +201,9 @@ function VisitorsStage() {
             <span style={{ fontSize: '0.5em' }}>번</span>
           </p>
           <p className={flow.bigNumberLabel}>손님 1000명에 데이터베이스를 읽은 횟수</p>
-          <button
-            type="button"
-            className={ui.bigButton}
-            onClick={() => void run()}
-            disabled={isRunning}
-          >
+          <Button size="big" onClick={() => void run()} disabled={isRunning}>
             {isRunning ? '손님 받는 중…' : '손님 1000명 받기'}
-          </button>
+          </Button>
           <p className={ui.hint}>
             진짜 서버에서 "오늘 메뉴" 읽기 1000번을 동시에 해요. 왼쪽은 매번 MySQL로, 오른쪽은 Redis
             대기판(5초짜리)을 먼저 봐요. 대기판이 이미 있으면 DB는 0번이에요.
@@ -249,11 +211,11 @@ function VisitorsStage() {
           {error && <p className={ui.errorLine}>{error}</p>}
         </div>
       </div>
-      <p className={`${ui.conclusion} ${ui.conclusionGood}`}>
+      <Conclusion isGood>
         같은 1000명인데 주방에 간 횟수가 {result.direct.dbReads}번 → {result.cached.dbReads}번. 걸린
         시간은 {ms(result.direct.ms)} → {ms(result.cached.ms)}예요. 대신 대기판은 최대 5초 늦을 수
         있어요 — 아래에서 직접 확인해 보세요.
-      </p>
+      </Conclusion>
     </section>
   );
 }
@@ -420,10 +382,7 @@ function StaleSection() {
     try {
       // 대기판이 차 있는 상태에서 바꿔야 "옛 메뉴가 남는" 모습이 보인다 (비어 있으면 한 번 채운다)
       await readMenu('cache');
-      const edited = await postJson<{ board: { version: number }; hops: Hop[] }>(
-        '/cache-demo/menu',
-        { invalidate },
-      );
+      const edited = await editMenu(invalidate);
       setEditedVersion(edited.board.version);
       setEditHops(edited.hops);
       const editedAt = performance.now();
@@ -471,16 +430,11 @@ function StaleSection() {
           marginTop: 'var(--space-6)',
         }}
       >
-        <button
-          type="button"
-          className={ui.smallButton}
-          onClick={() => void editAndWatch()}
-          disabled={isWatching}
-        >
+        <Button size="small" onClick={() => void editAndWatch()} disabled={isWatching}>
           {isWatching
             ? `지켜보는 중… ${elapsedMs ? (elapsedMs / 1000).toFixed(1) : '0.0'}초`
             : '주방에서 메뉴 바꾸기'}
-        </button>
+        </Button>
         <label className={flow.toggle}>
           <input
             type="checkbox"
@@ -495,13 +449,11 @@ function StaleSection() {
         <HopStrip hops={editHops} runKey={`edit-${editedVersion}`} caption="메뉴 바꾸기" />
       )}
       {editedVersion !== null && !isWatching && (
-        <p
-          className={`${ui.conclusion} ${cacheFresh !== null && cacheFresh < 1000 ? ui.conclusionGood : ''}`}
-        >
+        <Conclusion isGood={cacheFresh !== null && cacheFresh < 1000}>
           {cacheFresh === null
             ? '7초 안에 오른쪽이 바뀌지 않았어요. 다시 해 보세요.'
             : `왼쪽은 ${(sides.db.freshAfterMs! / 1000).toFixed(1)}초, 오른쪽은 ${(cacheFresh / 1000).toFixed(1)}초 만에 새 메뉴가 보였어요. ${invalidate ? '대기판을 지웠더니 바로 바뀌었어요.' : '그 사이 오른쪽 손님은 옛 메뉴를 봤어요.'} 주방 간 횟수: 왼쪽 ${sides.db.dbReads}번, 오른쪽 ${sides.cache.dbReads}번.`}
-        </p>
+        </Conclusion>
       )}
       {error && <p className={ui.errorLine}>{error}</p>}
     </section>
@@ -643,11 +595,7 @@ function StampedeSection() {
     setIsRunning(true);
     setError(null);
     try {
-      const body = await postJson<{ results: StampedeResult[] }>('/cache-demo/stampede', {
-        visitors: 1000,
-        instances: 3,
-      });
-      setResults(body.results);
+      setResults(await runStampede(1000, 3));
       setIsLive(true);
       setPlayCount((count) => count + 1);
     } catch (caught) {
@@ -693,14 +641,9 @@ function StampedeSection() {
         ))}
       </div>
       <p style={{ marginTop: 'var(--space-6)' }}>
-        <button
-          type="button"
-          className={ui.smallButton}
-          onClick={() => void run()}
-          disabled={isRunning}
-        >
+        <Button size="small" onClick={() => void run()} disabled={isRunning}>
           {isRunning ? '몰리는 중…' : '대기판 비우고 1000명 한꺼번에 보내기'}
-        </button>
+        </Button>
       </p>
       <p className={ui.hint}>
         {isLive
@@ -708,10 +651,10 @@ function StampedeSection() {
           : `지난 실측 기록 (${RECORDED_AT}, 로컬). 눌러서 직접 재 보세요.`}
       </p>
       {error && <p className={ui.errorLine}>{error}</p>}
-      <p className={`${ui.conclusion} ${ui.conclusionGood}`}>
+      <Conclusion isGood>
         서버마다 한 명씩 묶는 건 서버 안에서만 통해요. 서버가 늘면 그만큼 주방에 가죠. 모든 서버가
         같이 보는 Redis에 열쇠를 두면, 서버가 몇 대든 주방에 가는 건 한 명이에요.
-      </p>
+      </Conclusion>
     </section>
   );
 }

@@ -1,18 +1,11 @@
-import { ChapterLayout, ComicStrip } from '../components/ui';
+import { ChapterLayout } from '../components/organisms/ChapterLayout';
+import { ComicStrip } from '../components/organisms/ComicStrip';
 import CacheDemo from './CacheDemo';
+import { INK, inkStroke } from '../components/atoms/ink';
 
 export const metadata = {
   title: '6장 맛집 대기표: 빠르게 보여주고, 제때 바꾸기 — 버튼 하나 뒤에서',
 };
-
-const INK = '#2b2620';
-// 채움은 <svg fill="none">에서 물려받는다
-const ink = {
-  stroke: INK,
-  strokeWidth: 2,
-  strokeLinecap: 'round',
-  strokeLinejoin: 'round',
-} as const;
 
 function Kitchen({ x, y, busy = false }: { x: number; y: number; busy?: boolean }) {
   return (
@@ -24,12 +17,12 @@ function Kitchen({ x, y, busy = false }: { x: number; y: number; busy?: boolean 
         height="56"
         rx="4"
         fill={busy ? '#f2d3c8' : '#ede5d5'}
-        {...ink}
+        {...inkStroke}
       />
       <path
         d={`M${x - 6} ${y + 2} L${x + 35} ${y - 22} L${x + 76} ${y + 2}`}
         fill="#b4c9a9"
-        {...ink}
+        {...inkStroke}
       />
       <text x={x + 35} y={y + 34} textAnchor="middle" fontSize="12" fontWeight="700" fill={INK}>
         주방
@@ -41,11 +34,11 @@ function Kitchen({ x, y, busy = false }: { x: number; y: number; busy?: boolean 
 function Guest({ x, y, fill = '#bcd4e0' }: { x: number; y: number; fill?: string }) {
   return (
     <g>
-      <circle cx={x} cy={y} r="7" fill="#fbf8f2" {...ink} strokeWidth="1.6" />
+      <circle cx={x} cy={y} r="7" fill="#fbf8f2" {...inkStroke} strokeWidth="1.6" />
       <path
         d={`M${x - 10} ${y + 26} Q${x} ${y + 4} ${x + 10} ${y + 26}`}
         fill={fill}
-        {...ink}
+        {...inkStroke}
         strokeWidth="1.6"
       />
     </g>
@@ -65,7 +58,7 @@ function Board({
 }) {
   return (
     <g>
-      <rect x={x} y={y} width="86" height="50" rx="4" fill="#fbf8f2" {...ink} />
+      <rect x={x} y={y} width="86" height="50" rx="4" fill="#fbf8f2" {...inkStroke} />
       <text x={x + 8} y={y + 18} fontSize="10" fill="#5e564b">
         오늘의 메뉴
       </text>
@@ -85,7 +78,7 @@ const PANELS = [
         {[0, 1, 2, 3, 4, 5].map((index) => (
           <Guest key={index} x={22 + (index % 3) * 34} y={44 + Math.floor(index / 3) * 62} />
         ))}
-        <path d="M120 60 L146 80 M120 120 L146 104" {...ink} strokeDasharray="3 4" />
+        <path d="M120 60 L146 80 M120 120 L146 104" {...inkStroke} strokeDasharray="3 4" />
       </g>
     ),
   },
@@ -111,7 +104,7 @@ const PANELS = [
         <text x="185" y="150" textAnchor="middle" fontSize="12" fontWeight="700" fill={INK}>
           된장찌개
         </text>
-        <path d="M110 64 H140" {...ink} />
+        <path d="M110 64 H140" {...inkStroke} />
         <text x="125" y="58" textAnchor="middle" fontSize="16" fill="#a3321f">
           ≠
         </text>
@@ -124,8 +117,8 @@ const PANELS = [
       <g>
         <Kitchen x={160} y={70} />
         <Guest x={130} y={96} fill="#f2c7a2" />
-        <circle cx="146" cy="88" r="5" fill="#f2c7a2" {...ink} strokeWidth="1.6" />
-        <path d="M149 91 l8 8 m-3 -3 l3 -3" {...ink} strokeWidth="1.6" />
+        <circle cx="146" cy="88" r="5" fill="#f2c7a2" {...inkStroke} strokeWidth="1.6" />
+        <path d="M149 91 l8 8 m-3 -3 l3 -3" {...inkStroke} strokeWidth="1.6" />
         {[0, 1, 2, 3, 4].map((index) => (
           <Guest key={index} x={20 + (index % 3) * 30} y={60 + Math.floor(index / 3) * 56} />
         ))}

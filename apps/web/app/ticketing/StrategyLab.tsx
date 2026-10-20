@@ -1,9 +1,9 @@
 'use client';
 
 import { memo, useMemo, useState } from 'react';
-import { API_URL } from '../../lib/api';
+import { useReplay } from '../../lib/useReplay';
+import { loadCouponState, runSimulation } from './api';
 import styles from './coupon.module.css';
-
 import { Breakdown, DbChart, DbTables, RequestLog, StrategyDetail, TruthCheck } from './DbPanels';
 import {
   DEFAULT_USERS,
@@ -11,10 +11,8 @@ import {
   STRATEGY_INFO,
   STRATEGY_ORDER,
   replayStateAt,
-  runSimulation,
 } from './simulation';
 import type { DbState, Result, Strategy } from './types';
-import { useReplay } from '../components/useReplay';
 
 const MAX_DOTS = 36;
 
@@ -37,19 +35,7 @@ export default function StrategyLab({
   const replay = results[strategy] ?? null;
   const { elapsedMs, replayMs, isDone: done, play } = useReplay(replay);
 
-  const loadState = async (name: string) => {
-    try {
-      const response = await fetch(
-        `${API_URL}/coupons/${encodeURIComponent(name)}/state?limit=10`,
-        {
-          cache: 'no-store',
-        },
-      );
-      setDbState(response.ok ? ((await response.json()) as DbState) : null);
-    } catch {
-      setDbState(null);
-    }
-  };
+  const loadState = async (couponName: string) => setDbState(await loadCouponState(couponName));
 
   const run = async (runAllStrategies: boolean) => {
     setBusy(

@@ -1,21 +1,14 @@
 'use client';
 
 import { useState, type CSSProperties } from 'react';
-import { API_URL } from '../../lib/api';
 import { GITHUB_URL } from '../../lib/site';
 import flow from '../components/flow.module.css';
-import { DevDetails, ResultNumbers } from '../components/ui';
+import { DevDetails } from '../components/molecules/DevDetails';
+import { ResultNumbers } from '../components/molecules/ResultNumbers';
 import ui from '../components/ui.module.css';
-
-interface PaymentRow {
-  id: number;
-  orderId: string;
-  amount: number;
-  status: string;
-  idempotencyKey: string | null;
-  createdAt: string;
-  paidAt: string | null;
-}
+import { Button } from '../components/atoms/Button';
+import { Conclusion } from '../components/atoms/Conclusion';
+import { listPayments, pay, type PaymentRow } from './api';
 
 type AttemptState = 'sending' | 'gave_up' | 'charged' | 'replayed' | 'failed';
 interface Attempt {
@@ -125,17 +118,7 @@ async function runScenario(
 
   const send = async (attempt: Attempt, signal?: AbortSignal) => {
     try {
-      const response = await fetch(`${API_URL}/payments`, {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-          ...(idempotencyKey && { 'Idempotency-Key': idempotencyKey }),
-        },
-        body: JSON.stringify({ orderId, amount: AMOUNT }),
-        signal,
-      });
-      if (!response.ok) throw new Error(String(response.status));
-      const body = (await response.json()) as { payment: PaymentRow; replayed: boolean };
+      const body = await pay({ orderId, amount: AMOUNT, idempotencyKey, signal });
       attempt.state = body.replayed ? 'replayed' : 'charged';
       attempt.paymentId = body.payment.id;
     } catch {
@@ -168,8 +151,7 @@ async function runScenario(
   }
 
   const poll = async () => {
-    const response = await fetch(`${API_URL}/payments?orderId=${orderId}`);
-    if (response.ok) rows = (await response.json()) as PaymentRow[];
+    rows = await listPayments(orderId);
     emit();
   };
   const settled = Promise.all([...requests, retry]);
@@ -243,14 +225,9 @@ export default function PaymentDemo() {
             <p className={flow.bigNumberLabel}>
               실제로 결제된 횟수 (같은 결제 요청 {requestCount}개)
             </p>
-            <button
-              type="button"
-              className={ui.bigButton}
-              onClick={() => void run()}
-              disabled={isRunning}
-            >
+            <Button size="big" onClick={() => void run()} disabled={isRunning}>
               {isRunning ? '결제하는 중…' : '결제 버튼 세 번 + 자동 재시도'}
-            </button>
+            </Button>
             <p className={ui.hint}>
               진짜 서버로 결제 요청을 보내요: 버튼을 0.09초 간격으로 세 번 누르고, 첫 응답이 0.6초
               안에 안 오면 앱이 한 번 더 보내요. 결제사 승인은 0.9초 걸리게 해 뒀어요(가짜 결제,
@@ -260,14 +237,14 @@ export default function PaymentDemo() {
           </div>
         </div>
         {shown.withKey.isDone && shown.withoutKey.isDone && (
-          <p className={`${ui.conclusion} ${ui.conclusionGood}`}>
+          <Conclusion isGood>
             번호표가 없으면 요청 {shown.withoutKey.attempts.length}개가 결제{' '}
             {shown.withoutKey.rows.length}건(
             {won(shown.withoutKey.rows.length * AMOUNT)}). 같은 번호표를 붙이면 결제{' '}
             {shown.withKey.rows.length}건, 나머지 요청은 같은 영수증(결제 #
             {shown.withKey.rows[0]?.id})을 돌려받았어요. 앱이 포기한 첫 요청도 서버에선 끝까지
             처리됐어요.
-          </p>
+          </Conclusion>
         )}
       </section>
 
@@ -544,14 +521,9 @@ function ButtonLockSection() {
             </span>
           </p>
           <p className={flow.bigNumberLabel}>버튼은 한 번 눌렀는데 결제된 횟수</p>
-          <button
-            type="button"
-            className={ui.smallButton}
-            onClick={() => void start()}
-            disabled={isRunning}
-          >
+          <Button size="small" onClick={() => void start()} disabled={isRunning}>
             {isRunning ? '결제하는 중…' : '잠긴 버튼으로 한 번만 결제'}
-          </button>
+          </Button>
           <p className={ui.hint}>
             {run?.isDone
               ? '방금 실제로 보낸 결과예요.'

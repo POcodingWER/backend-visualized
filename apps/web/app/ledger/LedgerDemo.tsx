@@ -1,50 +1,24 @@
 'use client';
 
 import { memo, useEffect, useMemo, useState } from 'react';
-import { API_URL } from '../../lib/api';
 import { GITHUB_URL } from '../../lib/site';
 import flow from '../components/flow.module.css';
-import { DevDetails, ResultNumbers } from '../components/ui';
+import { DevDetails } from '../components/molecules/DevDetails';
+import { ResultNumbers } from '../components/molecules/ResultNumbers';
 import ui from '../components/ui.module.css';
-import { useReplay } from '../components/useReplay';
+import { useReplay } from '../../lib/useReplay';
+import { Button } from '../components/atoms/Button';
+import { Conclusion } from '../components/atoms/Conclusion';
+import {
+  loadWalletEntries,
+  simulatePoints,
+  type EntriesResponse,
+  type PointMode,
+  type PointSimulationResult,
+} from './api';
 
-type PointMode = 'overwrite' | 'ledger';
 const MODES: PointMode[] = ['overwrite', 'ledger'];
-
-interface PointRequestTrace {
-  amount: number;
-  startedAtMs: number;
-  readAtMs: number;
-  wroteAtMs: number;
-  balanceSeen: number;
-  balanceWritten: number;
-  outcome: 'applied' | 'rejected';
-}
-interface Reconciliation {
-  balance: number;
-  entriesSum: number;
-  difference: number;
-}
-interface PointSimulationResult {
-  mode: PointMode;
-  walletName: string;
-  requests: number;
-  openingBalance: number;
-  expectedBalance: number;
-  reconciliation: Reconciliation;
-  lostPoints: number;
-  rejected: number;
-  durationMs: number;
-  traces: PointRequestTrace[];
-  overdraft?: { attemptedAmount: number; rejected: boolean };
-}
 type Results = Record<PointMode, PointSimulationResult>;
-interface EntriesResponse {
-  walletName: string;
-  reconciliation: Reconciliation | null;
-  entries: { id: string; amount: number; reason: string; createdAt: string }[];
-}
-
 const RECORDED_RUN_URL = '/data/ledger-recorded-run.json';
 const CODE_URL = `${GITHUB_URL}/blob/main/apps/api/src/points/points.service.ts`;
 const DOCS_URL = `${GITHUB_URL}/blob/main/docs/chapters-4-6.md#4장-포인트-통장`;
@@ -83,8 +57,7 @@ export default function LedgerDemo() {
   const loadEntries = async () => {
     const loaded = await Promise.all(
       MODES.map(async (mode) => {
-        const response = await fetch(`${API_URL}/points/${mode}/entries?limit=8`);
-        return [mode, (await response.json()) as EntriesResponse] as const;
+        return [mode, await loadWalletEntries(mode, 8)] as const;
       }),
     );
     setEntries(Object.fromEntries(loaded));
@@ -94,16 +67,7 @@ export default function LedgerDemo() {
     setIsRunning(true);
     setError(null);
     try {
-      const response = await fetch(`${API_URL}/points/simulate`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ requests: 200 }),
-      });
-      if (response.status === 429 || response.status === 409)
-        throw new Error('방금 누가 실행했어요. 몇 초 뒤에 다시 눌러 주세요.');
-      if (!response.ok) throw new Error(`서버 오류 (${response.status})`);
-      const body = (await response.json()) as { results: PointSimulationResult[] };
-      setResults(toResults(body.results));
+      setResults(toResults(await simulatePoints(200)));
       setIsLive(true);
       setPlayCount((count) => count + 1);
       void loadEntries().catch(() => undefined);
@@ -270,9 +234,9 @@ function LedgerStage({
           <p className={ui.hint}>
             통장 방식은 같은 200건에서 <b className={ui.goodText}>0P</b> 사라졌어요.
           </p>
-          <button type="button" className={ui.bigButton} onClick={onRun} disabled={isRunning}>
+          <Button size="big" onClick={onRun} disabled={isRunning}>
             {isRunning ? '보내는 중…' : '적립·사용 200건 동시에 보내기'}
-          </button>
+          </Button>
           <p className={ui.hint}>
             진짜 서버와 데이터베이스에 적립(+100P) 150건, 사용(−100P) 50건을 한꺼번에 보내요. 시작
             잔액은 5,000P라 정상이라면 15,000P가 돼야 해요.
@@ -281,11 +245,11 @@ function LedgerStage({
         </div>
       </div>
       {results && (
-        <p className={`${ui.conclusion} ${lost > 0 ? '' : ui.conclusionGood}`}>
+        <Conclusion isGood={lost <= 0}>
           {lost > 0
             ? `내역 합계는 ${points(results.overwrite.reconciliation.entriesSum)}인데 잔액 칸은 ${points(results.overwrite.reconciliation.balance)}. 동시에 읽은 사람끼리 서로의 몫을 덮어써서 ${points(lost)}가 사라졌어요.`
             : '이번엔 덮어쓰기도 운 좋게 맞았어요. 다시 눌러 보세요 — 동시에 겹치면 언제든 사라져요.'}
-        </p>
+        </Conclusion>
       )}
     </section>
   );
@@ -515,14 +479,9 @@ function ReconcileSection({
         })}
       </div>
       <p style={{ marginTop: 'var(--space-6)' }}>
-        <button
-          type="button"
-          className={ui.smallButton}
-          onClick={() => void recheck()}
-          disabled={isChecking}
-        >
+        <Button size="small" onClick={() => void recheck()} disabled={isChecking}>
           {isChecking ? '세는 중…' : '지금 데이터베이스에서 다시 맞춰 보기'}
-        </button>
+        </Button>
       </p>
       <p className={ui.hint}>
         {checkedAt
@@ -549,11 +508,11 @@ function OverdraftSection({
         사용" 사이에 다른 사용이 끼어들어 잔액이 마이너스가 되는 일이 없어요.
       </p>
       {result?.overdraft && (
-        <p className={`${ui.conclusion} ${ui.conclusionGood}`} style={{ marginTop: 0 }}>
+        <Conclusion isGood style={{ marginTop: 0 }}>
           잔액 {points(result.reconciliation.balance)}에서{' '}
           {points(result.overdraft.attemptedAmount)}를 쓰려고 하자{' '}
           {result.overdraft.rejected ? '거절했어요' : '통과했어요(오류)'}. 내역도 잔액도 그대로예요.
-        </p>
+        </Conclusion>
       )}
       <p className={ui.source}>{sourceLabel}</p>
     </section>
@@ -572,13 +531,12 @@ function EntriesTables({
     <div>
       <p style={{ marginBottom: 'var(--space-3)' }}>
         <b>PointEntry 최근 행 (실제 DB)</b>{' '}
-        <button
-          type="button"
-          className={ui.smallButton}
+        <Button
+          size="small"
           onClick={() => void onLoad().catch(() => setError('불러오지 못했어요'))}
         >
           불러오기
-        </button>
+        </Button>
       </p>
       {error && <p className={ui.errorLine}>{error}</p>}
       <div className={`${ui.fixes} ${ui.fixesTwo}`}>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { authApi, errorReason, REASON_KO } from '../../lib/auth-api';
+import { authApi, errorReason, REASON_KO } from './api';
 import styles from './auth.module.css';
 
 function decodeSegment(segment: string): unknown {

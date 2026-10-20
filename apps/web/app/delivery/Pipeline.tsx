@@ -3,6 +3,14 @@
 import { createTracker, type SendInfo, type Tracker } from '@bv/sdk';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { API_URL } from '../../lib/api';
+import {
+  loadDailyStats,
+  loadStoredTotal,
+  probeRateLimit,
+  runDemoAggregate,
+  sendEventsBothWays,
+  type ProbeCounts,
+} from './api';
 import DailyChart, { type Daily } from './DailyChart';
 import styles from './pipeline.module.css';
 
@@ -141,10 +149,6 @@ interface LogRow {
   info: SendInfo;
 }
 
-interface Stats {
-  total: number;
-}
-
 const REASON: Record<SendInfo['reason'], string> = {
   size: '임계치 도달',
   interval: '타이머',
@@ -214,12 +218,9 @@ export default function Pipeline() {
 
   const loadStats = useCallback(async () => {
     try {
-      const [stage, doneCount] = await Promise.all([
-        fetch(`${API_URL}/events/stats`, { cache: 'no-store' }),
-        fetch(`${API_URL}/events/stats/daily`, { cache: 'no-store' }),
-      ]);
-      if (stage.ok) setDbTotal(((await stage.json()) as Stats).total);
-      if (doneCount.ok) setDaily((await doneCount.json()) as Daily);
+      const [stats, dailyStats] = await Promise.all([loadStoredTotal(), loadDailyStats()]);
+      if (stats.ok) setDbTotal(stats.body.total);
+      if (dailyStats.ok) setDaily(dailyStats.body);
     } catch {
       // API 다운 시 무시
     }
@@ -562,118 +563,6 @@ function rafBatch<T>(apply: (value: T) => void) {
       apply(latest);
     });
   };
-}
-
-export type SendResult = { requests: number; ms: number; rejected: number };
-
-/**
- * 같은 이벤트 eventCount개를 실제 API로 두 번 보낸다: 이벤트마다 POST /events(동시 10) → 100개씩 POST /events/batch.
- * rejected = 레이트 리밋(429)이나 네트워크 오류로 저장되지 않은 요청 수.
- */
-export async function sendEventsBothWays(
-  eventCount: number,
-  {
-    onSingleProgress,
-    onBatchProgress,
-  }: { onSingleProgress?: (done: number) => void; onBatchProgress?: (done: number) => void } = {},
-): Promise<{ single: SendResult; batch: SendResult }> {
-  const makeEvent = (eventIndex: number, mode: string) => ({
-    name: 'compare_demo',
-    properties: { mode, i: eventIndex },
-    sessionId: 'compare-demo',
-    occurredAt: new Date().toISOString(),
-  });
-  const isStored = (response: Response | null) => !!response && response.status < 300;
-
-  let startedAt = performance.now();
-  let next = 0;
-  let done = 0;
-  let singleRejected = 0;
-  const worker = async () => {
-    while (next < eventCount) {
-      const eventIndex = next++;
-      const response = await fetch(`${API_URL}/events`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(makeEvent(eventIndex, 'single')),
-      }).catch(() => null);
-      if (!isStored(response)) singleRejected++;
-      onSingleProgress?.(++done);
-    }
-  };
-  await Promise.all(Array.from({ length: 10 }, worker));
-  const single = {
-    requests: eventCount,
-    ms: performance.now() - startedAt,
-    rejected: singleRejected,
-  };
-
-  startedAt = performance.now();
-  let batchRequests = 0;
-  let batchRejected = 0;
-  for (let i = 0; i < eventCount; i += 100) {
-    const events = Array.from({ length: Math.min(100, eventCount - i) }, (_, k) =>
-      makeEvent(i + k, 'batch'),
-    );
-    const response = await fetch(`${API_URL}/events/batch`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ events }),
-    }).catch(() => null);
-    if (!isStored(response)) batchRejected++;
-    onBatchProgress?.(++batchRequests);
-  }
-  return {
-    single,
-    batch: { requests: batchRequests, ms: performance.now() - startedAt, rejected: batchRejected },
-  };
-}
-
-export type ProbeCounts = { ok: number; limited: number; other: number };
-
-/** 레이트 리밋 체험: DB에 쓰지 않는 /events/demo/rate-limit-probe로 요청 total개를 동시 15개씩 몰아 보낸다 */
-export async function probeRateLimit(total: number, onProgress?: (counts: ProbeCounts) => void) {
-  const counts: ProbeCounts = { ok: 0, limited: 0, other: 0 };
-  let next = 0;
-  const worker = async () => {
-    while (next < total) {
-      next++;
-      const response = await fetch(`${API_URL}/events/demo/rate-limit-probe`, {
-        method: 'POST',
-      }).catch(() => null);
-      if (response?.status === 202) counts.ok++;
-      else if (response?.status === 429) counts.limited++;
-      else counts.other++;
-      onProgress?.(counts);
-    }
-  };
-  await Promise.all(Array.from({ length: 15 }, worker));
-  return { ...counts };
-}
-
-export type AggregateResult = {
-  rows: number;
-  ms: number;
-  from: string;
-  to: string;
-  cooldownSeconds: number;
-};
-
-/** 공개 데모용 집계 실행 (전역 쿨다운이 있어 429면 retryAfterSeconds를 돌려준다) */
-export async function runDemoAggregate(): Promise<
-  { result: AggregateResult } | { retryAfterSeconds: number | undefined } | { error: string }
-> {
-  try {
-    const response = await fetch(`${API_URL}/events/demo/aggregate`, { method: 'POST' });
-    if (response.status === 429) {
-      const limited = (await response.json().catch(() => ({}))) as { retryAfterSeconds?: number };
-      return { retryAfterSeconds: limited.retryAfterSeconds };
-    }
-    if (!response.ok) return { error: `HTTP ${response.status}` };
-    return { result: (await response.json()) as AggregateResult };
-  } catch (error) {
-    return { error: String(error) };
-  }
 }
 
 /** 단건 vs 배치: 같은 N개 이벤트를 실제 API로 보내 요청 수/시간 비교 */

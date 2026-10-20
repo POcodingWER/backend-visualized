@@ -2,8 +2,10 @@
 
 import { memo, useEffect, useState } from 'react';
 import { GITHUB_URL } from '../../lib/site';
-import { DevDetails, ResultNumbers } from '../components/ui';
+import { DevDetails } from '../components/molecules/DevDetails';
+import { ResultNumbers } from '../components/molecules/ResultNumbers';
 import ui from '../components/ui.module.css';
+import { runSimulation } from './api';
 import styles from './coupon.module.css';
 import {
   DEFAULT_USERS,
@@ -12,11 +14,12 @@ import {
   RECORDED_RUN_URL,
   type RecordedRun,
   replayStateAt,
-  runSimulation,
 } from './simulation';
 import StrategyLab from './StrategyLab';
 import type { Result, Strategy } from './types';
-import { useReplay } from '../components/useReplay';
+import { useReplay } from '../../lib/useReplay';
+import { Button } from '../components/atoms/Button';
+import { Conclusion } from '../components/atoms/Conclusion';
 
 const FIXES = ['pessimistic', 'optimistic', 'atomic'] as const;
 const BENCHMARK_URL = `${GITHUB_URL}/blob/main/docs/benchmarks/stage3-coupon.md`;
@@ -221,14 +224,9 @@ function OversellStage({ result, sourceLabel, isRunning, isBlocked, error, onRun
               </div>
             )}
           </dl>
-          <button
-            type="button"
-            className={ui.bigButton}
-            onClick={() => onRun(play)}
-            disabled={isBlocked}
-          >
+          <Button size="big" onClick={() => onRun(play)} disabled={isBlocked}>
             {isRunning ? '500명이 예매하는 중…' : '500명 동시에 예매 시키기'}
-          </button>
+          </Button>
           {error ? (
             <p className={ui.errorLine} role="alert">
               {error}
@@ -241,10 +239,10 @@ function OversellStage({ result, sourceLabel, isRunning, isBlocked, error, onRun
         </div>
       </div>
       {result && isDone && result.final.oversold > 0 && (
-        <p className={ui.conclusion}>
+        <Conclusion>
           {QUANTITY}석에 {result.final.issueRows}명이 들어왔어요. 모두가 같은 순간에 &quot;자리
           있음&quot;을 봤기 때문이에요.
-        </p>
+        </Conclusion>
       )}
     </section>
   );
@@ -291,14 +289,9 @@ function FixColumn({ strategy, ...props }: RunProps & { strategy: (typeof FIXES)
       {strategy === 'optimistic' && (
         <p className={ui.hint}>사람이 몰리면 수 초~20초 넘게 걸릴 수 있어요.</p>
       )}
-      <button
-        type="button"
-        className={ui.smallButton}
-        onClick={() => onRun(play)}
-        disabled={isBlocked}
-      >
+      <Button size="small" onClick={() => onRun(play)} disabled={isBlocked}>
         {isRunning ? '실행 중…' : '이 방법으로 직접 실행'}
-      </button>
+      </Button>
       {error && (
         <p className={ui.errorLine} role="alert">
           {error}
