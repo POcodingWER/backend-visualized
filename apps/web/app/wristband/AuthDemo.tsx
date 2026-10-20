@@ -1,22 +1,16 @@
 'use client';
 
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
-import {
-  authApi,
-  errorReason,
-  isSession,
-  REASON_KO,
-  type ApiResult,
-  type Session,
-} from '../../lib/auth-api';
+import type { ApiResult } from '../../lib/api';
 import { createSingleFlight } from '../../lib/single-flight';
+import { DevDetails } from '../components/molecules/DevDetails';
+import { authApi, errorReason, isSession, REASON_KO, type Session } from './api';
 import ConcurrencyRace from './ConcurrencyRace';
 import JwtDecoder from './JwtDecoder';
 import StorageComparison from './StorageComparison';
 import styles from './auth.module.css';
 import TheftDemo from './TheftDemo';
 import type { AddLogEntry, RequestLogEntry } from './types';
-import { DevDetails } from '../components/ui';
 import WristbandStory from './WristbandStory';
 
 /** 화면에 그대로 안내하는 데모 계정 */
@@ -307,9 +301,11 @@ function LoginForm({
         value={username}
         onChange={(changeEvent) => setUsername(changeEvent.target.value)}
         aria-label="아이디"
+        autoComplete="username"
       />
       <input
         type="password"
+        autoComplete="current-password"
         value={password}
         onChange={(changeEvent) => setPassword(changeEvent.target.value)}
         aria-label="비밀번호"

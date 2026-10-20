@@ -1,4 +1,4 @@
-import { API_URL } from './api';
+import { callApi } from '../../lib/api';
 
 /** /auth 응답에 공통으로 오는 리프레시 토큰 행 (해시 제외) */
 export interface RefreshTokenRow {
@@ -20,13 +20,6 @@ export interface Session {
   refreshToken: RefreshTokenRow;
 }
 
-export interface ApiResult<Body> {
-  status: number;
-  ok: boolean;
-  body: Body;
-  durationMs: number;
-}
-
 export interface AuthErrorBody {
   statusCode: number;
   reason?: string;
@@ -34,28 +27,14 @@ export interface AuthErrorBody {
   familyId?: string;
 }
 
-/** 리프레시 쿠키를 주고받도록 항상 credentials: 'include' */
-async function call<Body>(path: string, init: RequestInit = {}): Promise<ApiResult<Body>> {
-  const startedAt = performance.now();
-  const response = await fetch(`${API_URL}${path}`, {
-    ...init,
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json', ...(init.headers ?? {}) },
-  });
-  const body = (await response.json().catch(() => ({}))) as Body;
-  return {
-    status: response.status,
-    ok: response.ok,
-    body,
-    durationMs: performance.now() - startedAt,
-  };
-}
+/** 2장 손목밴드 API. 리프레시 쿠키를 주고받도록 항상 credentials: 'include' */
+const call = <Body>(path: string, init: Parameters<typeof callApi>[1] = {}) =>
+  callApi<Body>(path, { ...init, credentials: 'include' });
 
 export const authApi = {
   login: (username: string, password: string, accessTokenTtlSeconds: number) =>
     call<Session | AuthErrorBody>('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ username, password, accessTokenTtlSeconds }),
+      json: { username, password, accessTokenTtlSeconds },
     }),
   me: (accessToken: string) =>
     call<{ username: string; expiresAt: string } | AuthErrorBody>('/auth/me', {
@@ -64,14 +43,12 @@ export const authApi = {
   /** 정상 사용자: httpOnly 쿠키로 회전 */
   refresh: (accessTokenTtlSeconds: number) =>
     call<Session | AuthErrorBody>('/auth/refresh', {
-      method: 'POST',
-      body: JSON.stringify({ accessTokenTtlSeconds }),
+      json: { accessTokenTtlSeconds },
     }),
   /** 공격자 시뮬레이션: 훔친 토큰을 본문으로 제출 */
   refreshWithStolenToken: (refreshToken: string) =>
     call<(Session & { rotatedRefreshTokenValue: string }) | AuthErrorBody>('/auth/refresh', {
-      method: 'POST',
-      body: JSON.stringify({ refreshToken }),
+      json: { refreshToken },
     }),
   logout: () => call<{ revokedTokens: number }>('/auth/logout', { method: 'POST' }),
   family: (familyId: string) =>

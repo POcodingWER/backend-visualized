@@ -8,7 +8,7 @@
     "start": "next start -p 3000",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test lib/*.test.ts app/ticketing/*.test.ts"
+    "test": "tsx --test lib/*.test.ts app/*/*.test.ts"
   },
   "dependencies": {
     "@bv/sdk": "workspace:*",

@@ -1,17 +1,12 @@
 import Link from 'next/link';
 import { CHAPTERS, GITHUB_URL } from '../lib/site';
-import { ResultNumbers } from './components/ui';
+import { ResultNumbers } from './components/molecules/ResultNumbers';
 import ui from './components/ui.module.css';
 import styles from './landing.module.css';
+import { buttonClassName } from './components/atoms/Button';
+import { INK, inkStroke } from './components/atoms/ink';
 
-const INK = '#2b2620';
-// 채움은 <svg fill="none">에서 물려받는다
-const ink = {
-  stroke: INK,
-  strokeWidth: 2.2,
-  strokeLinecap: 'round',
-  strokeLinejoin: 'round',
-} as const;
+const ink = { ...inkStroke, strokeWidth: 2.2 };
 const docLink = (file: string) => `${GITHUB_URL}/blob/main/docs/benchmarks/${file}`;
 
 const TEASERS = [
@@ -86,7 +81,7 @@ export default function Home() {
             데이터베이스에서 직접 일으켜 보고, 고친 결과를 잰 숫자로 확인하는 여섯 편의
             그림책이에요.
           </p>
-          <Link href="/ticketing" className={`${ui.bigButton} ${styles.cta}`}>
+          <Link href="/ticketing" className={`${buttonClassName.big} ${styles.cta}`}>
             1장 티켓팅부터 보기 →
           </Link>
         </div>

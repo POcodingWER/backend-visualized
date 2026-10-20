@@ -1,24 +1,17 @@
-import { ChapterLayout, ComicStrip } from '../components/ui';
+import { ChapterLayout } from '../components/organisms/ChapterLayout';
+import { ComicStrip } from '../components/organisms/ComicStrip';
 import LedgerDemo from './LedgerDemo';
+import { INK, inkStroke } from '../components/atoms/ink';
 
 export const metadata = {
   title: '4장 포인트 통장: 잔액이 저절로 틀어지는 이유 — 버튼 하나 뒤에서',
 };
 
-const INK = '#2b2620';
-// 채움은 <svg fill="none">에서 물려받는다
-const ink = {
-  stroke: INK,
-  strokeWidth: 2,
-  strokeLinecap: 'round',
-  strokeLinejoin: 'round',
-} as const;
-
 function Passbook({ x, y, balance }: { x: number; y: number; balance: string }) {
   return (
     <g>
-      <rect x={x} y={y} width="96" height="66" rx="5" fill="#bcd4e0" {...ink} />
-      <path d={`M${x} ${y + 18} H${x + 96}`} {...ink} strokeWidth="1.4" />
+      <rect x={x} y={y} width="96" height="66" rx="5" fill="#bcd4e0" {...inkStroke} />
+      <path d={`M${x} ${y + 18} H${x + 96}`} {...inkStroke} strokeWidth="1.4" />
       <text x={x + 10} y={y + 13} fontSize="10" fill={INK}>
         포인트 통장
       </text>
@@ -32,8 +25,12 @@ function Passbook({ x, y, balance }: { x: number; y: number; balance: string }) 
 function Person({ x, y, fill }: { x: number; y: number; fill: string }) {
   return (
     <g>
-      <circle cx={x} cy={y} r="11" fill="#fbf8f2" {...ink} />
-      <path d={`M${x - 16} ${y + 42} Q${x} ${y + 6} ${x + 16} ${y + 42}`} fill={fill} {...ink} />
+      <circle cx={x} cy={y} r="11" fill="#fbf8f2" {...inkStroke} />
+      <path
+        d={`M${x - 16} ${y + 42} Q${x} ${y + 6} ${x + 16} ${y + 42}`}
+        fill={fill}
+        {...inkStroke}
+      />
     </g>
   );
 }
@@ -41,7 +38,16 @@ function Person({ x, y, fill }: { x: number; y: number; fill: string }) {
 function Bubble({ x, y, text }: { x: number; y: number; text: string }) {
   return (
     <g>
-      <rect x={x} y={y} width="78" height="24" rx="10" fill="#fbf8f2" {...ink} strokeWidth="1.5" />
+      <rect
+        x={x}
+        y={y}
+        width="78"
+        height="24"
+        rx="10"
+        fill="#fbf8f2"
+        {...inkStroke}
+        strokeWidth="1.5"
+      />
       <text x={x + 39} y={y + 16} textAnchor="middle" fontSize="11" fill={INK}>
         {text}
       </text>
@@ -55,7 +61,7 @@ const PANELS = [
     art: (
       <g>
         <Passbook x={72} y={50} balance="5,000P" />
-        <circle cx="190" cy="56" r="14" fill="#f2c7a2" {...ink} />
+        <circle cx="190" cy="56" r="14" fill="#f2c7a2" {...inkStroke} />
         <text x="190" y="61" textAnchor="middle" fontSize="13" fontWeight="800" fill={INK}>
           P
         </text>
@@ -79,7 +85,7 @@ const PANELS = [
     art: (
       <g>
         <Passbook x={72} y={30} balance="5,100P" />
-        <circle cx="120" cy="140" r="16" fill="#f2d3c8" {...ink} strokeDasharray="4 4" />
+        <circle cx="120" cy="140" r="16" fill="#f2d3c8" {...inkStroke} strokeDasharray="4 4" />
         <text x="120" y="145" textAnchor="middle" fontSize="11" fontWeight="700" fill="#a3321f">
           100P
         </text>
@@ -91,13 +97,13 @@ const PANELS = [
     caption: '입출금 내역을 한 줄씩 남기면, 합계로 잔액을 언제든 다시 맞춰 볼 수 있어요.',
     art: (
       <g>
-        <rect x="60" y="16" width="120" height="150" rx="4" fill="#fbf8f2" {...ink} />
+        <rect x="60" y="16" width="120" height="150" rx="4" fill="#fbf8f2" {...inkStroke} />
         {['+5,000 시작', '+100 적립', '+100 적립', '−100 사용'].map((line, index) => (
           <text key={index} x="74" y={42 + index * 24} fontSize="12" fill={INK}>
             {line}
           </text>
         ))}
-        <path d="M70 128 H170" {...ink} />
+        <path d="M70 128 H170" {...inkStroke} />
         <text x="74" y="150" fontSize="13" fontWeight="800" fill="#44633d">
           합계 5,100P ✓
         </text>

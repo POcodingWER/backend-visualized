@@ -1,17 +1,19 @@
 'use client';
 
 import { useState } from 'react';
-import { authApi, errorReason, isSession, type Session } from '../../lib/auth-api';
+import { authApi, errorReason, isSession, type Session } from './api';
 import { GITHUB_URL } from '../../lib/site';
-import { ResultNumbers } from '../components/ui';
+import { ResultNumbers } from '../components/molecules/ResultNumbers';
 import ui from '../components/ui.module.css';
 import styles from './auth.module.css';
 import { applyRaceOutcome, runRefreshRace, type RefreshMode } from './ConcurrencyRace';
 import { readTokensLikeXss, type AttackOutcome, type StorageKind } from './StorageComparison';
 import type { AddLogEntry } from './types';
+import { Button } from '../components/atoms/Button';
+import { Conclusion } from '../components/atoms/Conclusion';
+import { INK } from '../components/atoms/ink';
 
 const RECORDED_AT = '2026-10-19';
-const INK = '#2b2620';
 const FAIL = '#a3321f';
 
 type StoryProps = {
@@ -217,14 +219,9 @@ function CopiedReceiptStage({
               </li>
             ))}
           </ol>
-          <button
-            type="button"
-            className={ui.bigButton}
-            onClick={() => void run()}
-            disabled={isRunning}
-          >
+          <Button size="big" onClick={() => void run()} disabled={isRunning}>
             {isRunning ? '영수증을 복사하는 중…' : '복사된 영수증 잡아내기'}
-          </button>
+          </Button>
           {error ? (
             <p className={ui.errorLine} role="alert">
               {error}
@@ -238,10 +235,10 @@ function CopiedReceiptStage({
         </div>
       </div>
       {bothKickedOut && (
-        <p className={ui.conclusion}>
+        <Conclusion>
           복사본이 쓰이는 순간 창구는 누가 진짜인지 묻지 않고 그 영수증 묶음을 전부 무효로 해요.
           그래서 도둑도 손님도 다시 로그인해야 해요.
-        </p>
+        </Conclusion>
       )}
     </section>
   );
@@ -430,14 +427,9 @@ function RefreshCrowd({
                   직접 해 보면 정말로 로그아웃돼요. 다음 버튼이 데모 계정으로 다시 들어가요.
                 </p>
               )}
-              <button
-                type="button"
-                className={ui.smallButton}
-                onClick={() => void run(mode)}
-                disabled={runningMode !== null}
-              >
+              <Button size="small" onClick={() => void run(mode)} disabled={runningMode !== null}>
                 {runningMode === mode ? '실행 중…' : '이 방법으로 직접 실행'}
-              </button>
+              </Button>
               {error?.mode === mode && (
                 <p className={ui.errorLine} role="alert">
                   {error.message}
@@ -532,13 +524,12 @@ function ReloadRecovery({ session, ensureSession, restoreState }: StoryProps) {
         {statusLine}
       </p>
       {session ? (
-        <button type="button" className={ui.smallButton} onClick={() => window.location.reload()}>
+        <Button size="small" onClick={() => window.location.reload()}>
           새로고침 해 보기
-        </button>
+        </Button>
       ) : (
-        <button
-          type="button"
-          className={ui.smallButton}
+        <Button
+          size="small"
           disabled={isLoggingIn}
           onClick={() => {
             setIsLoggingIn(true);
@@ -546,7 +537,7 @@ function ReloadRecovery({ session, ensureSession, restoreState }: StoryProps) {
           }}
         >
           데모 계정으로 들어가기
-        </button>
+        </Button>
       )}
     </section>
   );
@@ -611,13 +602,9 @@ function StorageLockers() {
         })}
       </div>
       <div className={styles.lockerAction}>
-        <button
-          type="button"
-          className={ui.smallButton}
-          onClick={() => setOutcomes(readTokensLikeXss())}
-        >
+        <Button size="small" onClick={() => setOutcomes(readTokensLikeXss())}>
           나쁜 스크립트로 뒤져 보기
-        </button>
+        </Button>
       </div>
     </section>
   );

@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import { GITHUB_URL } from '../lib/site';
 import './globals.css';
-import SiteHeader from './components/SiteHeader';
+import SiteHeader from './components/organisms/SiteHeader';
 import styles from './components/ui.module.css';
 
 export const metadata: Metadata = {

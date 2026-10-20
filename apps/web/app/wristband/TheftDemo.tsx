@@ -9,7 +9,7 @@ import {
   shortToken,
   type RefreshTokenRow,
   type Session,
-} from '../../lib/auth-api';
+} from './api';
 import styles from './auth.module.css';
 import type { AddLogEntry } from './types';
 
