@@ -87,7 +87,7 @@ apps/web/
     <장>/*Demo.tsx, ...       그 장에서만 쓰는 컴포넌트·CSS는 장 폴더 안에
     components/
       atoms/                  Button, Conclusion(결론 한 줄), ink(만화 먹색·선)
-      molecules/              DevDetails(개발자용 자세히), ResultNumbers(실측 숫자 묶음)
+      molecules/              DevDetails(개발자용 자세히), DevFlow(그 안의 흐름 따라가기), ResultNumbers(실측 숫자 묶음)
       organisms/              ChapterLayout(장 뼈대), ComicStrip(4컷 만화), SiteHeader
       ui.module.css           공용 스타일 (버튼·결론·제목·표)
       flow.module.css         요청이 지나가는 길(점·화살표) 그림 스타일
@@ -192,7 +192,7 @@ docs/                         이 문서, architecture, deploy, auth-tokens, cha
 4. **웹 페이지**: `apps/web/app/reservations/`
    - `page.tsx`: `ChapterLayout` + `ComicStrip`(4컷) + 데모 컴포넌트
    - `api.ts`: `callApi`로 API 함수 + 응답 타입, 상태 코드별 한국어 안내 문장
-   - `ReservationsDemo.tsx`: `Button size="big"` 하나, `Conclusion`, `ResultNumbers`(출처 필수), 전문 용어는 `DevDetails` 안에
+   - `ReservationsDemo.tsx`: `Button size="big"` 하나, `Conclusion`, `ResultNumbers`(출처 필수), 전문 용어는 `DevDetails` 안에 (흐름은 `dev-flow.tsx` + `DevFlow`)
 5. **장 목록**: `apps/web/lib/site.ts`의 `CHAPTERS`에 추가 (머리말·이전/다음 장 링크가 자동으로 생김)
 6. **문서**: 이 문서 3장에 흐름 한 단락, 필요하면 `docs/`에 설명 문서
 7. **확인**: `pnpm format:check && pnpm typecheck && pnpm lint && pnpm test && pnpm build`
