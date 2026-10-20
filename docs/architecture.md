@@ -113,6 +113,11 @@ export class PayDto {
 
 모든 DTO 파일 첫 줄에 이 문서를 가리키는 한 줄 주석이 있습니다.
 
+## 왜 `entities/` 폴더가 없나
+
+DB 모델은 `apps/api/prisma/schema.prisma` 한 곳에만 적습니다. `prisma generate`가 여기서 `@prisma/client`의 타입(`Payment`, `PointWallet` …)을 만들어 주고, 모든 모듈이 그 타입을 같이 씁니다.
+TypeORM 스타일의 `*.entity.ts`를 따로 만들면 같은 모델을 두 번 적게 되고, 한쪽만 고치면 서로 어긋납니다. 그래서 만들지 않습니다.
+
 ## 이름·위치 규칙
 
 1. **폴더 = URL 첫 단어 = 모듈.** `/points/...`는 `src/points/`, `PointsModule`. 데모·관리자 전용 라우트도 그 기능 아래 (`/events/demo/aggregate`, `/events/admin/aggregate`).

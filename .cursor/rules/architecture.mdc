@@ -18,3 +18,4 @@ Full explanation (Korean, for frontend devs): docs/architecture.md
 - Tests: the module's top-level `test/` folder (tests for `lib/` files go there too; `common/` has `test/` per subfolder), named `<file>.spec.ts`, using `node:test`. DB/Redis tests clean up their own rows/keys in `after`. `tsconfig.build.json` excludes `src/**/test/**`.
 - Split a file only when it clearly does two jobs. No repositories, interfaces or barrel `index.ts` files.
 - Use `git mv` when moving files. If a URL changes, update apps/web, docs, load/ (k6), CI smoke test and tests in the same change.
+- Don't create `entities/`; use Prisma generated types (`@prisma/client`, from `prisma/schema.prisma`, the single source of DB models).
