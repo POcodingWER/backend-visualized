@@ -160,7 +160,7 @@ export default function TicketingDemo() {
             </p>
             <p>
               코드:{' '}
-              <a href={`${GITHUB_URL}/blob/main/apps/api/src/coupons/coupon-strategies.ts`}>
+              <a href={`${GITHUB_URL}/blob/main/apps/api/src/coupons/lib/coupon-strategies.ts`}>
                 coupon-strategies.ts
               </a>{' '}
               · 검증 테스트:{' '}

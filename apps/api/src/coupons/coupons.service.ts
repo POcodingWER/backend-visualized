@@ -1,7 +1,7 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { CouponStrategies, type SimulationResult, type Strategy } from './coupon-strategies';
+import { CouponStrategies, type SimulationResult, type Strategy } from './lib/coupon-strategies';
 
 const DEMO_COUPON_NAME = 'demo';
 

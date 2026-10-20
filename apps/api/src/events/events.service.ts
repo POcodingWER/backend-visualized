@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateEventDto } from './dto/events.dto';
-import { parseDate } from './date-range';
-import { EventBus } from './event-bus';
+import { parseDate } from './lib/date-range';
+import { EventBus } from './lib/event-bus';
 
 const toRow = (dto: CreateEventDto): Prisma.EventCreateManyInput => ({
   name: dto.name,

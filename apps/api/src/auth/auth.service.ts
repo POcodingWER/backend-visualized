@@ -2,9 +2,9 @@ import { Injectable, OnModuleInit, UnauthorizedException } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt';
 import type { RefreshToken } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { authConfig, DEMO_USERS } from './auth.config';
-import { hashPassword, verifyPassword } from './password';
-import { RefreshTokenStore } from './refresh-token.store';
+import { authConfig, DEMO_USERS } from './lib/auth.config';
+import { hashPassword, verifyPassword } from './lib/password';
+import { RefreshTokenStore } from './lib/refresh-token.store';
 
 export interface AccessTokenPayload {
   /** user id */

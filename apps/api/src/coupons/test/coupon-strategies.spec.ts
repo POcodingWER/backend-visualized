@@ -5,7 +5,7 @@
 import assert from 'node:assert/strict';
 import { after, before, describe, test } from 'node:test';
 import { PrismaClient } from '@prisma/client';
-import { CouponStrategies, type Strategy } from '../coupon-strategies';
+import { CouponStrategies, type Strategy } from '../lib/coupon-strategies';
 
 if (!process.env.DATABASE_URL) {
   try {

@@ -83,7 +83,7 @@ export default function WristbandStory(props: StoryProps) {
             <>
               {RECORDED_AT} 로컬 API(NestJS + MySQL)에 같은 흐름을 직접 보내서 받은 결과예요. 위
               버튼으로 언제든 다시 확인할 수 있어요. 코드:{' '}
-              <a href={`${GITHUB_URL}/blob/main/apps/api/src/auth/refresh-token.store.ts`}>
+              <a href={`${GITHUB_URL}/blob/main/apps/api/src/auth/lib/refresh-token.store.ts`}>
                 refresh-token.store.ts
               </a>
               {' · '}

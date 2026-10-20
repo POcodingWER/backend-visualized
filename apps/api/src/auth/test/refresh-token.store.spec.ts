@@ -7,7 +7,7 @@ import { randomUUID } from 'node:crypto';
 import { after, before, describe, test } from 'node:test';
 import { PrismaClient } from '@prisma/client';
 import { readCookie } from '../auth.controller';
-import { RefreshTokenStore } from '../refresh-token.store';
+import { RefreshTokenStore } from '../lib/refresh-token.store';
 
 if (!process.env.DATABASE_URL) {
   try {
