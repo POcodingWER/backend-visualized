@@ -207,6 +207,30 @@ EC2와 같은 VPC에 만들고 보안 그룹 6379 ← EC2만 허용, `REDIS_URL=
 **MySQL 컨테이너를 쓸 때**: `deploy/production.env`의 `MYSQL_ROOT_PASSWORD`, `MYSQL_PASSWORD`를 채우고
 `DATABASE_URL=mysql://app:<MYSQL_PASSWORD>@mysql:3306/backend_visualized`. 데이터는 `mysql-data` 볼륨에 남습니다.
 
+**MySQL Workbench로 보기 (SSH 터널)**: mysql 컨테이너는 EC2의 `127.0.0.1:3306`에만 publish 돼 있어
+인터넷에서는 접속할 수 없고(보안 그룹도 22/80/443만), SSH로만 들어갈 수 있습니다.
+
+```bash
+# 터미널로 터널을 열 때 (Mac의 13306 → EC2의 127.0.0.1:3306). 다 쓰면 Ctrl+C
+ssh -i ~/.ssh/backend-visualized.pem -N -L 13306:127.0.0.1:3306 ubuntu@13.209.4.20
+```
+
+또는 Workbench 내장 터널: Connection Method **Standard TCP/IP over SSH**
+
+| 항목              | 값                                                                                           |
+| ----------------- | -------------------------------------------------------------------------------------------- |
+| SSH Hostname      | `13.209.4.20:22`                                                                             |
+| SSH Username      | `ubuntu`                                                                                     |
+| SSH Key File      | `~/.ssh/backend-visualized.pem`                                                              |
+| MySQL Hostname    | `127.0.0.1`                                                                                  |
+| MySQL Server Port | `3306`                                                                                       |
+| Username          | `app` (비밀번호 = EC2 `deploy/production.env`의 `MYSQL_PASSWORD`, Workbench 키체인에만 저장) |
+| Default Schema    | `backend_visualized`                                                                         |
+
+- docker가 publish한 포트로 들어온 접속은 MySQL에서 **docker 브리지 게이트웨이 IP**(예: `app@172.18.0.1`)로 보이므로 계정 host가 `'%'`여야 합니다. 공식 이미지가 만든 `app@'%'`, `root@'%'`가 그 조건을 만족합니다.
+- 평소엔 `app`(backend_visualized DB 권한만)을 쓰고, `root`는 관리 작업 때만 쓰세요.
+- 보안 그룹에 3306을 열거나 `ports`를 `'3306:3306'`(=0.0.0.0)으로 바꾸지 마세요.
+
 ### 참고 비용 (서울 리전, 온디맨드, USD, 세금·데이터 전송 제외)
 
 AWS 공식 가격표(aws.amazon.com 가격 페이지가 쓰는 공개 가격 데이터, EC2는 2026-10-15, RDS는 2026-10-06 게시분)와
