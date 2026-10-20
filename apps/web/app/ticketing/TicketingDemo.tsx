@@ -92,7 +92,7 @@ export default function TicketingDemo() {
         <div className={ui.column}>
           <h2 className={ui.sectionTitle}>고치는 방법 세 가지</h2>
           <p className={ui.lead}>
-            같은 조건(100석, 500명 동시)에서 세 가지 방법을 실제로 돌린 결과예요. 셋 다 자리 없이
+            같은 조건(표 100장, 500명 동시)에서 세 가지 방법을 실제로 돌린 결과예요. 셋 다 자리 없이
             들어온 사람은 0명이지만, 걸리는 시간과 수고가 달라요.
           </p>
         </div>
@@ -110,6 +110,10 @@ export default function TicketingDemo() {
             />
           ))}
         </div>
+        <p className={ui.source}>
+          같은 방법이라도 돌릴 때마다, 그리고 컴퓨터와 설정에 따라 걸린 시간과 다시 시도한 횟수가
+          달라져요. 그래서 카드의 숫자와 아래 &quot;숫자로 본 결과&quot;의 숫자가 다를 수 있어요.
+        </p>
       </section>
 
       <section className={ui.wide}>
@@ -120,7 +124,7 @@ export default function TicketingDemo() {
               value: '400명 → 0명',
               tone: 'good',
               label: '자리 없이 들어온 사람',
-              detail: '100석에 500명. 고치기 전엔 400명이 더 들어왔고, 세 방법 모두 0명.',
+              detail: '표 100장에 500명. 고치기 전엔 400명이 더 들어왔고, 세 방법 모두 0명.',
             },
             {
               value: '약 4배',
@@ -132,7 +136,7 @@ export default function TicketingDemo() {
               tone: 'fail',
               label: '"눈치 보고 재도전"의 다시 시도 횟수',
               detail:
-                '사람이 한꺼번에 몰리면 대부분 부딪혀요. 30번 넘게 실패한 440명은 자리가 남았는데도 못 샀어요 (100석 중 60석만 팔림).',
+                '사람이 한꺼번에 몰리면 대부분 부딪혀요. 30번 넘게 실패한 440명은 자리가 남았는데도 못 샀어요 (표 100장 중 60장만 팔림).',
             },
           ]}
           source={
@@ -206,7 +210,7 @@ function OversellStage({ result, sourceLabel, isRunning, isBlocked, error, onRun
             <div>
               <dt>앉은 사람</dt>
               <dd>
-                {seated} <small>/ {QUANTITY}석</small>
+                {seated} <small>/ 자리 {QUANTITY}개</small>
               </dd>
             </div>
             <div className={standing > 0 ? styles.tallyFail : undefined}>
@@ -325,7 +329,7 @@ const SeatGrid = memo(function SeatGrid({
       <svg
         viewBox="0 0 230 262"
         role="img"
-        aria-label={`좌석 ${QUANTITY}석 중 ${seated}석에 사람이 앉음`}
+        aria-label={`자리 ${QUANTITY}개 중 ${seated}개에 사람이 앉음`}
       >
         <path d="M20 14 Q115 2 210 14" fill="none" stroke="#2b2620" strokeWidth="1.5" />
         <text x="115" y="30" textAnchor="middle" fontSize="14" fill="#5e564b">

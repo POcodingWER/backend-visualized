@@ -3,7 +3,7 @@ import { ComicStrip } from '../components/organisms/ComicStrip';
 import TicketingDemo from './TicketingDemo';
 import { INK, inkStroke } from '../components/atoms/ink';
 
-export const metadata = { title: '1장 티켓팅: 100석에 500명이 몰리면 — 버튼 하나 뒤에서' };
+export const metadata = { title: '1장 티켓팅: 표 100장에 500명이 몰리면 — 버튼 하나 뒤에서' };
 
 /** 휴대폰 든 사람 한 명 (x,y = 머리 중심) */
 function PersonWithPhone({ x, y, screen }: { x: number; y: number; screen?: 'button' | 'ok' }) {
@@ -62,7 +62,7 @@ const PANELS = [
         <path d="M30 42 L120 14 L210 42" {...inkStroke} fill="#f2c7a2" />
         <rect x="70" y="70" width="100" height="56" rx="4" fill="#fbf8f2" {...inkStroke} />
         <text x="120" y="96" textAnchor="middle" fontSize="18" fontWeight="700" fill={INK}>
-          100석
+          표 100장
         </text>
         <text x="120" y="116" textAnchor="middle" fontSize="13" fill="#5e564b">
           9:00 판매 시작
@@ -130,7 +130,7 @@ const PANELS = [
     ),
   },
   {
-    caption: '공연장에 500명이 도착했어요. 의자는 100개뿐인데요.',
+    caption: '표를 산 500명이 공연장에 왔어요. 그런데 자리는 표 100장만큼뿐이에요.',
     art: (
       <g>
         <path d="M20 30 Q120 16 220 30" {...inkStroke} />
@@ -179,7 +179,7 @@ export default function TicketingPage() {
     >
       <section style={{ maxWidth: 'var(--wide)', margin: '0 auto var(--space-16)' }}>
         <ComicStrip
-          label="4컷 만화: 100석짜리 공연에 500명이 동시에 예매하는 이야기"
+          label="4컷 만화: 표 100장짜리 공연에 500명이 동시에 예매하는 이야기"
           panels={PANELS}
         />
       </section>

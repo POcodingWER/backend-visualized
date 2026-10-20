@@ -11,5 +11,5 @@ export const CHAPTERS = [
     title: '결제 버튼 두 번',
     subtitle: '두 번 눌러도 한 번만 결제',
   },
-  { number: 6, href: '/cache', title: '맛집 대기표', subtitle: '빠르게 보여주고, 제때 바꾸기' },
+  { number: 6, href: '/cache', title: '맛집 메뉴판', subtitle: '빠르게 보여주고, 제때 바꾸기' },
 ] as const;

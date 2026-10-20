@@ -5,10 +5,25 @@ import './globals.css';
 import SiteHeader from './components/organisms/SiteHeader';
 import styles from './components/ui.module.css';
 
+const SITE_TITLE = '버튼 하나 뒤에서 — 매일 쓰는 기능 뒤의 서버 이야기';
+const SITE_DESCRIPTION =
+  '티켓팅, 로그인 유지, 클릭 기록, 포인트, 결제, 캐시. 서버가 실수하는 순간을 실제 서버와 데이터베이스에서 일부러 일으켜 보고, 고친 뒤 얼마나 나아졌는지 숫자로 확인하는 그림책 여섯 편.';
+
+/**
+ * 파비콘은 app/icon.svg, 공유 미리보기 그림은 app/opengraph-image.png (Next 파일 규칙으로 자동 연결).
+ * metadataBase를 안 쓰면 Vercel에선 배포 주소로, 로컬에선 localhost로 절대 주소가 만들어진다.
+ */
 export const metadata: Metadata = {
-  title: '버튼 하나 뒤에서 — 매일 쓰는 기능 뒤의 서버 이야기',
-  description:
-    '티켓팅, 로그인 유지, 클릭 기록, 포인트, 결제, 캐시. 서버가 실수하는 순간을 실제로 일으키고, 고친 결과를 잰 숫자로 보여주는 그림책 여섯 편.',
+  title: SITE_TITLE,
+  description: SITE_DESCRIPTION,
+  openGraph: {
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    siteName: '버튼 하나 뒤에서',
+    locale: 'ko_KR',
+    type: 'website',
+  },
+  twitter: { card: 'summary_large_image', title: SITE_TITLE, description: SITE_DESCRIPTION },
 };
 
 export const viewport: Viewport = { themeColor: '#f6f1e7' };

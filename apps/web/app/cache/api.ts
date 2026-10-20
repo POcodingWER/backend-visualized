@@ -1,6 +1,6 @@
 import { callApi, FriendlyError, requireOk } from '../../lib/api';
 
-/** 6장 맛집 대기표 API (cache-demo 모듈 + Redis) */
+/** 6장 맛집 메뉴판 API (cache-demo 모듈 + Redis) */
 
 export type Node = 'api' | 'redis' | 'db';
 export interface Hop {

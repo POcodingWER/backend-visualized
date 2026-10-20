@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" stroke="#2b2620" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <!-- 손그림 버튼: 그림책 1장의 "예매" 버튼과 같은 살구색, 아래 그림자로 눌리는 느낌 -->
+  <path d="M5.5 12.2 Q5.2 9.1 8.4 8.8 L24 8.4 Q27.1 8.6 26.9 11.8 L27 20.6 Q27.2 23.6 24 23.8 L8.2 24.2 Q5.1 24 5.3 21 Z" fill="#2b2620"/>
+  <path d="M4 10.2 Q3.8 7.2 6.9 6.9 L22.6 6.5 Q25.6 6.7 25.5 9.8 L25.6 18.7 Q25.7 21.7 22.6 21.9 L6.8 22.3 Q3.7 22.1 3.9 19.1 Z" fill="#f2c7a2"/>
+  <path d="M10 14.6 Q14.6 13.9 19.4 14.3" stroke-width="1.8"/>
+</svg>

@@ -5,7 +5,7 @@ import { UsageLimitsService } from '../common/rate-limit/usage-limits.service';
 import { CacheDemoService, STAMPEDE_PROTECTIONS } from './cache-demo.service';
 import { EditMenuDto, ReadMenuDto, StampedeDto, VisitorsDto } from './dto/cache-demo.dto';
 
-/** 6장 맛집 대기표: 메뉴 읽기(DB 직접 / 대기판 먼저), 메뉴 수정(+DEL), 손님 1000명, 스탬피드 실험 */
+/** 6장 맛집 메뉴판: 메뉴 읽기(DB 직접 / 메뉴판 먼저), 메뉴 수정(+DEL), 손님 1000명, 스탬피드 실험 */
 @Controller('cache-demo')
 @UseGuards(ThrottlerGuard)
 export class CacheDemoController {

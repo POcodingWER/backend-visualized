@@ -48,7 +48,7 @@ describe('menu cache stampede (Redis + MySQL)', () => {
 
   test('redis lock: 1 DB read; single-flight: 1 per server; none: 1 per visitor', async (testContext) => {
     if (!up) return testContext.skip('DB or Redis unavailable');
-    await menu.readDirect(); // 대기판 행 만들기
+    await menu.readDirect(); // 원본 메뉴(MenuBoard) 행 만들기
     const locked = await menu.stampede('redis-lock', 300, 3);
     assert.equal(locked.dbReads, 1);
     assert.equal(locked.commands['SET EX'], 1);

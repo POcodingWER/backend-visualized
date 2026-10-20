@@ -62,14 +62,14 @@ const PROTECTION_TITLE: Record<Protection, string> = {
   'redis-lock': '전체에서 한 명만 (Redis 잠금)',
 };
 const PROTECTION_TEXT: Record<Protection, string> = {
-  none: '대기판이 빈 걸 본 손님이 전부 주방으로 달려가요.',
+  none: '메뉴판이 빈 걸 본 손님이 전부 주방으로 달려가요.',
   'single-flight':
     '같은 서버에 온 손님끼리는 한 명만 보내고 나머지는 기다려요. 하지만 서버가 3대면 3명이 가요.',
   'redis-lock':
-    'Redis에 열쇠(SET NX)를 하나만 두고, 열쇠를 잡은 한 명만 주방에 가요. 나머지는 잠깐 기다렸다 대기판을 다시 봐요.',
+    'Redis에 열쇠(SET NX)를 하나만 두고, 열쇠를 잡은 한 명만 주방에 가요. 나머지는 잠깐 기다렸다 메뉴판을 다시 봐요.',
 };
 const CODE_URL = `${GITHUB_URL}/blob/main/apps/api/src/cache-demo/cache-demo.service.ts`;
-const DOCS_URL = `${GITHUB_URL}/blob/main/docs/chapters-4-6.md#6장-맛집-대기표`;
+const DOCS_URL = `${GITHUB_URL}/blob/main/docs/chapters-4-6.md#6장-맛집-메뉴판`;
 const POLL_MS = 500;
 const WATCH_MS = 7_000;
 
@@ -87,18 +87,18 @@ export default function CacheDemo() {
               value: `${RECORDED_VISITORS.direct.dbReads}번 → ${RECORDED_VISITORS.cached.dbReads}번`,
               tone: 'good',
               label: '손님 1000명에 데이터베이스를 읽은 횟수',
-              detail: '매번 DB로 vs Redis 대기판(5초)으로. 대기판을 처음 채우는 한 번만 DB에 가요.',
+              detail: '매번 DB로 vs Redis 메뉴판(5초)으로. 메뉴판을 처음 채우는 한 번만 DB에 가요.',
             },
             {
               value: '1000 → 3 → 1',
-              label: '대기판이 비는 순간 1000명이 몰렸을 때 DB 읽기',
+              label: '메뉴판이 비는 순간 1000명이 몰렸을 때 DB 읽기',
               detail: '대책 없음 → 서버(3대)마다 한 명 → Redis 잠금으로 전체에서 한 명',
             },
             {
               value: '5.2초 → 0초',
               label: '메뉴를 고친 뒤 새 메뉴가 보이기까지',
               detail:
-                '대기판을 그대로 두면 유효 시간(5초)이 끝날 때까지 옛 메뉴. 고칠 때 대기판도 지우면(DEL) 다음 읽기부터 새 메뉴 (0.5초 간격으로 확인).',
+                '메뉴판을 그대로 두면 유효 시간(5초)이 끝날 때까지 옛 메뉴. 고칠 때 메뉴판도 지우면(DEL) 다음 읽기부터 새 메뉴 (0.5초 간격으로 확인).',
             },
           ]}
           source={`${RECORDED_AT} 로컬 실측 — NestJS + Redis 7.4(Docker) + MySQL 8.4, 맥북 한 대. 서버 3대는 API 한 프로세스 안에서 흉내 낸 거예요. 위 버튼들로 직접 다시 잴 수 있어요.`}
@@ -108,18 +108,24 @@ export default function CacheDemo() {
         <DevDetails description="cache-aside, TTL(SET EX), cache stampede, single-flight vs 분산 잠금(SET NX PX), 무효화(DEL), Redis 명령 수">
           <div className={ui.devIntro}>
             <p>
-              비유 ↔ 용어: 주방 = MySQL(<code>MenuBoard</code> 행), 대기판 = Redis 키{' '}
+              비유 ↔ 용어: 주방 = MySQL(원본 메뉴가 든 <code>MenuBoard</code> 행), 메뉴판 = Redis 키{' '}
               <code>bv:menu:board</code>, 5초마다 새로 확인 = TTL(<code>SET key value EX 5</code>),
-              대기판 먼저 보고 없으면 주방 = <b>cache-aside</b>(<code>GET</code> → miss →{' '}
+              메뉴판 먼저 보고 없으면 주방 = <b>cache-aside</b>(<code>GET</code> → miss →{' '}
               <code>SELECT</code> → <code>SET EX</code>), 비는 순간 몰림 = <b>cache stampede</b>
               (thundering herd), 서버마다 한 명 = 프로세스 안의 single-flight(2장 토큰 갱신과 같은
               함수), 열쇠 = 분산 잠금 <code>SET bv:menu:board:lock &lt;token&gt; NX PX 2000</code>
               (잡은 사람만 DB → <code>SET EX</code> → 내 토큰일 때만 <code>DEL</code>하는 Lua),
-              대기판 지우기 = <b>무효화</b>(<code>DEL</code>).
+              메뉴판 지우기 = <b>무효화</b>(<code>DEL</code>).
+            </p>
+            <p>
+              위 그림의 쉬운 말 ↔ 실제 흐름: 메뉴판에 있을 때 <code>GET → hit</code>, 없을 때{' '}
+              <code>GET → miss → SELECT → 행 → SET EX 5</code>, 매번 주방에 갈 때{' '}
+              <code>SELECT → 행</code>, 메뉴 바꾸기 <code>UPDATE</code>(무효화를 켜면{' '}
+              <code>+ DEL</code>). 몰림 실험의 Redis 명령 수는 아래 표에 있어요.
             </p>
             <p>
               왜 Redis인가: single-flight는 한 프로세스의 메모리 안에서만 묶여서, 서버를 여러 대로
-              늘리면 대수만큼 DB에 가요(위 3). 잠금과 대기판을 모든 서버가 같이 보는 곳(Redis)에
+              늘리면 대수만큼 DB에 가요(위 3). 잠금과 메뉴판을 모든 서버가 같이 보는 곳(Redis)에
               두면 서버 수와 상관없이 한 번이에요. 한계: 잠금을 기다리는 손님이 20ms마다 다시 GET
               해서 GET 수가 늘어요(위 1999). 잠금 주인이 1초 넘게 늦으면 기다리던 손님은 DB에서 직접
               읽어요(db-fallback). 무효화는 "DB 수정 후 DEL" 순서라, 그 사이 아주 짧게 옛 값이 다시
@@ -178,7 +184,7 @@ function VisitorsStage() {
           />
           <VisitorLane
             key={`cached-${runCount}`}
-            title="대기판(Redis) 먼저 보기"
+            title="메뉴판(Redis) 먼저 보기"
             target="redis"
             dbReads={result.cached.dbReads}
             visitors={result.cached.visitors}
@@ -202,7 +208,7 @@ function VisitorsStage() {
           </Button>
           <p className={ui.hint}>
             실제 서버에서 &quot;오늘 메뉴&quot; 읽기 1000번을 동시에 해요. 왼쪽은 매번 주방(MySQL)에
-            묻고, 오른쪽은 5초마다 새로 적는 대기판(Redis)을 먼저 봐요. 대기판이 이미 채워져 있으면
+            묻고, 오른쪽은 5초마다 새로 적는 메뉴판(Redis)을 먼저 봐요. 메뉴판이 이미 채워져 있으면
             주방에는 한 번도 안 가요.
           </p>
           {error && <p className={ui.errorLine}>{error}</p>}
@@ -211,7 +217,7 @@ function VisitorsStage() {
       <Conclusion isGood>
         같은 1000명인데 주방에 간 횟수가 {result.direct.dbReads}번 → {result.cached.dbReads}번. 걸린
         시간은 {seconds(result.direct.ms)} → {seconds(result.cached.ms)}예요. 대신 메뉴가 바뀌면
-        대기판에는 최대 5초 늦게 반영돼요. 아래에서 직접 확인해 보세요.
+        메뉴판에는 최대 5초 늦게 반영돼요. 아래에서 직접 확인해 보세요.
       </Conclusion>
     </section>
   );
@@ -377,7 +383,7 @@ function StaleSection() {
     setIsWatching(true);
     setError(null);
     try {
-      // 대기판이 차 있는 상태에서 바꿔야 "옛 메뉴가 남는" 모습이 보인다 (비어 있으면 한 번 채운다)
+      // 메뉴판이 차 있는 상태에서 바꿔야 "옛 메뉴가 남는" 모습이 보인다 (비어 있으면 한 번 채운다)
       await readMenu('cache');
       const edited = await editMenu(invalidate);
       setEditedVersion(edited.board.version);
@@ -411,12 +417,12 @@ function StaleSection() {
         <h2 className={ui.sectionTitle}>메뉴를 바꾸면 언제 보일까요?</h2>
         <p className={ui.lead}>
           주방에서 메뉴를 바꾼 뒤 7초 동안 0.5초마다 양쪽을 읽어 봐요. 왼쪽은 바로 바뀌지만 매번
-          주방에 가고, 오른쪽은 대기판을 다시 확인할 때(최대 5초)까지 옛 메뉴가 보여요.
+          주방에 가고, 오른쪽은 메뉴판을 다시 확인할 때(최대 5초)까지 옛 메뉴가 보여요.
         </p>
       </div>
       <div className={`${ui.fixes} ${ui.fixesTwo}`}>
         <MenuSide title="매번 DB" side={sides.db} editedVersion={editedVersion} />
-        <MenuSide title="Redis 대기판 (5초)" side={sides.cache} editedVersion={editedVersion} />
+        <MenuSide title="Redis 메뉴판 (5초)" side={sides.cache} editedVersion={editedVersion} />
       </div>
       <div
         style={{
@@ -439,7 +445,7 @@ function StaleSection() {
             onChange={(event) => setInvalidate(event.target.checked)}
             disabled={isWatching}
           />
-          바꿀 때 대기판도 지우기 (무효화)
+          바꿀 때 메뉴판도 지우기 (무효화)
         </label>
       </div>
       {editHops.length > 0 && (
@@ -449,7 +455,7 @@ function StaleSection() {
         <Conclusion isGood={cacheFresh !== null && cacheFresh < 1000}>
           {cacheFresh === null
             ? '7초 안에 오른쪽이 바뀌지 않았어요. 다시 해 보세요.'
-            : `왼쪽은 ${(sides.db.freshAfterMs! / 1000).toFixed(1)}초, 오른쪽은 ${(cacheFresh / 1000).toFixed(1)}초 만에 새 메뉴가 보였어요. ${invalidate ? '대기판을 지웠더니 바로 바뀌었어요.' : '그 사이 오른쪽 손님은 옛 메뉴를 봤어요.'} 주방 간 횟수: 왼쪽 ${sides.db.dbReads}번, 오른쪽 ${sides.cache.dbReads}번.`}
+            : `왼쪽은 ${(sides.db.freshAfterMs! / 1000).toFixed(1)}초, 오른쪽은 ${(cacheFresh / 1000).toFixed(1)}초 만에 새 메뉴가 보였어요. ${invalidate ? '메뉴판을 지웠더니 바로 바뀌었어요.' : '그 사이 오른쪽 손님은 옛 메뉴를 봤어요.'} 주방 간 횟수: 왼쪽 ${sides.db.dbReads}번, 오른쪽 ${sides.cache.dbReads}번.`}
         </Conclusion>
       )}
       {error && <p className={ui.errorLine}>{error}</p>}
@@ -499,7 +505,7 @@ function MenuSide({
         </div>
         {side.read?.ttlLeftMs != null && (
           <div>
-            <dt>대기판 남은 시간</dt>
+            <dt>메뉴판 남은 시간</dt>
             <dd>{(side.read.ttlLeftMs / 1000).toFixed(1)}초</dd>
           </div>
         )}
@@ -511,22 +517,42 @@ function MenuSide({
   );
 }
 
+/** API가 주는 개발 용어(GET, miss, SET EX 5…)를 화면용 쉬운 말로. 원래 용어는 개발자용 자세히에 */
+const plainHop = (label: string) => {
+  if (label.startsWith('SET EX'))
+    return { short: '적어 둠', long: `메뉴판에 ${label.slice(7)}초 동안 적어 둠` };
+  const words: Record<string, { short: string; long: string }> = {
+    GET: { short: '확인', long: '메뉴판 확인' },
+    hit: { short: '있음', long: '있음' },
+    miss: { short: '없음', long: '없음' },
+    SELECT: { short: '주방에', long: '주방에 물어봄' },
+    행: { short: '메뉴', long: '' }, // 문장에선 "주방에 물어봄"에 포함
+    UPDATE: { short: '바꿈', long: '주방에서 메뉴 바꿈' },
+    DEL: { short: '지움', long: '메뉴판 지움' },
+  };
+  return words[label] ?? { short: label, long: label };
+};
+
 /** 요청 한 번에 오간 것들을 서버 · Redis · DB 사이를 지나가는 조각으로 (runKey가 바뀌면 다시 재생) */
 function HopStrip({ hops, runKey, caption }: { hops: Hop[]; runKey: string; caption: string }) {
   const x: Record<Node, number> = { api: 60, redis: 230, db: 400 };
+  const sentence = `${caption}: ${hops
+    .map((hop) => plainHop(hop.label).long)
+    .filter(Boolean)
+    .join(' → ')}`;
   return (
     <svg
       className={flow.flowSvg}
       viewBox="0 0 460 96"
       role="img"
-      aria-label={`${caption}: ${hops.map((hop) => hop.label).join(' → ')}`}
+      aria-label={sentence}
       style={{ marginTop: 'var(--space-3)' }}
     >
       <FlowNode x={x.api} y={46} label="서버" fill="#ede5d5" />
       <FlowNode x={x.redis} y={46} label="Redis" fill="#bcd4e0" />
       <FlowNode x={x.db} y={46} label="DB" fill="#b4c9a9" />
       <text x="8" y="88" fontSize="12" fill="#5e564b">
-        {caption}: {hops.map((hop) => hop.label).join(' → ')}
+        {sentence}
       </text>
       <g key={runKey}>
         {hops.map((hop, index) => {
@@ -560,7 +586,7 @@ function HopStrip({ hops, runKey, caption }: { hops: Hop[]; runKey: string; capt
                 fontWeight="700"
                 fill="#fbf8f2"
               >
-                {hop.label}
+                {plainHop(hop.label).short}
               </text>
             </g>
           );
@@ -570,7 +596,7 @@ function HopStrip({ hops, runKey, caption }: { hops: Hop[]; runKey: string; capt
   );
 }
 
-/* ---------- 대기판이 비는 순간 (cache stampede) ---------- */
+/* ---------- 메뉴판이 비는 순간 (cache stampede) ---------- */
 
 function StampedeSection() {
   const [results, setResults] = useState<StampedeResult[]>(RECORDED_STAMPEDE);
@@ -605,9 +631,9 @@ function StampedeSection() {
   return (
     <section className={ui.wide}>
       <div className={ui.column}>
-        <h2 className={ui.sectionTitle}>대기판이 비는 순간 1000명이 몰리면</h2>
+        <h2 className={ui.sectionTitle}>메뉴판이 비는 순간 1000명이 몰리면</h2>
         <p className={ui.lead}>
-          대기판은 5초마다 비워져요. 하필 그 순간 손님 1000명이 한꺼번에 오면, 다들 "비었네?" 하고
+          메뉴판은 5초마다 비워져요. 하필 그 순간 손님 1000명이 한꺼번에 오면, 다들 "비었네?" 하고
           주방으로 달려가요(캐시 스탬피드). 서버 3대가 손님을 나눠 받는 상황을 실제 Redis와 DB로
           재현해요.
         </p>
@@ -639,7 +665,7 @@ function StampedeSection() {
       </div>
       <p style={{ marginTop: 'var(--space-6)' }}>
         <Button size="small" onClick={() => void run()} disabled={isRunning}>
-          {isRunning ? '몰리는 중…' : '대기판 비우고 1000명 한꺼번에 보내기'}
+          {isRunning ? '몰리는 중…' : '메뉴판 비우고 1000명 한꺼번에 보내기'}
         </Button>
       </p>
       <p className={ui.hint}>
@@ -753,8 +779,7 @@ const StampedeReplay = memo(function StampedeReplay({
         {finishedDbReads}번
       </text>
       <text x="6" y="174" fontSize="9.5" fill="#5e564b">
-        Redis 명령: SET NX {result.commands['SET NX']} · GET {result.commands.GET} · SET EX{' '}
-        {result.commands['SET EX']}
+        파란 점: 주방에 안 간 손님 · 빨간 점: 주방으로 간 손님
       </text>
       {sampled.map((trace, index) => {
         if (elapsedMs >= trace.finishedAtMs) return null;
