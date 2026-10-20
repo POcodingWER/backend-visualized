@@ -4,6 +4,7 @@ import { memo, useState } from 'react';
 import { seconds } from '../../lib/format';
 import { GITHUB_URL } from '../../lib/site';
 import { DevDetails } from '../components/molecules/DevDetails';
+import { DevFlow } from '../components/molecules/DevFlow';
 import { ResultNumbers } from '../components/molecules/ResultNumbers';
 import ui from '../components/ui.module.css';
 import {
@@ -14,6 +15,7 @@ import {
   type ProbeCounts,
   type SendResult,
 } from './api';
+import { DELIVERY_DEV_FLOW } from './dev-flow';
 import Pipeline from './Pipeline';
 import styles from './pipeline.module.css';
 import { Button } from '../components/atoms/Button';
@@ -70,25 +72,7 @@ export default function DeliveryDemo() {
       </section>
       <section className={ui.wide}>
         <DevDetails description="7단계 파이프라인(SDK 큐 → API → MySQL → 집계 → SSE), 요청 기록, 단건 vs 배치 실험, 일별 집계 차트">
-          <div className={ui.devIntro}>
-            <p>
-              비유 ↔ 용어: 택배 상자 = 이벤트 1개, 트럭 = HTTP 요청, 물류센터 = 브라우저 SDK의
-              메모리 큐(10개 또는 10초마다 전송), 묶음배송 = <code>POST /events/batch</code>
-              (1~100개) + Prisma <code>createMany</code>(INSERT 한 문장·한 커밋), 게이트 =
-              ThrottlerGuard(IP당 10초 200요청 → 429), 저녁 장부 정리 = 5분마다 도는 일별 롤업 잡(
-              <code>EventDailyStat</code> upsert).
-            </p>
-            <p>
-              코드: <a href={`${GITHUB_URL}/tree/main/packages/sdk/src`}>packages/sdk</a> ·{' '}
-              <a href={`${GITHUB_URL}/tree/main/apps/api/src/events`}>apps/api/src/events</a> · 측정
-              스크립트:{' '}
-              <a href={`${GITHUB_URL}/blob/main/apps/api/scripts/bench-ingest.ts`}>
-                bench-ingest.ts
-              </a>
-              . 한계: 배치는 한 문장이라 일부만 실패해도 100개가 함께 실패하고, SDK가 배치 단위로
-              다시 보내요.
-            </p>
-          </div>
+          <DevFlow content={DELIVERY_DEV_FLOW} />
           <Pipeline />
         </DevDetails>
       </section>

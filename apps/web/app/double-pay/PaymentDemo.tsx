@@ -1,14 +1,15 @@
 'use client';
 
 import { useState, type CSSProperties } from 'react';
-import { GITHUB_URL } from '../../lib/site';
 import flow from '../components/flow.module.css';
 import { DevDetails } from '../components/molecules/DevDetails';
+import { DevFlow } from '../components/molecules/DevFlow';
 import { ResultNumbers } from '../components/molecules/ResultNumbers';
 import ui from '../components/ui.module.css';
 import { Button } from '../components/atoms/Button';
 import { Conclusion } from '../components/atoms/Conclusion';
 import { listPayments, pay, type PaymentRow } from './api';
+import { DOUBLE_PAY_DEV_FLOW } from './dev-flow';
 
 type AttemptState = 'sending' | 'gave_up' | 'charged' | 'replayed' | 'failed';
 interface Attempt {
@@ -96,8 +97,6 @@ const RECORDED = {
   chargesWithKey: RECORDED_RUNS.withKey.rows.length,
   buttonLockOnlyCharges: RECORDED_RUNS.buttonLockOnly.rows.length,
 };
-const CODE_URL = `${GITHUB_URL}/blob/main/apps/api/src/payments/payments.service.ts`;
-const DOCS_URL = `${GITHUB_URL}/blob/main/docs/chapters-4-6.md#5장-결제-버튼-두-번`;
 
 const won = (value: number) => `${value.toLocaleString('ko-KR')}원`;
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -294,38 +293,7 @@ export default function PaymentDemo() {
 
       <section className={ui.wide}>
         <DevDetails description="Idempotency-Key 헤더, unique 제약 + INSERT 먼저, processing → paid, 재전송 응답, 실제 Payment 행">
-          <div className={ui.devIntro}>
-            <p>
-              비유 ↔ 용어: 번호표 = <code>Idempotency-Key</code> 헤더(클라이언트가 결제 시도 한
-              번마다 UUID 생성, 재시도에도 같은 값), 같은 영수증 = 저장된 결과 재전송(
-              <code>Idempotent-Replayed: true</code> 헤더), "같은 값은 한 줄만" ={' '}
-              <code>Payment.idempotencyKey</code>의 <b>UNIQUE</b> 제약. 순서: ①{' '}
-              <code>INSERT … status=&apos;processing&apos;</code>(키 선점, 중복이면 P2002) ② 가짜 PG
-              승인 0.9초 ③ <code>UPDATE status=&apos;paid&apos;</code>. 진 요청은 <code>paid</code>
-              가 될 때까지 50ms마다 조회해서 같은 행을 돌려줘요. 같은 키에 다른 주문·금액이면 422.
-            </p>
-            <p>
-              프론트 관점: 버튼 <code>disabled</code>는 사람의 연타만 막아요. 타임아웃 재시도,
-              새로고침 후 재전송, 모바일 네트워크의 중복 전송은 막지 못해요 — 그래서 키는 화면이
-              아니라 "결제 시도"에 묶어서 만들어요. 한계(ponytail): 첫 요청이 PG 호출 중에 죽으면
-              키가 processing으로 남아요. 운영에선 오래된 processing을 결제사에 조회해 정리하는 잡이
-              필요해요. 데모 행은 30분 뒤 자동 삭제.
-            </p>
-            <p>
-              브라우저 개발자 도구로 보면: 큰 버튼 한 번에 <code>POST /payments</code> 8개(실험 A·B
-              각 4개, 실험마다 <code>orderId</code> 하나), 끝날 때까지 200ms마다{' '}
-              <code>GET /payments?orderId=…</code>가 두 주문을 번갈아 조회해요. 빨간(canceled) 2개는
-              실험마다 첫 요청을 앱이 0.6초 만에 <code>AbortController</code>로 끊은 것이고, 서버는
-              그 요청도 끝까지 처리해요(A에선 결제 1건, B에선 키를 먼저 잡은 쪽). 크로스 오리진 JSON
-              POST라 브라우저가 사전 확인(<code>OPTIONS</code>)을 먼저 보내는데, API가{' '}
-              <code>Access-Control-Max-Age: 600</code>을 줘서 10분 동안은 한 번이면 돼요(전에는
-              요청에 <code>cache: &apos;no-store&apos;</code>가 붙어 Chrome이 매번 다시 보냈어요).
-            </p>
-            <p>
-              코드: <a href={CODE_URL}>payments.service.ts</a> · 문서:{' '}
-              <a href={DOCS_URL}>docs/chapters-4-6.md</a>
-            </p>
-          </div>
+          <DevFlow content={DOUBLE_PAY_DEV_FLOW} />
           <div className={`${ui.fixes} ${ui.fixesTwo}`}>
             <PaymentTable
               title={`번호표 없이 — Payment 행${runs ? '' : ' (지난 기록)'}`}
