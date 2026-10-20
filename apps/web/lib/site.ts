@@ -13,3 +13,6 @@ export const CHAPTERS = [
   },
   { number: 6, href: '/cache', title: '맛집 메뉴판', subtitle: '빠르게 보여주고, 제때 바꾸기' },
 ] as const;
+
+/** 저장소 파일 링크 (main 브랜치) */
+export const githubFile = (path: string) => `${GITHUB_URL}/blob/main/${path}`;

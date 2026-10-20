@@ -438,11 +438,98 @@
   font-weight: 600;
 }
 
-.devIntro {
+/* ---------- 개발자용 자세히: 흐름 따라가기 (DevFlow) ---------- */
+.devFlow {
   display: grid;
-  gap: var(--space-3);
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+  gap: var(--space-6);
   max-width: var(--column);
   font-size: 0.95rem;
+  line-height: 1.75;
+}
+.devFlow h3 {
+  font-size: 1rem;
+  margin-bottom: var(--space-2);
+}
+.devFlow ol,
+.devFlow ul {
+  margin: 0;
+  padding-left: 1.4rem;
+}
+.devFlow li + li {
+  margin-top: var(--space-1);
+}
+.devFlow > section {
+  min-width: 0;
+}
+.devFlow code {
+  overflow-wrap: anywhere;
+}
+.devFlowTitle {
+  font-size: var(--text-lg);
+}
+.devTerms {
+  margin: 0;
+  display: grid;
+  gap: var(--space-1);
+}
+.devTerms div {
+  display: grid;
+  grid-template-columns: minmax(7rem, 11rem) minmax(0, 1fr);
+  gap: var(--space-3);
+  padding: var(--space-1) 0;
+  border-bottom: 1px dashed var(--line);
+}
+.devTerms dt {
+  font-weight: 600;
+}
+.devTerms dd {
+  margin: 0;
+}
+.devSteps > li {
+  padding-left: var(--space-1);
+}
+.devSteps > li + li {
+  margin-top: var(--space-2);
+}
+.devSteps ul {
+  margin-top: var(--space-1);
+  color: var(--ink-soft);
+}
+.devWho {
+  display: inline-block;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--sky-ink);
+}
+.devSample + .devSample {
+  margin-top: var(--space-4);
+}
+.devSample {
+  display: grid;
+  gap: var(--space-1);
+}
+.devSample caption {
+  text-align: left;
+  font-weight: 600;
+  padding-bottom: var(--space-1);
+  white-space: nowrap;
+}
+.devNotes,
+.devLinks {
+  display: grid;
+  gap: var(--space-1);
+}
+.devNotes li + li,
+.devLinks li + li {
+  margin-top: 0;
+}
+@media (max-width: 640px) {
+  .devTerms div {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
 }
 
 .failText {
