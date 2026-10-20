@@ -87,6 +87,12 @@ services:
     image: mysql:8.4
     profiles: ['local-db']
     restart: unless-stopped
+    # EC2 자신의 loopback(127.0.0.1)에만 publish → 인터넷에서는 안 보이고, SSH 터널로만 접속 (MySQL Workbench 등)
+    #   ssh -i <key>.pem -N -L 13306:127.0.0.1:3306 ubuntu@<EC2 IP>  → Workbench: 127.0.0.1:13306
+    # 절대 '3306:3306'(=0.0.0.0)으로 바꾸지 말 것. 이 경로로 들어온 접속은 MySQL에서 docker 브리지 게이트웨이 IP로 보이므로
+    # 사용자 host가 '%'여야 한다 (공식 이미지가 만드는 MYSQL_USER, root는 기본 '%')
+    ports:
+      - '127.0.0.1:3306:3306'
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-backend_visualized}
