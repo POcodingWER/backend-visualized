@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { createSingleFlight } from '../common/utils/single-flight';
 import { sleep, startStopwatch } from '../common/utils/time';
 import { PrismaService } from '../prisma/prisma.service';
@@ -83,12 +84,24 @@ export class CacheDemoService {
     // findUnique는 Prisma가 같은 틱의 호출을 한 쿼리로 묶어 버려서(배칭) "DB 읽기 1000번"이 1번이 된다 → findFirst로 진짜 1번씩
     const board =
       (await this.prisma.menuBoard.findFirst({ where: { name: this.boardName } })) ??
-      (await this.prisma.menuBoard.upsert({
-        where: { name: this.boardName },
-        create: { name: this.boardName, content: menuText(1), version: 1 },
-        update: {},
-      }));
+      (await this.createBoard());
     return { content: board.content, version: board.version };
+  }
+
+  /**
+   * 새 DB라 대기판 행이 없을 때 한 번 만든다. 손님 1000명이 동시에 "없다"를 보고 만들러 와도
+   * unique(name) 제약에 막힌 쪽(P2002)은 먼저 만든 행을 다시 읽으면 된다 (upsert도 이 경쟁에선 P2002를 낸다)
+   */
+  private async createBoard() {
+    try {
+      return await this.prisma.menuBoard.create({
+        data: { name: this.boardName, content: menuText(1), version: 1 },
+      });
+    } catch (error) {
+      if (!(error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002'))
+        throw error;
+      return this.prisma.menuBoard.findFirstOrThrow({ where: { name: this.boardName } });
+    }
   }
 
   /** DB를 읽어 캐시에 5초짜리로 넣는다 */

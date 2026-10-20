@@ -39,6 +39,13 @@ describe('menu cache stampede (Redis + MySQL)', () => {
     await prisma.$disconnect();
   });
 
+  test('first visitors on an empty DB: concurrent reads create the board row once, no error', async (testContext) => {
+    if (!up) return testContext.skip('DB or Redis unavailable');
+    const result = await menu.welcomeVisitors(200);
+    assert.equal(result.direct.dbReads, 200);
+    assert.equal(await prisma.menuBoard.count({ where: { name: menu.boardName } }), 1);
+  });
+
   test('redis lock: 1 DB read; single-flight: 1 per server; none: 1 per visitor', async (testContext) => {
     if (!up) return testContext.skip('DB or Redis unavailable');
     await menu.readDirect(); // 대기판 행 만들기
