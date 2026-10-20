@@ -39,7 +39,8 @@ docker compose up -d redis      # bv-redis, localhost:6380
 **DB 테이블 만들기 → 실행**
 
 ```bash
-pnpm --filter @bv/api prisma:deploy   # 마이그레이션 적용 (개발 중 스키마를 바꿀 땐 prisma:migrate)
+pnpm --filter @bv/api prisma:generate # Prisma Client 타입 생성 (새로 clone하면 꼭 먼저. 없으면 typecheck·test가 실패)
+pnpm --filter @bv/api prisma:deploy   # 마이그레이션 적용 (개발 중 스키마를 바꿀 땐 prisma:migrate — generate도 같이 함)
 pnpm dev                              # web http://localhost:3000 · api http://localhost:4000
 curl localhost:4000/health            # {"status":"ok"...} 이면 DB 연결 OK
 ```

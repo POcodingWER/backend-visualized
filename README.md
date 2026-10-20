@@ -22,6 +22,7 @@ pnpm install
 cp apps/api/.env.example apps/api/.env          # DATABASE_URL을 내 MySQL(3306)로
 cp apps/web/.env.example apps/web/.env.local
 docker compose up -d redis                       # 6장용 Redis (bv-redis, 6380)
+pnpm --filter @bv/api prisma:generate
 pnpm --filter @bv/api prisma:deploy
 pnpm dev                                         # web :3000 · api :4000
 ```
