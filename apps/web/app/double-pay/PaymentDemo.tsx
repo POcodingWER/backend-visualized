@@ -103,7 +103,7 @@ const RECORDED = {
   chargesWithKey: RECORDED_RUNS.withKey.rows.length,
   buttonLockOnlyCharges: RECORDED_RUNS.buttonLockOnly.rows.length,
 };
-const CODE_URL = `${GITHUB_URL}/blob/main/apps/api/src/payments/payment-desk.ts`;
+const CODE_URL = `${GITHUB_URL}/blob/main/apps/api/src/payments/payments.service.ts`;
 const DOCS_URL = `${GITHUB_URL}/blob/main/docs/chapters-4-6.md#5장-결제-버튼-두-번`;
 
 const won = (value: number) => `${value.toLocaleString('ko-KR')}원`;
@@ -329,7 +329,7 @@ export default function PaymentDemo() {
               필요해요. 데모 행은 30분 뒤 자동 삭제.
             </p>
             <p>
-              코드: <a href={CODE_URL}>payment-desk.ts</a> · 문서:{' '}
+              코드: <a href={CODE_URL}>payments.service.ts</a> · 문서:{' '}
               <a href={DOCS_URL}>docs/chapters-4-6.md</a>
             </p>
           </div>

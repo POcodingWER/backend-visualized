@@ -10,63 +10,21 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
-import { Type } from 'class-transformer';
-import { IsBoolean, IsIn, IsInt, IsOptional, Max, Min } from 'class-validator';
 import type { Response } from 'express';
-import { UsageLimitsService } from '../abuse/usage-limits.service';
-import { PrismaService } from '../prisma/prisma.service';
-import { MenuCache, STAMPEDE_PROTECTIONS, type StampedeProtection } from './menu-cache';
-import { RedisService } from './redis.service';
+import { UsageLimitsService } from '../common/rate-limit/usage-limits.service';
+import { CacheDemoService, STAMPEDE_PROTECTIONS } from './cache-demo.service';
+import { EditMenuDto, ReadMenuDto, StampedeDto, VisitorsDto } from './dto/cache-demo.dto';
 
-class ReadMenuDto {
-  @IsIn(['db', 'cache'])
-  via!: 'db' | 'cache';
-}
-
-class EditMenuDto {
-  @IsBoolean()
-  invalidate!: boolean;
-}
-
-class VisitorsDto {
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(10)
-  @Max(1000)
-  visitors?: number;
-}
-
-class StampedeDto extends VisitorsDto {
-  @IsOptional()
-  @IsIn(STAMPEDE_PROTECTIONS)
-  protection?: StampedeProtection;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  @Max(5)
-  instances?: number;
-}
-
-/**
- * 6장 맛집 대기표: 진짜 Redis(cache-aside, TTL 5초)와 MySQL.
- * ponytail: single-flight는 이 프로세스 안에서만 묶는다. 서버가 여러 대면 Redis 잠금(SET NX PX)이 필요하다는 게 이 장의 요점.
- */
+/** 6장 맛집 대기표: 메뉴 읽기(DB 직접 / 대기판 먼저), 메뉴 수정(+DEL), 손님 1000명, 스탬피드 실험 */
 @Controller('cache-demo')
 @UseGuards(ThrottlerGuard)
 export class CacheDemoController {
-  private readonly menu: MenuCache;
   private running = false;
 
   constructor(
-    prisma: PrismaService,
-    redis: RedisService,
+    private readonly menu: CacheDemoService,
     private readonly usageLimits: UsageLimitsService,
-  ) {
-    this.menu = new MenuCache(prisma, redis);
-  }
+  ) {}
 
   @Get('menu')
   read(@Query() query: ReadMenuDto) {

@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { appEnvironment, logEnvironmentSummary } from './config/app-environment';
+import { appEnvironment, logEnvironmentSummary } from './common/config/app-environment';
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';

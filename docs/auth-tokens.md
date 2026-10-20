@@ -59,7 +59,7 @@ refresh(RT1) ─▶ RT1은 이미 used → 재사용 감지 → family의 모든
 
 ## 테스트
 
-- `apps/api/src/auth/refresh-token.store.spec.ts` (실제 MySQL): 회전 체인, 재사용 시 패밀리 폐기, 같은 토큰 동시 5회 → 1회만 성공, 알 수 없는 토큰 거부. 테스트 사용자는 끝나면 삭제.
+- `apps/api/src/auth/test/refresh-token.store.spec.ts` (실제 MySQL): 회전 체인, 재사용 시 패밀리 폐기, 같은 토큰 동시 5회 → 1회만 성공, 알 수 없는 토큰 거부. 테스트 사용자는 끝나면 삭제.
 - `apps/web/lib/single-flight.test.ts`: 동시 호출 공유, 완료 후 새 호출, 실패 공유.
 
 ## 운영 전 체크

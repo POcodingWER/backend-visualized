@@ -12,49 +12,26 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
-import { Type } from 'class-transformer';
-import { IsInt, IsOptional, Max, Min } from 'class-validator';
 import type { Response } from 'express';
-import { UsageLimitsService } from '../abuse/usage-limits.service';
-import { PrismaService } from '../prisma/prisma.service';
-import { PointLedger, POINT_MODES, type PointMode } from './point-ledger';
+import { UsageLimitsService } from '../common/rate-limit/usage-limits.service';
+import { EntriesQueryDto, SimulatePointsDto } from './dto/points.dto';
+import { POINT_MODES, PointsService, type PointMode } from './points.service';
 
 const WALLET_BY_MODE: Record<PointMode, string> = {
   overwrite: 'sim-overwrite',
   ledger: 'sim-ledger',
 };
 
-class SimulatePointsDto {
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(10)
-  @Max(400)
-  requests?: number;
-}
-
-class EntriesQueryDto {
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  @Max(50)
-  limit?: number;
-}
-
 /** 4장 포인트 통장: 같은 적립/사용 요청을 두 방식으로 동시에 보내고 잔액과 내역 합계를 맞춰 본다 */
 @Controller('points')
 @UseGuards(ThrottlerGuard)
 export class PointsController {
-  private readonly ledger: PointLedger;
   private running = false;
 
   constructor(
-    prisma: PrismaService,
+    private readonly ledger: PointsService,
     private readonly usageLimits: UsageLimitsService,
-  ) {
-    this.ledger = new PointLedger(prisma);
-  }
+  ) {}
 
   @Post('simulate')
   @HttpCode(200)
