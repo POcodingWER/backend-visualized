@@ -205,7 +205,7 @@ export default function PaymentDemo() {
   const requestCount = runs?.withKey.isDone ? runs.withKey.attempts.length : RECORDED.requests;
   const sourceLabel =
     liveChargesWithKey !== null
-      ? '방금 실제 서버·DB로 보낸 결과'
+      ? '방금 실제 서버에서 실행한 결과'
       : `지난 실측 기록 (${RECORDED_AT}, 로컬 MySQL)`;
 
   return (
@@ -226,10 +226,10 @@ export default function PaymentDemo() {
               실제로 결제된 횟수 (같은 결제 요청 {requestCount}개)
             </p>
             <Button size="big" onClick={() => void run()} disabled={isRunning}>
-              {isRunning ? '결제하는 중…' : '결제 버튼 세 번 + 자동 재시도'}
+              {isRunning ? '결제하는 중…' : '결제 버튼 세 번 연달아 눌러 보기'}
             </Button>
             <p className={ui.hint}>
-              진짜 서버로 결제 요청을 보내요: 버튼을 0.09초 간격으로 세 번 누르고, 첫 응답이 0.6초
+              실제 서버로 결제 요청을 보내요: 버튼을 0.09초 간격으로 세 번 누르고, 첫 응답이 0.6초
               안에 안 오면 앱이 한 번 더 보내요. 결제사 승인은 0.9초 걸리게 해 뒀어요(가짜 결제,
               돈은 안 나가요).
             </p>
@@ -282,7 +282,7 @@ export default function PaymentDemo() {
               detail: '버튼은 한 번만 눌렸지만, 앱의 자동 재시도가 두 번째 결제를 만들었어요',
             },
           ]}
-          source={`${sourceLabel === '방금 실제 서버·DB로 보낸 결과' ? '첫 두 숫자는 방금 결과, ' : ''}버튼 잠금 숫자는 ${RECORDED_AT} 로컬 실측 (NestJS + MySQL 8.4). 결제사는 0.9초 걸리는 가짜예요.`}
+          source={`${sourceLabel === '방금 실제 서버에서 실행한 결과' ? '첫 두 숫자는 방금 결과, ' : ''}버튼 잠금 숫자는 ${RECORDED_AT} 로컬 실측 (NestJS + MySQL 8.4). 결제사는 0.9초 걸리는 가짜예요.`}
         />
       </section>
 
@@ -328,7 +328,7 @@ export default function PaymentDemo() {
 
 const ATTEMPT_TEXT: Record<AttemptState, string> = {
   sending: '보내는 중',
-  gave_up: '앱이 포기',
+  gave_up: '앱이 기다리다 포기',
   charged: '새 결제',
   replayed: '같은 영수증',
   failed: '실패',
@@ -348,7 +348,7 @@ function PaymentLane({ title, run }: { title: string; run: ScenarioRun | null })
   return (
     <div>
       <p className={flow.laneTitle}>
-        {title} <small>· 결제 테이블 {rows.length}줄</small>
+        {title} <small>· 실제 결제 기록 {rows.length}건</small>
       </p>
       <svg
         className={flow.flowSvg}
@@ -429,7 +429,7 @@ function PaymentLane({ title, run }: { title: string; run: ScenarioRun | null })
           strokeWidth="1.8"
         />
         <text x="312" y="32" fontSize="13" fill="#5e564b">
-          결제 테이블 (DB)
+          결제 기록 (데이터베이스)
         </text>
         {rows.slice(0, 6).map((row, index) => (
           <g key={row.id} className={flow.rowNew}>

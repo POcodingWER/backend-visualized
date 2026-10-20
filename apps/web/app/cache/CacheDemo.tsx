@@ -1,6 +1,7 @@
 'use client';
 
 import { memo, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { seconds } from '../../lib/format';
 import { GITHUB_URL } from '../../lib/site';
 import flow from '../components/flow.module.css';
 import { DevDetails } from '../components/molecules/DevDetails';
@@ -71,9 +72,6 @@ const CODE_URL = `${GITHUB_URL}/blob/main/apps/api/src/cache-demo/cache-demo.ser
 const DOCS_URL = `${GITHUB_URL}/blob/main/docs/chapters-4-6.md#6장-맛집-대기표`;
 const POLL_MS = 500;
 const WATCH_MS = 7_000;
-
-const ms = (value: number) =>
-  value < 1000 ? `${Math.round(value)}ms` : `${(value / 1000).toFixed(2)}초`;
 
 export default function CacheDemo() {
   return (
@@ -190,9 +188,7 @@ function VisitorsStage() {
         </div>
         <div className={flow.stageSide}>
           <p className={ui.source}>
-            {isLive
-              ? '방금 실제 서버·Redis·DB에서 잰 결과'
-              : `지난 실측 기록 (${RECORDED_AT}, 로컬)`}
+            {isLive ? '방금 실제 서버에서 실행한 결과' : `지난 실측 기록 (${RECORDED_AT}, 로컬)`}
           </p>
           <p className={flow.bigNumber}>
             <span className={ui.failText}>{result.direct.dbReads}</span>
@@ -205,16 +201,17 @@ function VisitorsStage() {
             {isRunning ? '손님 받는 중…' : '손님 1000명 받기'}
           </Button>
           <p className={ui.hint}>
-            진짜 서버에서 "오늘 메뉴" 읽기 1000번을 동시에 해요. 왼쪽은 매번 MySQL로, 오른쪽은 Redis
-            대기판(5초짜리)을 먼저 봐요. 대기판이 이미 있으면 DB는 0번이에요.
+            실제 서버에서 &quot;오늘 메뉴&quot; 읽기 1000번을 동시에 해요. 왼쪽은 매번 주방(MySQL)에
+            묻고, 오른쪽은 5초마다 새로 적는 대기판(Redis)을 먼저 봐요. 대기판이 이미 채워져 있으면
+            주방에는 한 번도 안 가요.
           </p>
           {error && <p className={ui.errorLine}>{error}</p>}
         </div>
       </div>
       <Conclusion isGood>
         같은 1000명인데 주방에 간 횟수가 {result.direct.dbReads}번 → {result.cached.dbReads}번. 걸린
-        시간은 {ms(result.direct.ms)} → {ms(result.cached.ms)}예요. 대신 대기판은 최대 5초 늦을 수
-        있어요 — 아래에서 직접 확인해 보세요.
+        시간은 {seconds(result.direct.ms)} → {seconds(result.cached.ms)}예요. 대신 메뉴가 바뀌면
+        대기판에는 최대 5초 늦게 반영돼요. 아래에서 직접 확인해 보세요.
       </Conclusion>
     </section>
   );
@@ -245,7 +242,7 @@ const VisitorLane = memo(function VisitorLane({
       <p className={flow.laneTitle}>
         {title}{' '}
         <small>
-          · DB {dbReads}번 · {ms(elapsedMs)}
+          · DB {dbReads}번 · {seconds(elapsedMs)}
         </small>
       </p>
       <svg
@@ -633,7 +630,7 @@ function StampedeSection() {
               </div>
               <div>
                 <dt>걸린 시간</dt>
-                <dd>{ms(result.durationMs)}</dd>
+                <dd>{seconds(result.durationMs)}</dd>
               </div>
             </dl>
             <p className={ui.hint}>{PROTECTION_TEXT[result.protection]}</p>
@@ -756,7 +753,7 @@ const StampedeReplay = memo(function StampedeReplay({
         {finishedDbReads}번
       </text>
       <text x="6" y="174" fontSize="9.5" fill="#5e564b">
-        SET NX {result.commands['SET NX']} · GET {result.commands.GET} · SET EX{' '}
+        Redis 명령: SET NX {result.commands['SET NX']} · GET {result.commands.GET} · SET EX{' '}
         {result.commands['SET EX']}
       </text>
       {sampled.map((trace, index) => {

@@ -117,7 +117,7 @@ export default function StrategyLab({
           </select>
         </label>
         <button className={styles.primary} onClick={() => void run(false)} disabled={!!busy}>
-          {info.name}로 실행
+          ‘{info.name}’ 방식만 실행
         </button>
         <button onClick={() => void run(true)} disabled={!!busy}>
           4개 전략 모두 비교
@@ -137,7 +137,7 @@ export default function StrategyLab({
             <div className={styles.meta}>
               {replay.users}명 / {replay.quantity}장 · 실측 {(replay.durationMs / 1000).toFixed(2)}
               초 → {(replayMs / 1000).toFixed(1)}초로 재생 · 경과{' '}
-              <b>{(elapsedMs / 1000).toFixed(2)}s</b>
+              <b>{(elapsedMs / 1000).toFixed(2)}초</b>
             </div>
             <div className={styles.arena}>
               <Crowd
