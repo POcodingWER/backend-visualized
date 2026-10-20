@@ -8,7 +8,6 @@ import { buttonClassName } from './components/atoms/Button';
 import { INK, inkStroke } from './components/atoms/ink';
 import { DevDetails } from './components/molecules/DevDetails';
 import { AUTHOR, DECISIONS } from './landing-content';
-import authorPhoto from '../public/author.jpg';
 
 const ink = { ...inkStroke, strokeWidth: 2.2 };
 const docLink = (file: string) => `${GITHUB_URL}/blob/main/docs/benchmarks/${file}`;
@@ -216,11 +215,12 @@ export default function Home() {
         <h2 className={ui.sectionTitle}>만든 사람</h2>
         <div className={styles.author}>
           <Image
-            src={authorPhoto}
+            src="/author.jpg"
+            width={354}
+            height={472}
             alt={AUTHOR.photoAlt}
             className={styles.photo}
             sizes="(max-width: 860px) 6.5rem, 8rem"
-            placeholder="blur"
           />
           <div className={styles.authorText}>
             <p className={styles.authorName}>{AUTHOR.name}</p>
