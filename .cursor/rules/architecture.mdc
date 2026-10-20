@@ -9,12 +9,12 @@ alwaysApply: false
 Full explanation (Korean, for frontend devs): docs/architecture.md
 
 - Folder = first URL segment = module. `/points/...` lives in `src/points/` as `PointsModule`. Demo/admin routes go under their feature: `/<module>/demo/...`, `/<module>/admin/...`. No top-level `/demo` or `/admin`.
-- Module layout: `<name>.module.ts`, `<name>.controller.ts`, `<name>.service.ts`, `dto/<name>.dto.ts`, `test/`. Optional extra files with clear names (e.g. `coupon-strategies.ts`, `date-range.ts`, a module-only guard). Class name matches file name (`points.service.ts` → `PointsService`).
+- Module top level holds only `<name>.module.ts`, `<name>.controller.ts`, `<name>.service.ts`, `dto/`, `test/`, `lib/`. Every other module-only file (helpers, extra services, module-only guards, config, stores, strategies) goes in `<module>/lib/` (e.g. `auth/lib/password.ts`, `coupons/lib/coupon-strategies.ts`, `events/lib/aggregation.service.ts`). Never create an empty `lib/`. Class name matches file name (`points.service.ts` → `PointsService`).
 - Controller = HTTP only (routes, DTOs, guards/limits, status codes, headers). Logic and Prisma/Redis calls go in the service.
 - Every DTO file starts with the one-line comment pointing to docs/architecture.md. DTOs are class-validator classes, never inline in controllers.
-- Shared by 2+ modules → `src/common/{guards,rate-limit,config,utils}` (`CommonModule` is global). Used by one module → keep it in that module.
+- Module-only helper → `<module>/lib/`. Shared by 2+ modules → `src/common/{guards,rate-limit,config,utils}` (`CommonModule` is global).
 - Connections are their own modules: `src/prisma` (global `PrismaService`), `src/redis` (`RedisService`, import `RedisModule`).
 - Services are `@Injectable()` and get dependencies through the constructor. Tests build them by hand: `new PointsService(new PrismaService())`.
-- Tests: `test/` folder next to the file under test, named `<file>.spec.ts`, using `node:test`. DB/Redis tests clean up their own rows/keys in `after`. `tsconfig.build.json` excludes `src/**/test/**`.
+- Tests: the module's top-level `test/` folder (tests for `lib/` files go there too; `common/` has `test/` per subfolder), named `<file>.spec.ts`, using `node:test`. DB/Redis tests clean up their own rows/keys in `after`. `tsconfig.build.json` excludes `src/**/test/**`.
 - Split a file only when it clearly does two jobs. No repositories, interfaces or barrel `index.ts` files.
 - Use `git mv` when moving files. If a URL changes, update apps/web, docs, load/ (k6), CI smoke test and tests in the same change.

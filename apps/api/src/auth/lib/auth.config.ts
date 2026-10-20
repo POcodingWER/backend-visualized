@@ -1,5 +1,5 @@
 import type { CookieOptions } from 'express';
-import { appEnvironment } from '../common/config/app-environment';
+import { appEnvironment } from '../../common/config/app-environment';
 
 /** 인증 데모 설정. 값은 config/environment.ts에서 검증된 환경 변수에서 온다 */
 export const authConfig = {

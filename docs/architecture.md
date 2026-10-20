@@ -15,21 +15,22 @@ apps/api/src/
     events.controller.ts   라우트 (/events, /events/batch, /events/stats, /events/stream,
                                    /events/demo/*, /events/admin/aggregate)
     events.service.ts      저장·통계
-    aggregation.service.ts 일별 집계 (5분 cron 포함) ─ 서비스가 둘인 모듈
-    event-bus.ts           SSE로 보낼 "저장됨" 알림
-    date-range.ts          KST 날짜 계산 (순수 함수)
     dto/events.dto.ts
+    lib/                   이 모듈만 쓰는 도우미
+      aggregation.service.ts  일별 집계 (5분 cron 포함)
+      event-bus.ts            SSE로 보낼 "저장됨" 알림
+      date-range.ts           KST 날짜 계산 (순수 함수)
     test/                  events.dto.spec.ts, date-range.spec.ts
   auth/                    /auth/*        2장 손목밴드 (액세스·리프레시 토큰)
     auth.module.ts  auth.controller.ts  auth.service.ts
-    access-token.guard.ts  이 모듈 전용 가드
-    refresh-token.store.ts  password.ts  auth.config.ts
     dto/auth.dto.ts
+    lib/                   access-token.guard.ts (이 모듈 전용 가드), refresh-token.store.ts,
+                           password.ts, auth.config.ts
     test/refresh-token.store.spec.ts
   coupons/                 /coupons/*     1장 티켓팅 (선착순 쿠폰)
     coupons.module.ts  coupons.controller.ts  coupons.service.ts
-    coupon-strategies.ts   발급 전략 4종 (Nest 없이 PrismaClient만 → 테스트·벤치도 사용)
     dto/coupons.dto.ts
+    lib/coupon-strategies.ts  발급 전략 4종 (Nest 없이 PrismaClient만 → 테스트·벤치도 사용)
     test/coupon-strategies.spec.ts
   points/                  /points/*      4장 포인트 통장
     points.module.ts  points.controller.ts  points.service.ts  dto/  test/
@@ -51,17 +52,16 @@ apps/api/src/
 
 ## 무엇을 어디에 두나
 
-| 만들려는 것                        | 위치                                                               |
-| ---------------------------------- | ------------------------------------------------------------------ |
-| 새 URL (`/orders/...`)             | `src/orders/` 모듈을 새로 만든다. URL 첫 단어와 폴더 이름을 맞춘다 |
-| 기존 기능의 데모·관리자 버튼       | 그 기능 모듈 안 `/<모듈>/demo/...`, `/<모듈>/admin/...`            |
-| 요청 본문·쿼리 모양 + 검증         | `<모듈>/dto/<모듈>.dto.ts`                                         |
-| 비즈니스 로직, DB 읽기·쓰기        | `<모듈>/<모듈>.service.ts`                                         |
-| 크고 독립적인 알고리즘 묶음        | 이름 붙은 파일 하나 (`coupon-strategies.ts`) — 서비스가 사용       |
-| 두 모듈 이상이 쓰는 가드·한도·유틸 | `common/guards`, `common/rate-limit`, `common/utils`               |
-| 한 모듈만 쓰는 가드                | 그 모듈 폴더 (`auth/access-token.guard.ts`)                        |
-| 외부 연결 (DB, Redis)              | `prisma/`, `redis/` 처럼 자기 모듈                                 |
-| 테스트                             | 테스트 대상 파일 옆 `test/` 폴더, 이름은 `<대상 파일>.spec.ts`     |
+| 만들려는 것                                                 | 위치                                                                                 |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| 새 URL (`/orders/...`)                                      | `src/orders/` 모듈을 새로 만든다. URL 첫 단어와 폴더 이름을 맞춘다                   |
+| 기존 기능의 데모·관리자 버튼                                | 그 기능 모듈 안 `/<모듈>/demo/...`, `/<모듈>/admin/...`                              |
+| 요청 본문·쿼리 모양 + 검증                                  | `<모듈>/dto/<모듈>.dto.ts`                                                           |
+| 비즈니스 로직, DB 읽기·쓰기                                 | `<모듈>/<모듈>.service.ts`                                                           |
+| 그 모듈만 쓰는 도우미 (알고리즘, 가드, 설정, 저장소 클래스) | `<모듈>/lib/` (`coupons/lib/coupon-strategies.ts`)                                   |
+| 두 모듈 이상이 쓰는 가드·한도·유틸                          | `common/guards`, `common/rate-limit`, `common/utils`                                 |
+| 외부 연결 (DB, Redis)                                       | `prisma/`, `redis/` 처럼 자기 모듈                                                   |
+| 테스트                                                      | 모듈 최상위 `test/` 폴더 (`lib/` 파일의 테스트도 여기), 이름은 `<대상 파일>.spec.ts` |
 
 ## 요청 하나가 지나가는 길
 
@@ -116,11 +116,11 @@ export class PayDto {
 ## 이름·위치 규칙
 
 1. **폴더 = URL 첫 단어 = 모듈.** `/points/...`는 `src/points/`, `PointsModule`. 데모·관리자 전용 라우트도 그 기능 아래 (`/events/demo/aggregate`, `/events/admin/aggregate`).
-2. 모듈 폴더의 기본 파일: `<이름>.module.ts`, `<이름>.controller.ts`, `<이름>.service.ts`, `dto/<이름>.dto.ts`, `test/`. 클래스 이름은 파일과 맞춘다 (`points.service.ts` → `PointsService`).
+2. 모듈 폴더 최상위에는 `<이름>.module.ts`, `<이름>.controller.ts`, `<이름>.service.ts`, `dto/`, `test/`, `lib/`만 둔다. 클래스 이름은 파일과 맞춘다 (`points.service.ts` → `PointsService`). 필요 없는 파일·폴더는 만들지 않는다 (빈 `lib/` 금지).
 3. 컨트롤러는 HTTP만: 라우트, DTO, 가드·한도, 상태 코드, 헤더. 로직과 DB는 서비스로.
 4. 파일은 한 파일이 두 가지 일을 할 때만 나눈다. 리포지토리 계층, 인터페이스, `index.ts` 배럴은 만들지 않는다.
-5. 두 모듈 이상이 쓰는 코드만 `common/`으로. 한 모듈만 쓰면 그 모듈 폴더에 둔다.
-6. 테스트는 대상 파일 옆 `test/` 폴더에 `<대상 파일>.spec.ts` (`points/test/points.service.spec.ts`, `common/config/test/environment.spec.ts`).
+5. **모듈 전용 도우미 → `<모듈>/lib/`, 여러 모듈이 공유 → `common/`.** (`auth/lib/password.ts`, `common/utils/single-flight.ts`)
+6. 테스트는 모듈 최상위 `test/` 폴더에 `<대상 파일>.spec.ts` (`points/test/points.service.spec.ts`, `coupons/test/coupon-strategies.spec.ts`). `common/`은 하위 폴더마다 `test/` (`common/config/test/environment.spec.ts`).
    - 실행: `pnpm --filter @bv/api test` (컴파일 후 `node --test`로 모든 `*.spec.js` 실행).
    - 빌드(`tsconfig.build.json`)는 `src/**/test/**`를 빼서 `dist`에 테스트가 들어가지 않는다.
    - DB·Redis를 쓰는 테스트는 자기가 만든 행·키를 `after`에서 지운다.

@@ -1,7 +1,7 @@
 // DTO = 요청 본문/쿼리의 모양 + 검증 규칙 (프론트의 TS 타입 + zod 스키마). 자세히: docs/architecture.md
 import { Type } from 'class-transformer';
 import { IsIn, IsInt, IsOptional, IsString, Length, Max, Min } from 'class-validator';
-import { STRATEGIES, type Strategy } from '../coupon-strategies';
+import { STRATEGIES, type Strategy } from '../lib/coupon-strategies';
 
 /** 남용 방지 상한 */
 export const MAX_USERS = 1000;

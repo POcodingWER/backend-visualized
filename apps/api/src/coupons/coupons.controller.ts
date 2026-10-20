@@ -14,7 +14,7 @@ import {
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { UsageLimitsService } from '../common/rate-limit/usage-limits.service';
-import { STRATEGIES, type SimulationResult } from './coupon-strategies';
+import { STRATEGIES, type SimulationResult } from './lib/coupon-strategies';
 import { CouponsService } from './coupons.service';
 import { IssueDto, ResetDto, SimulateDto, StateQueryDto } from './dto/coupons.dto';
 

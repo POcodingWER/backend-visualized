@@ -9,7 +9,7 @@
 | `optimistic`  | `SELECT (issuedCount, version)` → `UPDATE ... WHERE version = ?` 0행이면 백오프 후 재시도 (최대 30회)           |
 | `atomic`      | `UPDATE Coupon SET issuedCount = issuedCount + 1 WHERE id = ? AND issuedCount < totalQuantity` 1행이면 `INSERT` |
 
-코드: [`apps/api/src/coupons/coupon-strategies.ts`](../../apps/api/src/coupons/coupon-strategies.ts)
+코드: [`apps/api/src/coupons/lib/coupon-strategies.ts`](../../apps/api/src/coupons/coupon-strategies.ts)
 
 ## 환경
 

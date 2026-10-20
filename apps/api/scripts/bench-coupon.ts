@@ -7,7 +7,7 @@
  *   USERS=500 QTY=100 RUNS=3
  */
 import { PrismaClient } from '@prisma/client';
-import { CouponStrategies, STRATEGIES, type Strategy } from '../src/coupons/coupon-strategies';
+import { CouponStrategies, STRATEGIES, type Strategy } from '../src/coupons/lib/coupon-strategies';
 
 const USERS = Number(process.env.USERS ?? 500);
 const QUANTITY = Number(process.env.QTY ?? 100);

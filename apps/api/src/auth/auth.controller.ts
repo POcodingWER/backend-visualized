@@ -14,8 +14,8 @@ import {
 } from '@nestjs/common';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
-import { AccessTokenGuard, type AuthenticatedRequest } from './access-token.guard';
-import { authConfig, refreshCookieOptions } from './auth.config';
+import { AccessTokenGuard, type AuthenticatedRequest } from './lib/access-token.guard';
+import { authConfig, refreshCookieOptions } from './lib/auth.config';
 import { LoginDto, RefreshDto } from './dto/auth.dto';
 import { authError, AuthService, toPublicTokenRow } from './auth.service';
 

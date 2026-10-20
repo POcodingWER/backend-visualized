@@ -16,9 +16,9 @@ import type { Response } from 'express';
 import { Observable, finalize, interval, map, merge } from 'rxjs';
 import { AdminApiKeyGuard } from '../common/guards/admin-api-key.guard';
 import { UsageLimitsService } from '../common/rate-limit/usage-limits.service';
-import { AggregationService } from './aggregation.service';
+import { AggregationService } from './lib/aggregation.service';
 import { BatchEventsDto, CreateEventDto, StatsQueryDto } from './dto/events.dto';
-import { EventBus } from './event-bus';
+import { EventBus } from './lib/event-bus';
 import { EventsService } from './events.service';
 
 /** 3장 묶음배송: 클릭 이벤트 수집 · 통계 · 실시간 스트림 + 같은 이벤트의 데모/관리자 집계 버튼 */

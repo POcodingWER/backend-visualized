@@ -1,5 +1,5 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
-import { authError, AuthService, type AccessTokenPayload } from './auth.service';
+import { authError, AuthService, type AccessTokenPayload } from '../auth.service';
 
 export interface AuthenticatedRequest {
   headers: Record<string, string | undefined>;

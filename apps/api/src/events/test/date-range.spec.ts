@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { resolveDayRange, toDailySeries, toKstDateKey } from '../date-range';
+import { resolveDayRange, toDailySeries, toKstDateKey } from '../lib/date-range';
 
 test('resolveDayRange: inclusive KST days, KST midnight bounds', () => {
   const range = resolveDayRange('2026-10-01', '2026-10-03');
