@@ -463,8 +463,36 @@
 .devFlow > section {
   min-width: 0;
 }
-.devFlow code {
-  overflow-wrap: anywhere;
+/* 코드 칩: 본문 글과 한눈에 구분되게 (단계·용어·목록·표 모두). 줄바꿈은 body의
+   keep-all + overflow-wrap: break-word를 그대로 따른다: 짧은 토큰은 안에서 끊지 않고,
+   한 줄보다 긴 토큰만 끊는다. 줄이 넘어가도 칩 모양은 줄마다 유지 (box-decoration-break) */
+.devFlow :not(pre) > code {
+  font-size: 0.85em;
+  padding: 0.08em 0.38em;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--paper-deep);
+  color: var(--ink);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+.devFlow td > code {
+  padding: 0.02em 0.3em;
+}
+/* 긴 요청·응답 본문이나 SQL을 <pre>로 넣으면 문장과 떨어진 블록으로 보인다 */
+.devFlow pre {
+  margin: var(--space-2) 0 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--sky-ink);
+  border-radius: 6px;
+  background: var(--paper-deep);
+  font-size: 0.8rem;
+  line-height: 1.6;
+  overflow-x: auto;
+}
+.devFlow pre code {
+  font-size: inherit;
 }
 .devFlowTitle {
   font-size: var(--text-lg);
