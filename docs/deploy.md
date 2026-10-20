@@ -385,8 +385,24 @@ Deploy (deploy.yml)
 | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | EC2 인스턴스 역할 `backend-visualized-ec2-ssm` | 관리형 정책 `AmazonSSMManagedInstanceCore`만. SSM Agent가 AWS에 등록되는 데 필요                                                            |
 | IAM OIDC 공급자                                | `token.actions.githubusercontent.com`, audience `sts.amazonaws.com`                                                                         |
-| 배포 역할 `backend-visualized-github-deploy`   | 신뢰 정책: `sub` = `repo:POcodingWER/backend-visualized:ref:refs/heads/main`, `aud` = `sts.amazonaws.com`                                   |
+| 배포 역할 `backend-visualized-github-deploy`   | 신뢰 정책: `aud` = `sts.amazonaws.com`, `sub` = `repo:POcodingWER@89626659/backend-visualized@1425018571:ref:refs/heads/main` (아래 주의)   |
 | 배포 역할 인라인 정책                          | `ssm:SendCommand` → 이 인스턴스 ARN + `AWS-RunShellScript` 문서만 / `ssm:GetCommandInvocation`, `ssm:ListCommandInvocations` → `*` (조회만) |
+
+- **`sub` 형식 주의 (immutable subject)**: 이 저장소는 GitHub OIDC의 _immutable subject_ 형식을 씁니다
+  (`gh api repos/POcodingWER/backend-visualized/actions/oidc/customization/sub` → `use_immutable_subject: true`).
+  그래서 토큰의 `sub`는 `repo:POcodingWER/backend-visualized:…`가 아니라 **소유자·저장소 ID가 붙은**
+  `repo:POcodingWER@89626659/backend-visualized@1425018571:ref:refs/heads/main` 입니다. 신뢰 정책 예:
+
+  ```json
+  "Condition": {
+    "StringEquals": {
+      "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
+      "token.actions.githubusercontent.com:sub": "repo:POcodingWER@89626659/backend-visualized@1425018571:ref:refs/heads/main"
+    }
+  }
+  ```
+
+  `workflow_run`과 `workflow_dispatch`(main에서 실행) 모두 이 `sub`로 들어옵니다. 저장소 이름이 재사용돼도 다른 사람이 같은 `sub`를 만들 수 없어서 더 안전합니다.
 
 - 배포 역할은 EC2를 만들거나 지우거나, 다른 인스턴스에 명령을 보내거나, 비밀값을 읽을 수 없습니다.
 - 워크플로에 `environment:`를 붙이면 OIDC `sub`가 `repo:…:environment:<이름>`으로 바뀌어 신뢰 정책과 맞지 않습니다. 붙이려면 신뢰 정책도 같이 바꾸세요.
@@ -418,14 +434,14 @@ reset의 영향을 받지 않지만, **서버에서 직접 고친 추적 파일�
 
 ## 8. 문제 해결
 
-| 증상                                                                                        | 확인                                                                                                     |
-| ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| API 컨테이너가 바로 종료                                                                    | `./deploy/compose.sh logs api` 의 `[config] 환경 변수 설정 오류` 목록                                    |
-| 인증서 발급 실패                                                                            | DNS A 레코드가 Elastic IP인지, 보안 그룹 80/443 열림 확인. `logs caddy`                                  |
-| 브라우저 CORS 오류                                                                          | `WEB_ORIGIN`이 Vercel 주소와 **정확히** 같은지 (https, 끝 슬래시 없음)                                   |
-| 새로고침하면 로그아웃                                                                       | 4장: `none`+Secure인지, Safari면 커스텀 도메인 + `lax`                                                   |
-| 모든 사용자가 429                                                                           | `TRUST_PROXY` 값 (Caddy 뒤면 1)                                                                          |
-| `prisma migrate deploy` 반복 실패                                                           | RDS 보안 그룹이 EC2 보안 그룹을 허용하는지, 비밀번호 URL 인코딩                                          |
-| Deploy: `Could not assume role` / `Not authorized to perform sts:AssumeRoleWithWebIdentity` | OIDC 공급자, 역할 신뢰 정책의 `sub`(main 브랜치)·`aud`                                                   |
-| Deploy: `InvalidInstanceId`                                                                 | 인스턴스에 `backend-visualized-ec2-ssm` 역할이 붙었는지, SSM Agent 재시작 후 Fleet Manager에 Online인지  |
-| Deploy: `AccessDeniedException ... ssm:SendCommand`                                         | 배포 역할 인라인 정책의 인스턴스 ARN·문서 ARN(`arn:aws:ssm:ap-northeast-2::document/AWS-RunShellScript`) |
+| 증상                                                                                        | 확인                                                                                                                                          |
+| ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| API 컨테이너가 바로 종료                                                                    | `./deploy/compose.sh logs api` 의 `[config] 환경 변수 설정 오류` 목록                                                                         |
+| 인증서 발급 실패                                                                            | DNS A 레코드가 Elastic IP인지, 보안 그룹 80/443 열림 확인. `logs caddy`                                                                       |
+| 브라우저 CORS 오류                                                                          | `WEB_ORIGIN`이 Vercel 주소와 **정확히** 같은지 (https, 끝 슬래시 없음)                                                                        |
+| 새로고침하면 로그아웃                                                                       | 4장: `none`+Secure인지, Safari면 커스텀 도메인 + `lax`                                                                                        |
+| 모든 사용자가 429                                                                           | `TRUST_PROXY` 값 (Caddy 뒤면 1)                                                                                                               |
+| `prisma migrate deploy` 반복 실패                                                           | RDS 보안 그룹이 EC2 보안 그룹을 허용하는지, 비밀번호 URL 인코딩                                                                               |
+| Deploy: `Could not assume role` / `Not authorized to perform sts:AssumeRoleWithWebIdentity` | 신뢰 정책의 `sub`가 immutable 형식(`repo:POcodingWER@89626659/backend-visualized@1425018571:ref:refs/heads/main`)인지, `aud`, OIDC 공급자 ARN |
+| Deploy: `InvalidInstanceId`                                                                 | 인스턴스에 `backend-visualized-ec2-ssm` 역할이 붙었는지, SSM Agent 재시작 후 Fleet Manager에 Online인지                                       |
+| Deploy: `AccessDeniedException ... ssm:SendCommand`                                         | 배포 역할 인라인 정책의 인스턴스 ARN·문서 ARN(`arn:aws:ssm:ap-northeast-2::document/AWS-RunShellScript`)                                      |
