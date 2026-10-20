@@ -84,14 +84,11 @@
   align-items: start;
   max-width: var(--column);
 }
-.photoPlaceholder {
-  aspect-ratio: 1;
-  border: 1.5px dashed var(--line-strong);
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  color: var(--ink-soft);
-  font-size: var(--text-sm);
+.photo {
+  width: 100%;
+  height: auto;
+  border: 2px solid var(--ink);
+  border-radius: var(--hand-radius-soft);
 }
 .authorText {
   display: grid;
@@ -104,23 +101,24 @@
 .authorLinks {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: var(--space-4);
 }
-/* 아직 채우지 않은 자리: 눈에 덜 띄게 점선 칸으로 */
-.todo {
-  display: inline-block;
-  min-width: 4.5rem;
-  padding: 0 var(--space-2);
-  border: 1px dashed var(--line-strong);
-  border-radius: 4px;
-  color: var(--ink-soft);
-  font-size: var(--text-sm);
-  font-weight: 500;
+.authorIntro {
+  font-size: 1.08rem;
+  font-weight: 650;
 }
-
+.authorMore {
+  margin: 0;
+  padding-left: 1.2rem;
+  display: grid;
+  gap: var(--space-1);
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+}
 .decisions {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-8);
 }
 .decisions article {
@@ -129,6 +127,14 @@
 }
 .decisions h3 {
   font-size: 1.1rem;
+  margin-bottom: var(--space-3);
+}
+.decisionChapter {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  margin-bottom: var(--space-1);
+}
+.decisionSummary {
   margin-bottom: var(--space-3);
 }
 .decisions dl {
@@ -142,7 +148,13 @@
 }
 .decisions dd {
   margin: 0;
-  font-size: 0.97rem;
+  font-size: 0.95rem;
+}
+.decisions dd ul {
+  margin: var(--space-1) 0 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: var(--space-2);
 }
 
 .stack {
@@ -208,7 +220,10 @@
     transform: rotate(90deg);
   }
   .author {
-    grid-template-columns: 5rem minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
     gap: var(--space-4);
+  }
+  .photo {
+    width: 6.5rem;
   }
 }

@@ -77,7 +77,8 @@ curl localhost:4000/health            # {"status":"ok"...} 이면 DB 연결 OK
 ```
 apps/web/
   app/
-    page.tsx                  첫 화면 (장 목록, 만든 사람)
+    page.tsx                  첫 화면 (장 목록, 여섯 장의 선택, 만든 사람)
+    landing-content.ts        첫 화면 글: 만든 사람(AUTHOR), 장별 선택·포기·배운 것(DECISIONS). 고치면 docs/decisions.md도 같이
     layout.tsx                공통 머리말(SiteHeader)·글꼴·공유 미리보기(OG) 문구
     icon.svg                  파비콘 (손그림 버튼). Next 파일 규칙이라 따로 연결하지 않는다
     opengraph-image.png       링크 공유 미리보기 그림 1200×630 (첫 화면 그림으로 만든 정적 PNG, .alt.txt가 대체 글)
@@ -96,6 +97,7 @@ apps/web/
     useReplay.ts              실측 타임라인을 2.5~6초로 다시 재생하는 훅
     single-flight.ts          진행 중인 Promise 공유 (2장 토큰 갱신)
   public/data/*.json          "지난 실측 기록" — 첫 화면을 빈 상태 없이 보여주는 값
+  public/author.jpg           만든 사람 사진 (354×472, 촬영 정보 제거)
 
 apps/api/src/                 폴더 = URL 첫 단어 = 모듈 (자세히: architecture.md)
   coupons/ auth/ events/ points/ payments/ cache-demo/ health/
@@ -217,5 +219,4 @@ docs/                         이 문서, architecture, deploy, auth-tokens, cha
 - **시뮬레이션은 공용 데이터**: 1·4장 버튼은 `sim-*` 쿠폰·지갑을 매번 리셋합니다. 여러 사람이 동시에 보면 서로의 결과를 덮어씁니다(그래서 한 번에 하나 + 쿨다운).
 - **single-flight 코드가 두 벌**: `apps/api/src/common/utils/single-flight.ts`와 `apps/web/lib/single-flight.ts`(같은 내용, 각자 테스트). 공유 패키지로 뺄 만큼 크지 않아 그대로 둡니다.
 - **"지난 실측 기록"**(`public/data/*.json`, 각 Demo의 `RECORDED_*`)은 손으로 갱신합니다. 측정 환경은 맥북 M1 Pro 로컬.
-- 첫 화면의 만든 사람 정보는 `TODO(author)` 자리표시(사진·이름·이력서)로 남아 있습니다.
 - 웹 `next dev`가 "workspace root" 경고를 띄울 수 있습니다(상위 폴더에 다른 lockfile이 있을 때). 동작에는 영향 없음.

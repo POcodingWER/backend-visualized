@@ -31,6 +31,7 @@ pnpm dev                                         # web :3000 · api :4000
 
 ## 문서
 
+- [docs/decisions.md](docs/decisions.md) — 장마다 고른 방법 · 포기한 방법 · 배운 것 (실측 숫자 근거)
 - [docs/handover.md](docs/handover.md) — 인수인계: 로컬 실행, 어디에 무엇이 있나, 장별 흐름, 새 장 추가, CI·배포, 한계
 - [docs/architecture.md](docs/architecture.md) — 폴더·이름 규칙, Nest 개념 ↔ 프론트 비유, 원자 단위 설계
 - [docs/deploy.md](docs/deploy.md) — Vercel + EC2 Docker + RDS/MySQL 배포
