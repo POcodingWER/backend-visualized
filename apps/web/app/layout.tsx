@@ -36,13 +36,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <link rel="stylesheet" href="/fonts/pretendard/pretendardvariable-dynamic-subset.css" />
       </head>
       <body>
-        {/* 손그림 느낌: 정적인 일러스트에만 filter="url(#hand-wobble)" (움직이는 요소엔 쓰지 않음) */}
-        <svg width="0" height="0" aria-hidden="true" style={{ position: 'absolute' }}>
-          <filter id="hand-wobble">
-            <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="7" />
-            <feDisplacementMap in="SourceGraphic" scale="2.6" />
-          </filter>
-        </svg>
         <a className="visually-hidden" href="#main">
           본문으로 건너뛰기
         </a>

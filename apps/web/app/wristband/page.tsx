@@ -113,7 +113,7 @@ const PANELS = [
         <text x="120" y="44" textAnchor="middle" fontSize="20" fontWeight="800" fill="#a3321f">
           =
         </text>
-        <path d="M60 130 l120 0" stroke="#a3321f" strokeWidth="3" strokeLinecap="round" />
+        <path d="M60 130 q60 -3 120 1" stroke="#a3321f" strokeWidth="3" strokeLinecap="round" />
         <text x="120" y="158" textAnchor="middle" fontSize="14" fontWeight="700" fill="#a3321f">
           둘 다 무효
         </text>

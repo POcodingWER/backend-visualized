@@ -192,7 +192,7 @@ function TruckStage() {
   );
 }
 
-/** 상자 하나에 트럭 하나: 10×10. 도착한 트럭은 채워진다. 움직이는 그림이라 필터 없음 */
+/** 상자 하나에 트럭 하나: 10×10. 도착한 트럭은 채워진다 */
 const TruckGrid = memo(function TruckGrid({ total, arrived }: { total: number; arrived: number }) {
   return (
     <svg
@@ -245,7 +245,7 @@ function BigTruck({ arrived }: { arrived: boolean }) {
       role="img"
       aria-label={arrived ? '상자 100개를 실은 트럭 한 대 도착' : '트럭 한 대가 기다리는 중'}
     >
-      <g filter="url(#hand-wobble)">
+      <g>
         <rect
           x="20"
           y="14"
