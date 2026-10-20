@@ -1,6 +1,5 @@
 import {
   Body,
-  ConflictException,
   Controller,
   Get,
   HttpCode,
@@ -18,13 +17,10 @@ import { STRATEGIES, type SimulationResult } from './lib/coupon-strategies';
 import { CouponsService } from './coupons.service';
 import { IssueDto, ResetDto, SimulateDto, StateQueryDto } from './dto/coupons.dto';
 
-/** Stage 3: 선착순 쿠폰 동시성 데모 (공개 데모: IP별 한도 + 시뮬레이션 단일 실행 + 전역 쿨다운) */
+/** 1장 티켓팅: 선착순 쿠폰 동시성 데모 (공개 데모: IP별 한도 + 시뮬레이션 단일 실행 + 전역 쿨다운) */
 @Controller('coupons')
 @UseGuards(ThrottlerGuard)
 export class CouponsController {
-  /** 시뮬레이션은 DB 커넥션을 많이 쓰므로 동시에 하나만 */
-  private running = false;
-
   constructor(
     private readonly coupons: CouponsService,
     private readonly usageLimits: UsageLimitsService,
@@ -62,30 +58,21 @@ export class CouponsController {
   @Post('simulate')
   @HttpCode(200)
   @Throttle({ default: { limit: 6, ttl: 10_000 } })
-  async simulate(
+  simulate(
     @Body() dto: SimulateDto,
     @Res({ passthrough: true }) response: Response,
   ): Promise<{ results: SimulationResult[] }> {
-    if (this.running) throw new ConflictException('다른 시뮬레이션이 실행 중입니다');
-    // 전역 쿨다운: 시뮬레이션은 DB 커넥션을 많이 쓰므로 끝난 뒤에도 잠깐 쉬게 한다
-    this.usageLimits.enforce(
-      this.usageLimits.couponSimulationCooldown.tryStart(),
+    const strategiesToRun = dto.strategy ? [dto.strategy] : [...STRATEGIES];
+    return this.usageLimits.runSimulation(
+      this.usageLimits.couponSimulation,
       response,
-      'simulation_cooldown',
-      '방금 시뮬레이션이 끝났습니다. 잠시 후 다시 실행하세요',
+      async () => ({
+        results: await this.coupons.simulate(
+          strategiesToRun,
+          dto.users ?? 500,
+          dto.quantity ?? 100,
+        ),
+      }),
     );
-    this.running = true;
-    try {
-      const strategiesToRun = dto.strategy ? [dto.strategy] : [...STRATEGIES];
-      const results = await this.coupons.simulate(
-        strategiesToRun,
-        dto.users ?? 500,
-        dto.quantity ?? 100,
-      );
-      return { results };
-    } finally {
-      this.running = false;
-      this.usageLimits.couponSimulationCooldown.restartFromNow();
-    }
   }
 }

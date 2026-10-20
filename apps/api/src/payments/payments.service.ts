@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Prisma } from '@prisma/client';
+import { sleep } from '../common/utils/time';
 import { PrismaService } from '../prisma/prisma.service';
 
 /** 가짜 결제사(PG) 승인에 걸리는 시간. 이 사이에 두 번째 클릭·재시도가 들어온다 */
@@ -28,8 +29,6 @@ export type PaymentOutcome =
   | { kind: 'key_reused_for_different_request' }
   /** 첫 요청이 아직 끝나지 않음 (오래 걸리거나 중간에 죽음) */
   | { kind: 'still_processing' };
-
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 @Injectable()
 export class PaymentsService {

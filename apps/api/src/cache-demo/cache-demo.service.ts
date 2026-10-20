@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { createSingleFlight } from '../common/utils/single-flight';
+import { sleep, startStopwatch } from '../common/utils/time';
 import { PrismaService } from '../prisma/prisma.service';
 import { RedisService } from '../redis/redis.service';
 
@@ -54,8 +55,6 @@ export const emptyStats = (): CacheStats => ({
   dbReads: 0,
   commands: { GET: 0, 'SET EX': 0, 'SET NX': 0, DEL: 0 },
 });
-
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
  * 6장 맛집 대기표: 진짜 Redis(cache-aside, TTL 5초)와 MySQL.
@@ -187,8 +186,7 @@ export class CacheDemoService {
   async stampede(protection: StampedeProtection, visitors: number, instances: number) {
     await this.redis.del(this.cacheKey, this.lockKey); // 만료된 순간
     const stats = emptyStats();
-    const startedAt = performance.now();
-    const clock = () => Math.round((performance.now() - startedAt) * 10) / 10;
+    const clock = startStopwatch();
 
     const leaderFlags = Array.from({ length: instances }, () => ({ startedNow: false }));
     const flights = leaderFlags.map((flag) =>
@@ -222,6 +220,14 @@ export class CacheDemoService {
       }),
     );
     return { protection, visitors, instances, durationMs: clock(), ...stats, traces };
+  }
+
+  /** 여러 대책을 같은 조건으로 차례로 (동시에 돌리면 서로의 Redis·DB 부하가 섞인다) */
+  async compareStampedes(protections: StampedeProtection[], visitors: number, instances: number) {
+    const results = [];
+    for (const protection of protections)
+      results.push(await this.stampede(protection, visitors, instances));
+    return results;
   }
 
   /** 큰 버튼: 손님 visitors명이 매번 DB로 vs 캐시로 (캐시는 첫 손님 한 명이 채운 뒤) */

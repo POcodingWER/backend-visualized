@@ -1,5 +1,5 @@
 /**
- * Stage 3 coupon benchmark: 500명 vs 쿠폰 100장, 전략별 초과 발급/시간/재시도
+ * 1장 티켓팅(쿠폰) 벤치마크 (docs/benchmarks/stage3-coupon.md): 500명 vs 쿠폰 100장, 전략별 초과 발급/시간/재시도
  *
  *   pnpm --filter @bv/api bench:coupon                 # MODE=inproc (서버 프로세스 없이 Prisma 직접, 동시 Promise)
  *   MODE=http API_URL=http://localhost:4100 pnpm --filter @bv/api bench:coupon

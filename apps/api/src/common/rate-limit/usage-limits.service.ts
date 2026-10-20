@@ -1,7 +1,13 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { ConflictException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import type { Response } from 'express';
 import { appEnvironment } from '../config/app-environment';
-import { ConcurrencyLimit, Cooldown, type LimitDecision, SlidingWindowLimit } from './usage-limits';
+import {
+  ConcurrencyLimit,
+  Cooldown,
+  type LimitDecision,
+  SimulationGate,
+  SlidingWindowLimit,
+} from './usage-limits';
 
 const MINUTE_MS = 60_000;
 
@@ -19,10 +25,27 @@ export class UsageLimitsService {
   );
   readonly streamConnections = new ConcurrencyLimit(this.limits.maxStreamConnections);
   readonly aggregationDemoCooldown = new Cooldown(this.limits.aggregationCooldownMs);
-  readonly couponSimulationCooldown = new Cooldown(this.limits.couponSimulationCooldownMs);
-  // 4장·6장 시뮬레이션도 DB 커넥션을 많이 써서 같은 쿨다운 값을 쓴다 (장마다 따로 센다)
-  readonly pointSimulationCooldown = new Cooldown(this.limits.couponSimulationCooldownMs);
-  readonly cacheStampedeCooldown = new Cooldown(this.limits.couponSimulationCooldownMs);
+  // 1장·4장·6장 시뮬레이션: 장마다 따로 "동시에 하나 + 쿨다운"
+  readonly couponSimulation = new SimulationGate(this.limits.simulationCooldownMs);
+  readonly pointSimulation = new SimulationGate(this.limits.simulationCooldownMs);
+  readonly cacheExperiment = new SimulationGate(this.limits.simulationCooldownMs);
+
+  /** gate가 비어 있으면 work를 실행. 실행 중이면 409, 쿨다운 중이면 429 */
+  async runSimulation<T>(gate: SimulationGate, response: Response, work: () => Promise<T>) {
+    const decision = gate.tryStart();
+    if (decision === 'running') throw new ConflictException('다른 시뮬레이션이 실행 중입니다');
+    this.enforce(
+      decision,
+      response,
+      'simulation_cooldown',
+      '방금 시뮬레이션이 끝났습니다. 잠시 후 다시 실행하세요',
+    );
+    try {
+      return await work();
+    } finally {
+      gate.finish();
+    }
+  }
 
   /** 거절이면 Retry-After 헤더를 달고 429를 던진다 */
   enforce(decision: LimitDecision, response: Response, reason: string, message: string) {

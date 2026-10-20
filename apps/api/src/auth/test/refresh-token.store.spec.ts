@@ -6,7 +6,6 @@ import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { after, before, describe, test } from 'node:test';
 import { PrismaClient } from '@prisma/client';
-import { readCookie } from '../auth.controller';
 import { RefreshTokenStore } from '../lib/refresh-token.store';
 
 if (!process.env.DATABASE_URL) {
@@ -16,11 +15,6 @@ if (!process.env.DATABASE_URL) {
     // .env 없음 → skip
   }
 }
-
-test('readCookie: picks the named cookie and decodes it', () => {
-  assert.equal(readCookie('a=1; bv_refresh_token=abc%2Bdef; b=2', 'bv_refresh_token'), 'abc+def');
-  assert.equal(readCookie(undefined, 'bv_refresh_token'), undefined);
-});
 
 describe('RefreshTokenStore rotation (MySQL)', () => {
   const prisma = new PrismaClient();

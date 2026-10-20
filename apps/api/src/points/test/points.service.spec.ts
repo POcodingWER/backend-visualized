@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { after, before, describe, test } from 'node:test';
 import { PrismaService } from '../../prisma/prisma.service';
-import { OPENING_BALANCE, PointsService } from '../points.service';
+import { amountForRequest, OPENING_BALANCE, PointsService } from '../points.service';
 
 if (!process.env.DATABASE_URL) {
   try {
@@ -11,6 +11,13 @@ if (!process.env.DATABASE_URL) {
     // .env 없음 → skip
   }
 }
+
+test('amountForRequest: 3 earns then 1 spend, repeating', () => {
+  assert.deepEqual(
+    Array.from({ length: 8 }, (_, index) => amountForRequest(index)),
+    [100, 100, 100, -100, 100, 100, 100, -100],
+  );
+});
 
 describe('point ledger under concurrency (MySQL)', () => {
   const prisma = new PrismaService();

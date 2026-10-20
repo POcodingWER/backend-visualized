@@ -1,9 +1,16 @@
 import { Injectable } from '@nestjs/common';
+import { startStopwatch } from '../common/utils/time';
 import { PrismaService } from '../prisma/prisma.service';
 
 /** overwrite: 잔액을 읽고 → 계산해서 → 덮어쓰기 / ledger: 잠금 + 내역 추가 + 잔액 증가를 한 트랜잭션으로 */
 export const POINT_MODES = ['overwrite', 'ledger'] as const;
 export type PointMode = (typeof POINT_MODES)[number];
+
+/** 방식마다 지갑 하나 (데모용 고정 이름) */
+export const WALLET_BY_MODE: Record<PointMode, string> = {
+  overwrite: 'sim-overwrite',
+  ledger: 'sim-ledger',
+};
 
 export const OPENING_BALANCE = 5_000;
 export const POINTS_PER_REQUEST = 100;
@@ -115,8 +122,7 @@ export class PointsService {
 
   async simulate(mode: PointMode, walletName: string, requests: number) {
     await this.reset(walletName);
-    const startedAt = performance.now();
-    const clock = () => Math.round((performance.now() - startedAt) * 10) / 10;
+    const clock = startStopwatch();
     const apply = mode === 'overwrite' ? this.applyByOverwrite : this.applyByLedger;
     const traces = await Promise.all(
       Array.from({ length: requests }, async (_, index): Promise<PointRequestTrace> => {
@@ -157,6 +163,29 @@ export class PointsService {
       result.overdraft = { attemptedAmount, rejected: !step.applied };
     }
     return result;
+  }
+
+  /** 같은 요청 수로 두 방식을 차례로 (동시에 돌리면 서로의 DB 부하가 섞인다) */
+  async simulateBothModes(requests: number) {
+    const results: PointSimulationResult[] = [];
+    for (const mode of POINT_MODES)
+      results.push(await this.simulate(mode, WALLET_BY_MODE[mode], requests));
+    return results;
+  }
+
+  /** 개발자용 화면: 지갑 잔액 칸, 내역 합계, 최근 내역 행 (아직 실행 전이면 reconciliation은 null) */
+  async entriesFor(mode: PointMode, limit: number) {
+    const walletName = WALLET_BY_MODE[mode];
+    const [reconciliation, entries] = await Promise.all([
+      this.reconcile(walletName).catch(() => null),
+      this.recentEntries(walletName, limit),
+    ]);
+    // id는 BigInt라 JSON으로 못 보낸다 → 문자열
+    return {
+      walletName,
+      reconciliation,
+      entries: entries.map((entry) => ({ ...entry, id: entry.id.toString() })),
+    };
   }
 
   recentEntries(walletName: string, take: number) {

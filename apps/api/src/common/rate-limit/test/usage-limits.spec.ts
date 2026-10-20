@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { ConcurrencyLimit, Cooldown, SlidingWindowLimit } from '../usage-limits';
+import { ConcurrencyLimit, Cooldown, SimulationGate, SlidingWindowLimit } from '../usage-limits';
 
 test('SlidingWindowLimit: allows up to the limit, then frees capacity as the window slides', () => {
   let now = 10_000;
@@ -45,4 +45,17 @@ test('ConcurrencyLimit: caps active connections and release is idempotent', () =
   first();
   assert.equal(connections.activeCount, 1);
   assert.ok(connections.tryAcquire());
+});
+
+test('SimulationGate: one run at a time, cooldown counts from the end', () => {
+  let now = 0;
+  const gate = new SimulationGate(3_000, () => now);
+  assert.equal((gate.tryStart() as { allowed: boolean }).allowed, true);
+  assert.equal(gate.tryStart(), 'running');
+  now = 10_000;
+  gate.finish(); // 10초 걸려 끝남 → 13초까지 쿨다운
+  now = 12_000;
+  assert.deepEqual(gate.tryStart(), { allowed: false, retryAfterMs: 1_000 });
+  now = 13_000;
+  assert.equal((gate.tryStart() as { allowed: boolean }).allowed, true);
 });

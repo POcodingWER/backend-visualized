@@ -1,4 +1,5 @@
 import type { PrismaClient } from '@prisma/client';
+import { roundToTenth as round, sleep } from '../../common/utils/time';
 
 export const STRATEGIES = ['none', 'pessimistic', 'optimistic', 'atomic'] as const;
 export type Strategy = (typeof STRATEGIES)[number];
@@ -68,8 +69,6 @@ export interface SimulationResult {
 
 const OPTIMISTIC_MAX_RETRIES = 30;
 const SNAPSHOT_EVERY_MS = 25;
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-const round = (value: number) => Math.round(value * 10) / 10;
 
 /**
  * 선착순 쿠폰 발급 전략 4종. NestJS 의존성 없이 PrismaClient만 받아 테스트/벤치에서도 재사용.
