@@ -13,6 +13,10 @@ import { DEPLOY_STEPS } from './steps';
 import { withCode } from '../../lib/inline-code';
 import styles from './deploy.module.css';
 
+// API를 부르지 않는 페이지라 빌드할 때 HTML을 미리 만들어 둔다(SSG).
+// 나중에 cookies() · headers()처럼 요청마다 다른 값을 쓰는 코드가 들어와도 요청 시 렌더링으로 바뀌지 않게 고정 (그 값은 빈 값으로 보인다)
+export const dynamic = 'force-static';
+
 export const metadata = {
   title: `${DEPLOY_PAGE.title}: ${DEPLOY_PAGE.subtitle} — 버튼 하나 뒤에서`,
 };

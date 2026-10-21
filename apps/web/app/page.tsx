@@ -9,6 +9,10 @@ import { INK, inkStroke } from './components/atoms/ink';
 import { DevDetails } from './components/molecules/DevDetails';
 import { AUTHOR, DECISIONS } from './landing-content';
 
+// API를 부르지 않는 페이지라 빌드할 때 HTML을 미리 만들어 둔다(SSG).
+// 나중에 cookies() · headers()처럼 요청마다 다른 값을 쓰는 코드가 들어와도 요청 시 렌더링으로 바뀌지 않게 고정 (그 값은 빈 값으로 보인다)
+export const dynamic = 'force-static';
+
 const ink = { ...inkStroke, strokeWidth: 2.2 };
 const docLink = (file: string) => `${GITHUB_URL}/blob/main/docs/benchmarks/${file}`;
 
