@@ -38,3 +38,22 @@ test('production.env 예시의 비밀 키는 값이 가려져 있다', () => {
     assert.match(value!, /^(<[^>]+>|\$\(openssl rand [^)]+\))$/, `${key} 값이 드러남`);
   }
 });
+
+// 서버의 실제 IP는 화면에 싣지 않는다 (명령 블록도 <IP> · <IP-대시>.sslip.io로 가림)
+const REAL_IPS = [/3[.-]35[.-]59[.-]193/, /13[.-]209[.-]4[.-]20/];
+const pageFiles = [
+  ...sources,
+  ...readdirSync(join(folder, '../about'))
+    .filter((file) => /\.(ts|tsx)$/.test(file) && !file.endsWith('.test.ts'))
+    .map((file) => ({
+      file: `about/${file}`,
+      text: readFileSync(join(folder, '../about', file), 'utf8'),
+    })),
+  { file: 'landing-content.ts', text: readFileSync(join(folder, '../landing-content.ts'), 'utf8') },
+];
+
+test('/deploy · /about 에 서버의 실제 IP가 없다', () => {
+  for (const { file, text } of pageFiles) {
+    for (const ip of REAL_IPS) assert.doesNotMatch(text, ip, `${file}: 실제 IP`);
+  }
+});

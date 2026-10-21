@@ -23,7 +23,8 @@ export interface DeployStep {
   reasons?: string[];
 }
 
-export const API_HOST = 'https://3-35-59-193.sslip.io';
+/** 화면에 보이는 API 주소. 실제 IP는 페이지에 싣지 않는다 (no-secrets.test.ts) */
+export const API_HOST = 'https://<IP-대시>.sslip.io';
 
 export const DEPLOY_STEPS: DeployStep[] = [
   {
@@ -86,7 +87,7 @@ EC2 → 인스턴스 시작 (서울)
 mv ~/Downloads/backend-visualized.pem ~/.ssh/
 chmod 400 ~/.ssh/backend-visualized.pem
 # 2) 접속 (처음 받은 공인 IP, 나중에 고정 IP로 바뀜)
-ssh -i ~/.ssh/backend-visualized.pem ubuntu@13.209.4.20
+ssh -i ~/.ssh/backend-visualized.pem ubuntu@<예전 IP>
 # 3) CPU 종류 · OS 버전 · 메모리 · 디스크 확인
 uname -m; lsb_release -ds; free -h; df -h /`,
       },
@@ -197,7 +198,7 @@ ADMIN_API_KEY=$(openssl rand -hex 32)
 # 3) 설정 파일 쓰기 (비밀값 자리는 위 변수. 이 화면에서는 가림)
 cat > deploy/production.env <<ENV
 COMPOSE_PROFILES=local-db
-API_DOMAIN=13-209-4-20.sslip.io
+API_DOMAIN=<예전 IP-대시>.sslip.io
 ACME_EMAIL=<GitHub noreply 메일>
 WEB_ORIGIN=http://localhost:3000
 VERCEL_ORIGIN=
@@ -252,7 +253,7 @@ sudo ss -tlnp | grep -E ':(3306|6379|4000)\\b' || echo "밖에서 안 보임 OK"
     title: 'HTTPS: Caddy + sslip.io',
     reasons: ['caddy'],
     plain:
-      '인증서는 도메인에만 발급돼요. sslip.io는 `13-209-4-20.sslip.io`를 `13.209.4.20`으로 알려주는 무료 주소라, 도메인 없이도 진짜 인증서를 받았어요. Caddy가 발급과 갱신을 알아서 해요.',
+      '인증서는 도메인에만 발급돼요. sslip.io는 `1-2-3-4.sslip.io`를 `1.2.3.4`로 알려주는 무료 주소라, 도메인 없이도 진짜 인증서를 받았어요. Caddy가 발급과 갱신을 알아서 해요.',
     commands: [
       {
         where: '서버 (ubuntu@EC2)',
@@ -264,11 +265,11 @@ sudo ss -tlnp | grep -E ':(3306|6379|4000)\\b' || echo "밖에서 안 보임 OK"
       {
         where: '내 맥',
         code: `# 1) https로 응답하는지
-curl -sS https://13-209-4-20.sslip.io/health
+curl -sS https://<예전 IP-대시>.sslip.io/health
 # 2) http로 오면 https로 보내는지 (308)
-curl -sSI http://13-209-4-20.sslip.io/health | head -3
+curl -sSI http://<예전 IP-대시>.sslip.io/health | head -3
 # 3) 인증서 발급자 · 만료일
-curl -sSv https://13-209-4-20.sslip.io/health 2>&1 \\
+curl -sSv https://<예전 IP-대시>.sslip.io/health 2>&1 \\
   | grep -E 'subject:|issuer:|expire date'`,
       },
     ],
@@ -292,7 +293,7 @@ sudo systemctl reboot`,
         where: '내 맥',
         code: `# 5초마다 health → 언제 다시 살아나는지
 while true; do
-  curl -sS -m 5 https://13-209-4-20.sslip.io/health; echo
+  curl -sS -m 5 https://<예전 IP-대시>.sslip.io/health; echo
   sleep 5
 done`,
       },
@@ -321,13 +322,13 @@ sudo ss -ltnp | grep 3306`,
         where: '내 맥',
         code: `# 1) SSH 터널: 내 맥의 13306 → 서버의 127.0.0.1:3306
 ssh -i ~/.ssh/backend-visualized.pem -N \\
-  -L 13306:127.0.0.1:3306 ubuntu@3.35.59.193
+  -L 13306:127.0.0.1:3306 ubuntu@<IP>
 # 2) Workbench 접속 설정: Standard TCP/IP over SSH
-#   SSH Hostname 3.35.59.193:22 · SSH Username ubuntu
+#   SSH Hostname <IP>:22 · SSH Username ubuntu
 #   SSH Key File ~/.ssh/backend-visualized.pem
 #   MySQL Hostname 127.0.0.1 · Port 3306 · Username app · 비밀번호는 키체인에만
 # 3) 인터넷에서 직접은 막혀 있어야 정상 (Operation timed out)
-nc -vz -G 5 3.35.59.193 3306`,
+nc -vz -G 5 <IP> 3306`,
       },
     ],
   },
@@ -341,12 +342,12 @@ nc -vz -G 5 3.35.59.193 3306`,
         where: '브라우저 (AWS 콘솔)',
         code: `# 고정 IP를 받아 서버에 붙이기 (예전 IP는 반납)
 EC2 → 탄력적 IP → 할당 → 연결 → backend-visualized
-  13.209.4.20 (반납) → 3.35.59.193`,
+  <예전 IP> (반납) → <IP>`,
       },
       {
         where: '서버 (ubuntu@EC2)',
         code: `# 1) API 주소를 새 IP의 sslip.io 이름으로
-sed -i 's/^API_DOMAIN=.*/API_DOMAIN=3-35-59-193.sslip.io/' deploy/production.env
+sed -i 's/^API_DOMAIN=.*/API_DOMAIN=<IP-대시>.sslip.io/' deploy/production.env
 # 2) 다시 띄우기 → Caddy가 새 주소로 인증서를 다시 받음
 ./deploy/compose.sh up -d`,
       },
