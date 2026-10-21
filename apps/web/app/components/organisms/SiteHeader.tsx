@@ -29,7 +29,9 @@ export default function SiteHeader() {
         >
           {DEPLOY_PAGE.title}
         </Link>
-        <Link href="/#author">About me</Link>
+        <Link href="/about" aria-current={pathname.startsWith('/about') ? 'page' : undefined}>
+          About me
+        </Link>
       </nav>
     </header>
   );

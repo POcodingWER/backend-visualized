@@ -1,0 +1,213 @@
+/* About me 페이지 (/about). 색·간격은 globals.css 토큰만 쓴다 */
+
+.intro {
+  display: grid;
+  grid-template-columns: 11rem minmax(0, 1fr);
+  gap: var(--space-8);
+  align-items: center;
+}
+.photo {
+  width: 100%;
+  height: auto;
+  border: 2px solid var(--ink);
+  border-radius: var(--hand-radius-soft);
+}
+.introText {
+  display: grid;
+  gap: var(--space-3);
+}
+.lead {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  max-width: var(--column);
+}
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.why {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-6);
+  border-left: 4px solid var(--apricot);
+  background: var(--paper-raised);
+  font-size: 1.08rem;
+}
+
+/* 기술 스택: 묶음 이름 + 칩 */
+.stack {
+  margin: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+.stack div {
+  display: grid;
+  grid-template-columns: 12rem minmax(0, 1fr);
+  gap: var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px dashed var(--line);
+}
+.stack dt {
+  font-weight: 700;
+}
+.stack dd {
+  margin: 0;
+}
+.stack ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.stack li {
+  padding: 0.05rem 0.6rem;
+  border: 1.5px solid var(--ink);
+  border-radius: 999px;
+  background: var(--paper-raised);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+/* 이 프로젝트에서 한 것: 장 카드 */
+.chapters {
+  margin: 0 0 var(--space-6);
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+.chapters a,
+.extra {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  height: 100%;
+  padding: var(--space-4) var(--space-6);
+  border: 2px solid var(--ink);
+  border-radius: var(--hand-radius-soft);
+  background: var(--paper-raised);
+  text-decoration: none;
+}
+.chapters a span:last-child,
+.extra span:last-child {
+  color: var(--ink-soft);
+  font-size: var(--text-sm);
+}
+.extra {
+  border-style: dashed;
+  background: var(--paper-deep);
+}
+.chapterNumber {
+  font-size: var(--text-sm);
+  font-weight: 750;
+  color: var(--apricot-ink);
+}
+.subTitle {
+  margin: var(--space-8) 0 var(--space-3);
+  font-size: var(--text-lg);
+}
+.list {
+  margin: 0;
+  padding-left: 1.2rem;
+  display: grid;
+  gap: var(--space-2);
+}
+.chapterLink {
+  white-space: nowrap;
+  margin-right: var(--space-3);
+  font-weight: 650;
+}
+
+/* 경력: 세로 줄에 매단 시간표 */
+.timeline {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--space-8);
+  max-width: var(--column);
+}
+.timeline > li {
+  display: grid;
+  gap: var(--space-2);
+  padding-left: var(--space-6);
+  border-left: 3px solid var(--ink);
+}
+.timeline h3 {
+  font-size: var(--text-lg);
+}
+.timeline h3 small {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--ink-soft);
+  letter-spacing: 0;
+}
+.period {
+  font-size: var(--text-sm);
+  font-weight: 750;
+  color: var(--apricot-ink);
+  font-variant-numeric: tabular-nums;
+}
+.highlights {
+  margin-top: var(--space-12);
+}
+
+/* 글 · 활동 */
+.writing {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-8);
+}
+.writing h3 {
+  font-size: 1.05rem;
+  margin-bottom: var(--space-3);
+}
+
+/* 연락처 */
+.contact {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+.contact a {
+  display: inline-block;
+  padding: var(--space-2) var(--space-4);
+  border: 2px solid var(--ink);
+  border-radius: var(--hand-radius-soft);
+  background: var(--paper-raised);
+  font-weight: 650;
+  text-decoration: none;
+}
+
+@media (max-width: 860px) {
+  .chapters,
+  .writing {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 640px) {
+  .intro {
+    grid-template-columns: 7rem minmax(0, 1fr);
+    gap: var(--space-4);
+    align-items: start;
+  }
+  .stack div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-2);
+  }
+  .why {
+    padding: var(--space-4);
+  }
+  .timeline > li {
+    padding-left: var(--space-4);
+  }
+}

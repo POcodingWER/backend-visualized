@@ -84,12 +84,19 @@
   background: var(--paper-deep);
 }
 
-.author {
+/* 첫 화면의 짧은 소개 카드 → /about */
+.authorCard {
   display: grid;
-  grid-template-columns: 8rem minmax(0, 1fr);
-  gap: var(--space-8);
-  align-items: start;
+  grid-template-columns: 5rem minmax(0, 1fr);
+  gap: var(--space-6);
+  align-items: center;
   max-width: var(--column);
+  padding: var(--space-4) var(--space-6);
+  border: 2px solid var(--ink);
+  border-radius: var(--hand-radius-soft);
+  background: var(--paper-raised);
+  color: inherit;
+  text-decoration: none;
 }
 .photo {
   width: 100%;
@@ -99,48 +106,19 @@
 }
 .authorText {
   display: grid;
-  gap: var(--space-3);
+  gap: var(--space-1);
+}
+.authorText small {
+  color: var(--ink-soft);
 }
 .authorName {
   font-size: var(--text-lg);
   font-weight: 750;
 }
-.authorLinks {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-4);
-}
-.authorIntro {
-  font-size: 1.08rem;
-  font-weight: 650;
-}
-.authorHighlights {
-  margin-top: var(--space-8);
-}
-.authorColumns {
-  margin-top: var(--space-12);
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-8);
-}
-.authorColumns h3 {
-  margin: 0 0 var(--space-3);
-  font-size: var(--text-lg);
-}
-.authorColumns * + h3 {
-  margin-top: var(--space-6);
-}
-.authorList {
-  margin: 0;
-  padding-left: 1.2rem;
-  display: grid;
-  gap: var(--space-3);
-}
-.chapterLink {
-  white-space: nowrap;
-  margin-right: var(--space-3);
-  font-weight: 650;
+.authorMore {
+  margin-top: var(--space-2);
+  font-weight: 700;
+  text-decoration: underline;
 }
 .decisions {
   display: grid;
@@ -245,14 +223,10 @@
   .arrow {
     transform: rotate(90deg);
   }
-  .author {
-    grid-template-columns: minmax(0, 1fr);
+  .authorCard {
+    grid-template-columns: 4rem minmax(0, 1fr);
     gap: var(--space-4);
-  }
-  .authorColumns {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .photo {
-    width: 6.5rem;
+    padding: var(--space-4);
+    align-items: start;
   }
 }

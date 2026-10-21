@@ -403,15 +403,33 @@ Deploy (deploy.yml)
 
 롤백해도 마이그레이션은 되돌려지지 않으므로(Prisma는 앞으로만), 이 순서를 지키면 예전 이미지로 롤백해도 안전합니다.
 
-### GHCR 패키지 공개 (1회)
+### 걸리는 시간 (2026-10-21 실측, GitHub Actions Deploy 기록)
+
+Actions 목록에 보이는 시간은 **워크플로 전체**(대상 커밋 확인 + 이미지 굽기 + 서버 배포)입니다.
+
+| 경우                                        | 워크플로 전체    | 이미지 굽기 job | 서버 배포 job |
+| ------------------------------------------- | ---------------- | --------------- | ------------- |
+| 예전: 서버에서 직접 빌드 (#4, job 하나)     | 2분 18초 (138초) | —               | 135초         |
+| API 코드 변경 없음, 이미지 캐시 (#7·#9·#10) | 약 1분 12~13초   | 18~22초         | 37~39초       |
+| API 코드 변경, 이미지 새로 굽기 (#8)        | 2분 23초 (143초) | 75초            | 51초          |
+
+API 코드가 바뀌면 전체 시간은 예전과 비슷합니다. 달라진 점은 그동안 2GB 서버가 빌드하지 않고 서비스를 계속하고,
+서버가 하는 일이 135초 → 37~51초로 줄었고, 바꿔 끼우는 동안 실패한 요청이 0번이라는 것입니다.
+
+### GHCR 패키지 공개 여부
 
 서버는 로그인 없이(익명으로) 이미지를 받습니다 → 서버에 GitHub 토큰을 둘 필요가 없습니다. 대신 패키지가 **Public**이어야 합니다.
-워크플로가 처음 push한 패키지는 기본이 private이라, 저장소 관리자(POcodingWER)가 한 번 바꿔야 합니다:
+이 저장소는 public이고 이미지에 `org.opencontainers.image.source` 라벨로 저장소가 연결돼 있어서, 패키지도 저장소를 따라
+**처음부터 Public**이었습니다 (따로 바꾼 적 없음). 익명 pull 확인:
 
-1. https://github.com/users/POcodingWER/packages/container/backend-visualized-api/settings
-2. 맨 아래 **Danger Zone → Change visibility → Public** → 패키지 이름 입력 후 확인
+```bash
+curl -s "https://ghcr.io/token?scope=repository:pocodingwer/backend-visualized-api:pull"   # {"token":…} 이면 Public
+```
 
-아직 private이면 image job에 경고가 뜨고, 서버는 비상용으로 **직접 빌드**합니다 (`FALLBACK_LOCAL_BUILD`, 느림).
+나중에 저장소를 private으로 바꾸거나 패키지가 private이 되면, image job에 경고가 뜨고 서버는 비상용으로
+**직접 빌드**합니다 (`FALLBACK_LOCAL_BUILD`, 느림). 그때는
+https://github.com/users/POcodingWER/packages/container/backend-visualized-api/settings →
+**Danger Zone → Change visibility → Public** 으로 되돌립니다.
 
 ### 왜 SSH가 아니라 SSM?
 
@@ -567,7 +585,7 @@ S3에서 받을 때: `aws s3 cp s3://<버킷>/mysql/<파일> backups/` (이 경�
 | Deploy: `Could not assume role` / `Not authorized to perform sts:AssumeRoleWithWebIdentity` | 신뢰 정책의 `sub`가 immutable 형식(`repo:POcodingWER@89626659/backend-visualized@1425018571:ref:refs/heads/main`)인지, `aud`, OIDC 공급자 ARN |
 | Deploy: `InvalidInstanceId`                                                                 | 인스턴스에 `backend-visualized-ec2-ssm` 역할이 붙었는지, SSM Agent 재시작 후 Fleet Manager에 Online인지                                       |
 | Deploy: `AccessDeniedException ... ssm:SendCommand`                                         | 배포 역할 인라인 정책의 인스턴스 ARN·문서 ARN(`arn:aws:ssm:ap-northeast-2::document/AWS-RunShellScript`)                                      |
-| Deploy: `FALLBACK_LOCAL_BUILD` 경고, 배포가 느림                                            | GHCR 패키지가 private → 7-1장 「GHCR 패키지 공개」                                                                                            |
+| Deploy: `FALLBACK_LOCAL_BUILD` 경고, 배포가 느림                                            | GHCR 패키지가 private → 7-1장 「GHCR 패키지 공개 여부」                                                                                       |
 | Deploy: `api_<색> 가 건강해지지 않았습니다`                                                 | 출력에 붙은 새 컨테이너 로그 (마이그레이션 오류, `[config]` env 오류). 서비스는 예전 색이 계속 함                                             |
 | 502가 계속 남                                                                               | `cat deploy/caddy/upstream.caddy`의 색이 실제로 떠 있는지 `./deploy/compose.sh ps`. 아니면 `./deploy/deploy.sh current`                       |
 | Deploy: `caddy reload` 가 `localhost:2019 ... connection refused`                           | caddy가 막 다시 만들어져 관리 API가 아직 안 뜬 상태. deploy.sh가 15초까지 다시 시도함. 그래도 실패하면 `./deploy/deploy.sh current`           |
