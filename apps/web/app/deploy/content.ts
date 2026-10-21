@@ -108,6 +108,20 @@ env:
       '예전엔 컨테이너를 그 자리에서 다시 만들어서, 바꿔 끼우는 순간 몇 초 끊겼어요. 이제는 쉬고 있던 쪽(blue/green)에 새 버전을 먼저 띄우고, `/health`가 200이면 문(Caddy)만 돌려요. 실패하면 문을 안 돌려서 예전 쪽이 계속 서비스해요. 배포 3번 동안 0.2초마다 862 · 705 · 565번 찔러서 실패는 0번이었고, 두 쪽이 잠깐 같이 떠도 메모리는 최고 869MiB / 1836MiB였어요. 서버 배포 job은 서버 빌드가 빠지면서 135초에서 37~51초로 줄었어요.',
     cost: '두 버전이 몇십 초 같이 돌아서, DB 구조를 바꿀 때는 "추가 먼저, 삭제는 다음 배포"(expand → contract) 순서를 지켜야 해요.',
   },
+  {
+    id: 'monitoring',
+    question: '서버가 죽거나 오류가 나면 어떻게 아나요?',
+    answer:
+      '세 겹으로 봐요. ① GitHub Actions가 15분마다 `/health`를 찔러 보고, 3번 연속 200이 아니면 실패 메일이 와요. ② 오류(500)는 Sentry로 보내서 어떤 코드에서 났는지 바로 봐요. `SENTRY_DSN`이 없으면 그냥 꺼져 있고 서버는 그대로 떠요. ③ 요청마다 `x-request-id` 번호를 붙여 응답 헤더와 서버 로그에 같이 남겨요. 화면에서 오류가 나면 그 번호 하나로 서버 로그의 그 줄을 찾을 수 있어요.',
+    cost: '15분 간격이라 짧게 죽었다 살아나면 모를 수 있어요. GitHub 예약 실행은 몇 분 늦기도 해요. 지금은 메일 한 통이 전부라, 진짜 서비스라면 UptimeRobot 같은 1분 단위 외부 감시나 메신저 알림을 붙일 거예요.',
+    snippet: `# 응답에 붙는 번호 (들어온 x-request-id가 있으면 그대로 이어 받음)
+curl -si https://<IP-대시>.sslip.io/nope | grep -i request-id
+x-request-id: 2f0c…
+{"statusCode":404,"message":"Cannot GET /nope","requestId":"2f0c…"}
+
+# 그 번호로 서버 로그 찾기 (로그는 한 줄 JSON)
+./deploy/compose.sh logs api_blue | grep 2f0c`,
+  },
 ];
 
 /** 막혀서 고친 것: 왜 → 어떻게 */

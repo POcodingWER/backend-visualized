@@ -24,3 +24,11 @@ test('HTTPS 단계에서 sslip.io · Caddy 카드로 바로 간다', () => {
   const caddy = REASONS.find((reason) => reason.id === 'caddy');
   assert.ok(caddy?.compare?.length, 'Caddy 카드에 비교가 없음');
 });
+
+test('장애 알림 단계에서 monitoring 카드로 바로 간다', () => {
+  const step = DEPLOY_STEPS.find((item) => item.reasons?.includes('monitoring'));
+  assert.ok(step, 'monitoring 카드를 가리키는 단계가 없음');
+  const card = REASONS.find((reason) => reason.id === 'monitoring');
+  assert.match(card?.answer ?? '', /x-request-id/);
+  assert.match(card?.answer ?? '', /SENTRY_DSN/);
+});

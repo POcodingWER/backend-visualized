@@ -289,33 +289,35 @@ AWS 공식 가격표(aws.amazon.com 가격 페이지가 쓰는 공개 가격 데
 
 ## 5. 환경 변수 표 (API, `deploy/production.env`)
 
-| 변수                                                                    |   운영 필수   | 기본값 (개발 / 운영)              | 설명                                                                                              |
-| ----------------------------------------------------------------------- | :-----------: | --------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `DATABASE_URL`                                                          |      ✅       | —                                 | `mysql://user:password@host:3306/backend_visualized`                                              |
-| `REDIS_URL`                                                             |      ✅       | `redis://127.0.0.1:6380/0` / 없음 | 6장 캐시. `redis://` 또는 `rediss://`. compose 안이면 `redis://redis:6379/0`                      |
-| `WEB_ORIGIN`                                                            |      ✅       | `http://localhost:3000` / 없음    | CORS 허용 출처. 경로 없이, 쉼표로 여러 개. 운영은 https, `*` 금지                                 |
-| `VERCEL_ORIGIN`                                                         |       —       | 없음                              | compose가 `WEB_ORIGIN` 뒤에 쉼표로 붙임 (Vercel 주소용 자리)                                      |
-| `COMPOSE_PROFILES`                                                      |       —       | 없음                              | `local-db`면 `--profile local-db` 없이 mysql 컨테이너도 같이 실행                                 |
-| `JWT_ACCESS_SECRET`                                                     |      ✅       | 개발용 공개값 / 없음              | 32자 이상, 저장소에 적힌 기본값 금지. `openssl rand -base64 48`                                   |
-| `API_DOMAIN`                                                            |  ✅ (Caddy)   | —                                 | Caddy가 HTTPS 인증서를 받을 도메인                                                                |
-| `ACME_EMAIL`                                                            |  ✅ (Caddy)   | —                                 | Let's Encrypt 인증서 알림 메일                                                                    |
-| `ADMIN_API_KEY`                                                         |     선택      | 없음                              | `/events/admin/*` 호출 시 `X-Admin-Api-Key` 헤더. 없으면 개발=허용, 운영=비활성. 운영은 24자 이상 |
-| `TRUST_PROXY`                                                           |       —       | `false` / compose에서 `1`         | 프록시 홉 수 또는 IP/CIDR. Caddy 뒤=1, ALB+Caddy=2. `true`는 운영에서 금지(IP 위조)               |
-| `REFRESH_COOKIE_SAME_SITE`                                              |       —       | `lax` / `none`                    | 4장 참고                                                                                          |
-| `REFRESH_COOKIE_SECURE`                                                 |       —       | `false` / `true`                  | `none`이면 반드시 `true`                                                                          |
-| `REFRESH_COOKIE_PARTITIONED`                                            |       —       | SameSite=None이면 `true`          | CHIPS 파티션 쿠키                                                                                 |
-| `AUTH_DEMO_ENDPOINTS`                                                   |       —       | `true` / `false`                  | 토큰 탈취 시뮬레이션 등 데모 전용 API. 공개 데모 사이트라면 `true`로 명시                         |
-| `AUTH_ACCESS_TOKEN_TTL_SECONDS`                                         |       —       | `20`                              | 액세스 토큰 수명 (데모라 짧음)                                                                    |
-| `AUTH_REFRESH_TOKEN_TTL_SECONDS`                                        |       —       | `86400`                           | 리프레시 토큰/쿠키 수명                                                                           |
-| `MAX_BODY_SIZE`                                                         |       —       | `200kb`                           | JSON/text 요청 본문 최대 크기 (초과 시 413)                                                       |
-| `EVENTS_GLOBAL_LIMIT_PER_MINUTE`                                        |       —       | `30000`                           | 서버 전체 분당 저장 이벤트 수 (0=무제한)                                                          |
-| `RATE_LIMIT_DEMO_GLOBAL_LIMIT_PER_MINUTE`                               |       —       | `20000`                           | 레이트 리밋 체험 엔드포인트 전역 분당 한도                                                        |
-| `MAX_STREAM_CONNECTIONS`                                                |       —       | `200`                             | 동시 SSE(`/events/stream`) 연결 수                                                                |
-| `AGGREGATION_DEMO_COOLDOWN_MS`                                          |       —       | `10000`                           | 공개 "지금 집계 실행" 버튼 전역 쿨다운                                                            |
-| `SIMULATION_COOLDOWN_MS`                                                |       —       | `3000`                            | 1·4·6장 시뮬레이션 종료 후 전역 쿨다운 (ms)                                                       |
-| `THROTTLE_TTL_MS` / `THROTTLE_LIMIT`                                    |       —       | `10000` / `200`                   | IP별 기본 한도 (라우트별 `@Throttle`이 우선)                                                      |
-| `RUN_MIGRATIONS`                                                        |       —       | `true`                            | 컨테이너 시작 시 `prisma migrate deploy` 실행 여부                                                |
-| `MYSQL_ROOT_PASSWORD`, `MYSQL_PASSWORD`, `MYSQL_USER`, `MYSQL_DATABASE` | local-db일 때 | —                                 | MySQL 컨테이너 초기화용                                                                           |
+| 변수                                                                    |   운영 필수   | 기본값 (개발 / 운영)              | 설명                                                                                                    |
+| ----------------------------------------------------------------------- | :-----------: | --------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`                                                          |      ✅       | —                                 | `mysql://user:password@host:3306/backend_visualized`                                                    |
+| `REDIS_URL`                                                             |      ✅       | `redis://127.0.0.1:6380/0` / 없음 | 6장 캐시. `redis://` 또는 `rediss://`. compose 안이면 `redis://redis:6379/0`                            |
+| `WEB_ORIGIN`                                                            |      ✅       | `http://localhost:3000` / 없음    | CORS 허용 출처. 경로 없이, 쉼표로 여러 개. 운영은 https, `*` 금지                                       |
+| `VERCEL_ORIGIN`                                                         |       —       | 없음                              | compose가 `WEB_ORIGIN` 뒤에 쉼표로 붙임 (Vercel 주소용 자리)                                            |
+| `COMPOSE_PROFILES`                                                      |       —       | 없음                              | `local-db`면 `--profile local-db` 없이 mysql 컨테이너도 같이 실행                                       |
+| `JWT_ACCESS_SECRET`                                                     |      ✅       | 개발용 공개값 / 없음              | 32자 이상, 저장소에 적힌 기본값 금지. `openssl rand -base64 48`                                         |
+| `API_DOMAIN`                                                            |  ✅ (Caddy)   | —                                 | Caddy가 HTTPS 인증서를 받을 도메인                                                                      |
+| `ACME_EMAIL`                                                            |  ✅ (Caddy)   | —                                 | Let's Encrypt 인증서 알림 메일                                                                          |
+| `ADMIN_API_KEY`                                                         |     선택      | 없음                              | `/events/admin/*` 호출 시 `X-Admin-Api-Key` 헤더. 없으면 개발=허용, 운영=비활성. 운영은 24자 이상       |
+| `TRUST_PROXY`                                                           |       —       | `false` / compose에서 `1`         | 프록시 홉 수 또는 IP/CIDR. Caddy 뒤=1, ALB+Caddy=2. `true`는 운영에서 금지(IP 위조)                     |
+| `REFRESH_COOKIE_SAME_SITE`                                              |       —       | `lax` / `none`                    | 4장 참고                                                                                                |
+| `REFRESH_COOKIE_SECURE`                                                 |       —       | `false` / `true`                  | `none`이면 반드시 `true`                                                                                |
+| `REFRESH_COOKIE_PARTITIONED`                                            |       —       | SameSite=None이면 `true`          | CHIPS 파티션 쿠키                                                                                       |
+| `AUTH_DEMO_ENDPOINTS`                                                   |       —       | `true` / `false`                  | 토큰 탈취 시뮬레이션 등 데모 전용 API. 공개 데모 사이트라면 `true`로 명시                               |
+| `AUTH_ACCESS_TOKEN_TTL_SECONDS`                                         |       —       | `20`                              | 액세스 토큰 수명 (데모라 짧음)                                                                          |
+| `AUTH_REFRESH_TOKEN_TTL_SECONDS`                                        |       —       | `86400`                           | 리프레시 토큰/쿠키 수명                                                                                 |
+| `MAX_BODY_SIZE`                                                         |       —       | `200kb`                           | JSON/text 요청 본문 최대 크기 (초과 시 413)                                                             |
+| `EVENTS_GLOBAL_LIMIT_PER_MINUTE`                                        |       —       | `30000`                           | 서버 전체 분당 저장 이벤트 수 (0=무제한)                                                                |
+| `RATE_LIMIT_DEMO_GLOBAL_LIMIT_PER_MINUTE`                               |       —       | `20000`                           | 레이트 리밋 체험 엔드포인트 전역 분당 한도                                                              |
+| `MAX_STREAM_CONNECTIONS`                                                |       —       | `200`                             | 동시 SSE(`/events/stream`) 연결 수                                                                      |
+| `AGGREGATION_DEMO_COOLDOWN_MS`                                          |       —       | `10000`                           | 공개 "지금 집계 실행" 버튼 전역 쿨다운                                                                  |
+| `SIMULATION_COOLDOWN_MS`                                                |       —       | `3000`                            | 1·4·6장 시뮬레이션 종료 후 전역 쿨다운 (ms)                                                             |
+| `THROTTLE_TTL_MS` / `THROTTLE_LIMIT`                                    |       —       | `10000` / `200`                   | IP별 기본 한도 (라우트별 `@Throttle`이 우선)                                                            |
+| `SENTRY_DSN`                                                            |     선택      | 없음                              | 있으면 5xx 오류를 Sentry로 보냄 (요청 번호 태그 `request_id`). 비우면 꺼짐, 시작 로그에 `sentry=on/off` |
+| `LOG_LEVEL`                                                             |       —       | `info`                            | pino 로그 단계 (`debug`·`warn` 등)                                                                      |
+| `RUN_MIGRATIONS`                                                        |       —       | `true`                            | 컨테이너 시작 시 `prisma migrate deploy` 실행 여부                                                      |
+| `MYSQL_ROOT_PASSWORD`, `MYSQL_PASSWORD`, `MYSQL_USER`, `MYSQL_DATABASE` | local-db일 때 | —                                 | MySQL 컨테이너 초기화용                                                                                 |
 
 웹 (Vercel): `NEXT_PUBLIC_API_URL` (필수, 운영은 https).
 
@@ -571,6 +573,27 @@ S3에서 받을 때: `aws s3 cp s3://<버킷>/mysql/<파일> backups/` (이 경�
    ```
 
    (API 컨테이너에는 이 값이 쓰이지 않으므로 다시 띄울 필요 없음)
+
+---
+
+## 7-3. 장애 알아채기 (로그 · 오류 알림 · 살아 있는지 감시)
+
+| 무엇           | 어디서                               | 하는 일                                                                                                    |
+| -------------- | ------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| 요청 로그      | `src/common/observability/logger.ts` | 운영은 한 줄 JSON(pino). 요청마다 `x-request-id` (들어온 값이 안전하면 이어 받음). `/health`는 로그에서 뺌 |
+| 오류 응답 모양 | `all-exceptions.filter.ts`           | 모든 오류를 `{ statusCode, message, requestId, … }`로. 500은 내부 메시지를 숨기고 로그 + Sentry            |
+| Sentry (선택)  | `sentry.ts`, `SENTRY_DSN`            | DSN이 있을 때만 켬. 오류만 전송(트레이스 0), 태그 `request_id`                                             |
+| 살아 있는지    | `.github/workflows/uptime.yml`       | 15분마다 `/health`, 20초 간격 3번 연속 실패면 job 실패 → GitHub이 메일                                     |
+
+```bash
+# 화면에서 오류가 났을 때: 응답 헤더의 x-request-id로 서버 로그 찾기
+./deploy/compose.sh logs api_blue api_green | grep '<request-id>'
+
+# Sentry 켜기: production.env에 SENTRY_DSN=... 한 줄 → 다시 배포 (Actions → Deploy → Run workflow)
+./deploy/compose.sh logs api_blue | grep 'sentry='   # [config] … sentry=on
+```
+
+한계: 15분 간격이라 짧은 장애는 놓칠 수 있고, GitHub 예약 실행은 몇 분 늦거나 저장소가 60일 조용하면 꺼진다. 알림은 메일뿐 (메신저·1분 단위 외부 감시는 아직 없음).
 
 ---
 

@@ -44,6 +44,8 @@ export interface AppEnvironment {
   /** null이면: 개발에선 관리자 API 허용, 운영에선 관리자 API 비활성화 */
   adminApiKey: string | null;
   limits: UsageLimitSettings;
+  /** Sentry 오류 전송 주소. 비어 있으면 Sentry를 끈다 (선택) */
+  sentryDsn: string | null;
   /** 시작은 하되 로그로 알려줄 것들 */
   warnings: string[];
 }
@@ -203,6 +205,11 @@ export function loadEnvironment(env: NodeJS.ProcessEnv): AppEnvironment {
         : 'ADMIN_API_KEY가 없어 개발 모드에서는 /events/admin/* 를 키 없이 허용합니다',
     );
 
+  // ── 오류 알림 (선택) ──
+  const sentryDsn = read('SENTRY_DSN') ?? null;
+  if (sentryDsn && !/^https:\/\/[^@\s]+@[^/\s]+\/\d+$/.test(sentryDsn))
+    problems.push('SENTRY_DSN은 https://<키>@<호스트>/<프로젝트 번호> 모양이어야 합니다');
+
   const environment: AppEnvironment = {
     isProduction,
     port: integer('PORT', 4000, 1),
@@ -224,6 +231,7 @@ export function loadEnvironment(env: NodeJS.ProcessEnv): AppEnvironment {
       aggregationCooldownMs: integer('AGGREGATION_DEMO_COOLDOWN_MS', 10_000),
       simulationCooldownMs: integer('SIMULATION_COOLDOWN_MS', 3_000),
     },
+    sentryDsn,
     warnings,
   };
   if (problems.length > 0) throw new EnvironmentError(problems);
@@ -248,5 +256,6 @@ export function describeEnvironment(environment: AppEnvironment): string {
     `refreshCookie=SameSite=${cookie.sameSite}${cookie.secure ? '; Secure' : ''}${cookie.partitioned ? '; Partitioned' : ''}`,
     `authDemoEndpoints=${environment.authDemoEndpointsEnabled ? 'on' : 'off'}`,
     `adminApi=${environment.adminApiKey ? 'key required' : environment.isProduction ? 'disabled' : 'open (dev)'}`,
+    `sentry=${environment.sentryDsn ? 'on' : 'off'}`,
   ].join(' · ');
 }
