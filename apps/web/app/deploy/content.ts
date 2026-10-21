@@ -10,6 +10,10 @@ export interface Reason {
   answer: string;
   /** 대신 떠안은 것 */
   cost?: string;
+  /** 단계 칩에 붙는 짧은 이름 (한 단계에 카드가 둘일 때 "왜 GHCR? →"처럼) */
+  label?: string;
+  /** 카드 안의 짧은 코드 (터미널 모양으로) */
+  snippet?: string;
 }
 
 export const REASONS: Reason[] = [
@@ -17,7 +21,7 @@ export const REASONS: Reason[] = [
     id: 'ssm',
     question: '왜 SSH가 아니라 SSM으로 배포하나요?',
     answer:
-      'SSH로 배포하려면 GitHub 쪽 컴퓨터(IP가 매번 바뀜)에 22번 문을 열어 주고, 서버 열쇠(`.pem`)를 GitHub에 맡겨야 해요. SSM은 서버 안의 에이전트가 AWS로 나가는 연결만 써서 문을 하나도 더 안 열어요. 누가 언제 무슨 명령을 보냈는지 AWS에 기록이 남고, 배포 역할은 "이 서버 한 대에 셸 명령 보내기"만 할 수 있어요.',
+      'SSH로 배포하려면 서버의 SSH 포트를 밖에 열어 둬야 해요. GitHub Actions 러너는 IP가 매번 바뀌어서 사실상 넓게 열어야 하고, 서버 개인키도 GitHub에 맡겨야 해요. SSM은 서버의 에이전트가 AWS 쪽으로 먼저 연결해서 명령을 받아 오는 방식이라 배포 때문에 열어 둘 포트가 없어요. 권한은 OIDC로 받는 임시 권한이라 저장해 둔 키도 없고, "이 서버 한 대에 `AWS-RunShellScript`로만"으로 좁혀 두었고, 누가 언제 무슨 명령을 보냈는지 기록도 남아요. 솔직히 덧붙이면 SSH 포트는 하나 열려 있어요. Workbench로 DB를 보려고 쓰는 터널인데, 제 IP에서 제 키로만 들어오는 개인용 통로이고 자동 배포에는 SSH가 아예 끼지 않아요.',
     cost: 'IAM 역할 두 개와 정책을 직접 이해해야 했어요. 처음 설정이 SSH보다 훨씬 오래 걸렸어요.',
   },
   {
@@ -38,7 +42,7 @@ export const REASONS: Reason[] = [
     id: 'caddy',
     question: '왜 sslip.io + Caddy인가요?',
     answer:
-      'Vercel 화면은 https라서 API도 https여야 브라우저가 막지 않고, 로그인 쿠키(`Secure`)도 https에서만 돼요. 그런데 Let’s Encrypt는 IP 주소에는 인증서를 안 줘요. sslip.io는 IP를 이름으로 바꿔 주는 무료 주소라 도메인을 사지 않고도 진짜 인증서를 받을 수 있었어요. Caddy는 설정 몇 줄로 인증서 발급과 갱신, http→https 이동까지 해 줘요.',
+      'Vercel 화면은 https라서 API도 https여야 브라우저가 막지 않고, 로그인 쿠키(`Secure`)도 https에서만 돼요. 그런데 Caddy가 기본으로 받는 Let’s Encrypt 인증서는 도메인 이름이 있어야 해요. sslip.io는 IP를 이름으로 바꿔 주는 무료 주소라 도메인을 사지 않고도 진짜 인증서를 받을 수 있었어요. Caddy는 설정 몇 줄로 인증서 발급과 갱신, http→https 이동까지 해 줘요.',
     cost: 'sslip.io는 남의 무료 서비스라 멈추면 API 주소도 멈춰요. 제 도메인이 생기면 `API_DOMAIN` 한 줄만 바꾸면 돼요.',
   },
   {
@@ -57,9 +61,24 @@ export const REASONS: Reason[] = [
   },
   {
     id: 'ghcr',
-    question: '왜 이미지를 미리 구워 두고(GHCR), blue-green으로 바꾸나요?',
+    label: 'GHCR',
+    question: '왜 이미지를 GHCR(GitHub 컨테이너 저장소)에 두나요?',
     answer:
-      '서버가 직접 빌드하면 2GB 서버가 2분 동안 바쁘고, 컨테이너를 바꿔 끼우는 순간 몇 초 끊겼어요. 이제 빌드는 GitHub의 ARM 컴퓨터가 하고, 서버는 받아서 쉬고 있던 쪽에 먼저 띄운 뒤 건강하면 문(Caddy)만 돌려요. Actions의 Deploy 전체는 예전 2분 18초(서버에서 빌드하는 job 하나)에서 약 1분 10초가 됐어요. API 코드가 바뀌어 이미지를 새로 구우면 2분 23초로 예전과 비슷하지만, 그중 서버가 하는 배포 job은 135초에서 37~51초로 줄었어요. 배포 3번 동안 862 · 705 · 565번 찔러서 실패는 0번이었어요. 두 쪽이 잠깐 같이 떠도 메모리는 최고 869MiB / 1836MiB였어요.',
+      '서버가 빌드하지 않고 "받기만" 하려면 구워 둔 이미지를 둘 곳이 필요해요. GHCR은 공개 저장소면 무료이고, Actions가 따로 비밀값 없이 `GITHUB_TOKEN`으로 바로 올려요. Docker Hub처럼 계정을 하나 더 만들거나 익명 pull 횟수 제한을 신경 쓸 일도 없어요. 이미지에 `org.opencontainers.image.source` 라벨을 붙여 이 공개 저장소에 연결하니 패키지도 Public이 돼서, 서버는 로그인 없이 받아요. 태그가 커밋 SHA라 롤백은 "예전 SHA로 다시 배포"면 끝나요.',
+    cost: '이미지 이름이 `deploy.yml`의 `IMAGE`와 서버의 `deploy/deploy.sh` 두 곳에 적혀 있어서, 바꿀 땐 둘 다 고쳐야 해요.',
+    snippet: `# .github/workflows/deploy.yml 맨 위: 이미지 이름은 여기 한 번만
+env:
+  IMAGE: ghcr.io/pocodingwer/backend-visualized-api
+# push할 태그와 "로그인 없이 받을 수 있나" 확인이 같은 이름을 씀 → 안 어긋남
+# GHCR 이름은 소문자만 → POcodingWER 대신 pocodingwer
+# 태그: <IMAGE>:<커밋 SHA> (배포·롤백용), <IMAGE>:main (지금 main 표시용)`,
+  },
+  {
+    id: 'blue-green',
+    label: 'blue-green',
+    question: '왜 blue-green으로 바꿔 끼우나요?',
+    answer:
+      '예전엔 컨테이너를 그 자리에서 다시 만들어서, 바꿔 끼우는 순간 몇 초 끊겼어요. 이제는 쉬고 있던 쪽(blue/green)에 새 버전을 먼저 띄우고, `/health`가 200이면 문(Caddy)만 돌려요. 실패하면 문을 안 돌려서 예전 쪽이 계속 서비스해요. 배포 3번 동안 0.2초마다 862 · 705 · 565번 찔러서 실패는 0번이었고, 두 쪽이 잠깐 같이 떠도 메모리는 최고 869MiB / 1836MiB였어요. 서버 배포 job은 서버 빌드가 빠지면서 135초에서 37~51초로 줄었어요.',
     cost: '두 버전이 몇십 초 같이 돌아서, DB 구조를 바꿀 때는 "추가 먼저, 삭제는 다음 배포"(expand → contract) 순서를 지켜야 해요.',
   },
 ];
@@ -72,28 +91,16 @@ export interface Trouble {
 
 export const TROUBLES: Trouble[] = [
   {
-    symptom: 'AWS 로그인 화면에서 뭘 눌러야 할지 헷갈림',
-    cause:
-      '로그인이 "루트 사용자"와 "IAM 사용자" 두 갈래예요. 가입한 이메일은 루트 사용자용이고, IAM 사용자는 계정 ID(12자리)나 별칭을 먼저 넣어야 해서 어느 쪽인지 헷갈렸어요.',
-    fix: '가입한 이메일로는 "루트 사용자"로 들어가요. 평소 작업용은 IAM 사용자를 따로 만들고, 루트는 MFA를 켜서 결제·계정 설정 때만 써요.',
-  },
-  {
-    symptom: 'MySQL Workbench가 서버 MySQL에 접속을 못 함',
-    cause:
-      'MySQL 컨테이너는 Docker 안쪽 네트워크에만 열려 있었어요. 보안 그룹도 3306을 막고 있어서 바깥에서는 길이 아예 없었어요(그게 맞는 상태였어요).',
-    fix: '3306을 인터넷에 여는 대신 `127.0.0.1:3306:3306`으로 서버 자기 자신에만 열고, Workbench는 Standard TCP/IP over SSH로 SSH 터널을 타고 들어가요.',
-  },
-  {
-    symptom: '고정 IP로 바꾼 뒤 잠깐 503, Workbench는 계속 접속 실패',
-    cause:
-      '주소를 바꾸고 다시 띄우는 동안 API가 아직 켜지는 중이라 Caddy가 503을 돌려줬어요. 곧 새 주소로 인증서를 다시 받고 정상이 됐어요. Workbench는 예전 IP `13.209.4.20`을 그대로 가리키고 있었어요.',
-    fix: 'API가 healthy가 될 때까지 기다리면 돼요. Workbench의 SSH Hostname을 `3.35.59.193:22`로 바꿨어요. IP를 바꾸면 sslip.io 주소, Vercel, Workbench, `ssh` 명령을 한 번에 같이 고쳐야 해요.',
-  },
-  {
     symptom: '`Not authorized to perform sts:AssumeRoleWithWebIdentity`',
     cause:
       '이 저장소는 GitHub OIDC의 immutable subject 형식이라 `sub`에 소유자·저장소 ID가 붙어요(`repo:POcodingWER@89626659/backend-visualized@1425018571:ref:refs/heads/main`). 신뢰 정책에는 이름만 있는 예전 형식이 적혀 있어서 글자가 달랐어요.',
     fix: '`gh api …/oidc/customization/sub`로 실제 형식을 확인하고, GitHub 설정을 되돌리는 대신(그게 덜 안전해요) AWS 신뢰 정책의 `sub`를 새 형식으로 고쳤어요.',
+  },
+  {
+    symptom: 'OIDC 로그인은 통과했는데 `AccessDenied: ssm:SendCommand`',
+    cause:
+      'IAM 역할에는 정책이 두 종류예요. "누가 이 역할을 빌릴 수 있나"(신뢰 정책)와 "빌린 뒤 무엇을 할 수 있나"(권한 정책). 신뢰 정책은 맞았지만 권한 정책이 하나도 없어서, 역할은 받고도 아무것도 못 했어요.',
+    fix: '배포 역할에 권한(인라인) 정책 `ssm-deploy-only`를 붙였어요. `SendCommand`는 이 인스턴스 하나와 `AWS-RunShellScript` 문서로만 좁히고, 결과 조회(`GetCommandInvocation`)만 전체로 열었어요.',
   },
   {
     symptom: 'SSM에 서버가 안 보이고, 메타데이터가 404',
@@ -102,10 +109,34 @@ export const TROUBLES: Trouble[] = [
     fix: '콘솔에서 `backend-visualized-ec2-ssm` 역할을 붙이고 `sudo snap restart amazon-ssm-agent` → 30분을 안 기다리고 바로 `Credentials ready`.',
   },
   {
-    symptom: '`AccessDenied: ssm:SendCommand`',
+    symptom: 'API는 4000번에서 도는데 밖에서 `:4000`으로는 안 열림',
     cause:
-      'GitHub가 OIDC로 배포 역할을 받는 데까지는 성공했는데, 그 역할에 SSM 명령을 보낼 권한(인라인 정책)이 없었어요.',
-    fix: '배포 역할에 인라인 정책 `ssm-deploy-only`를 붙였어요. `SendCommand`는 이 인스턴스 하나와 `AWS-RunShellScript` 문서로만 좁히고, 조회(`GetCommandInvocation`)만 전체로 열었어요.',
+      'API 컨테이너는 Docker 안쪽 네트워크에만 4000을 열고, 보안 그룹도 4000을 막아요. 밖에서 API로 들어오는 길은 Caddy의 443 하나예요.',
+    fix: '일부러 그렇게 뒀어요. Caddy가 HTTPS를 받아서 안쪽 `api_blue:4000`으로 넘겨 줘요(리버스 프록시). API는 인증서를 몰라도 되고, 밖에서 `X-Forwarded-For`를 꾸며 바로 들어올 길도 없어요.',
+  },
+  {
+    symptom: '고정 IP가 있는데 왜 `https://3.35.59.193`이 아니라 sslip.io?',
+    cause:
+      'Vercel 화면은 https라서 API를 http로 부르면 브라우저가 막아요(mixed content). 그런데 Caddy가 기본으로 받는 Let’s Encrypt 인증서는 도메인 이름이 있어야 해요.',
+    fix: '`3-35-59-193.sslip.io`처럼 IP를 이름으로 바꿔 주는 무료 DNS를 쓰고, Caddy가 그 이름으로 인증서를 받아요. 제 도메인이 생기면 `API_DOMAIN` 한 줄만 바꾸면 돼요.',
+  },
+  {
+    symptom: '화면(vercel.app)과 API(sslip.io)가 다른 사이트: CORS와 로그인 쿠키',
+    cause:
+      'API가 허락한 주소가 아니면 브라우저가 응답을 화면에 안 넘겨요(CORS). 로그인을 이어 주는 리프레시 쿠키도 다른 사이트로 보내려면 `SameSite=None; Secure`가 있어야 하고, Safari는 원래 제3자 쿠키를 막아서(ITP) 새로고침하면 풀릴까 걱정했어요.',
+    fix: '`VERCEL_ORIGIN`에 Vercel 주소를 넣고 preflight(`OPTIONS`)로 허락 헤더를 확인했어요. 쿠키는 `SameSite=None; Secure; Partitioned`. 실제 Safari에서 새로고침해도 로그인이 유지됐어요(Partitioned 덕분으로 보여요). "모든 쿠키 차단" 같은 엄격한 설정이나 오래된 버전에서는 여전히 막힐 수 있어서, 제 도메인으로 같은 사이트를 만들고 `SameSite=Lax`로 바꾸는 게 가장 튼튼해요.',
+  },
+  {
+    symptom: 'Elastic IP로 바꾼 뒤 Workbench가 갑자기 접속 실패 (API도 잠깐 503)',
+    cause:
+      'Workbench의 SSH Hostname이 아직 예전 IP `13.209.4.20`을 가리키고 있었어요. API는 새 주소로 다시 뜨는 동안 Caddy가 잠깐 503을 돌려줬어요.',
+    fix: 'SSH Hostname을 `3.35.59.193:22`로 바꿨고, 503은 API가 healthy가 되자 사라졌어요. IP를 바꾸면 sslip.io 주소, Vercel, Workbench, `ssh` 명령을 한 번에 같이 고쳐야 해요.',
+  },
+  {
+    symptom: 'MySQL Workbench가 서버 MySQL에 접속을 못 함',
+    cause:
+      'MySQL 컨테이너는 Docker 안쪽 네트워크에만 열려 있었어요. 보안 그룹도 3306을 막고 있어서 바깥에서는 길이 아예 없었어요(그게 맞는 상태였어요).',
+    fix: '3306을 인터넷에 여는 대신 `127.0.0.1:3306:3306`으로 서버 자기 자신에만 열고, Workbench는 Standard TCP/IP over SSH로 SSH 터널을 타고 들어가요.',
   },
   {
     symptom: '`caddy reload: connection refused` (첫 blue-green 배포 실패)',
@@ -114,10 +145,16 @@ export const TROUBLES: Trouble[] = [
     fix: '`deploy.sh`가 `reload`를 1초 간격으로 최대 15번 다시 시도하게 고쳤어요. 그 뒤 배포는 전부 통과했어요.',
   },
   {
-    symptom: 'Safari에서 새로고침하면 로그인이 풀리지 않을까 걱정했던 것',
+    symptom: '`deploy/caddy/upstream.caddy`가 저장소에 없음',
     cause:
-      '화면(vercel.app)과 API(sslip.io)가 서로 다른 사이트라 로그인 쿠키가 "제3자 쿠키"가 돼요. Safari는 원래 제3자 쿠키를 기본으로 막아서(ITP) 새로고침하면 로그인이 풀릴 거라고 생각했어요.',
-    fix: '쿠키에 `SameSite=None; Secure; Partitioned`를 붙였고, 실제 Safari에서 새로고침해도 로그인이 유지되는 걸 확인했어요 (Partitioned 덕분으로 보여요). 다만 "모든 쿠키 차단" 같은 엄격한 설정이나 오래된 버전에서는 여전히 막힐 수 있어서, 제 도메인으로 화면과 API를 같은 사이트로 묶고 `SameSite=Lax`로 바꾸는 게 가장 튼튼한 해결이에요.',
+      '이 파일은 "지금 어느 색이 서비스 중인가"라는 서버의 실행 상태예요. git에 넣어 두면 배포 때마다 하는 `git reset --hard origin/main`이 지금 색을 커밋된 값으로 되돌려 버려요.',
+    fix: '`.gitignore`에 넣고 `deploy.sh`가 배포 때마다 만들어요(임시 파일에 쓰고 `mv`로 한 번에 바꿈). 파일이 없으면 첫 배포로 보고 blue부터 띄워요.',
+  },
+  {
+    symptom: 'Actions 목록엔 1분 12초인데 페이지엔 37~51초?',
+    cause:
+      'Actions 목록의 시간은 워크플로 전체(커밋 확인 + 이미지 굽기 + 서버 배포)이고, 37~51초는 그중 서버 배포 job만이에요. 처음엔 이 둘을 섞어 적어서 읽는 사람이 헷갈렸어요.',
+    fix: '숫자를 나눠 적었어요: 전체 약 1분 10초(API 코드가 바뀌면 2분 23초), 서버 배포 job 135초 → 37~51초.',
   },
 ];
 

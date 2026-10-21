@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Fragment } from 'react';
 import { DEPLOY_PAGE, githubFile } from '../../lib/site';
 import { Conclusion } from '../components/atoms/Conclusion';
 import { INK, inkStroke } from '../components/atoms/ink';
@@ -50,7 +51,7 @@ const PANELS = [
     ),
   },
   {
-    caption: '문지기(Caddy)가 자물쇠(HTTPS)를 걸고, 열린 문은 두 개(80/443)만 남겨요.',
+    caption: '문지기(Caddy)가 자물쇠(HTTPS)를 걸고, 모두에게 열린 문은 두 개(80/443)만 남겨요.',
     art: (
       <g>
         <rect x="40" y="40" width="160" height="110" rx="6" fill="#ede5d5" {...inkStroke} />
@@ -103,6 +104,21 @@ const PANELS = [
   },
 ];
 
+/** 한 단계에 카드가 둘일 때 칩 이름 ("왜 GHCR? →") */
+const REASON_LABEL: Record<string, string> = Object.fromEntries(
+  REASONS.map((reason) => [reason.id, reason.label ?? reason.id]),
+);
+
+/** 터미널 블록: '#' · '//'로 시작하는 설명 줄만 흐리게 (명령 뒤에 붙은 주석은 그대로) */
+function terminalLines(code: string) {
+  return code.split('\n').map((line, index) => (
+    <Fragment key={index}>
+      {index > 0 && '\n'}
+      {/^\s*(#|\/\/)/.test(line) ? <span className={styles.comment}>{line}</span> : line}
+    </Fragment>
+  ));
+}
+
 export default function DeployPage() {
   return (
     <main className={`${ui.page} ${ui.codeChips}`}>
@@ -118,20 +134,7 @@ export default function DeployPage() {
       </header>
 
       <section className={ui.wide}>
-        <h2 className={ui.sectionTitle}>1. 그림으로 보는 구조</h2>
-        <p className={ui.lead}>
-          제가 만든 서버의 모습이에요. 화면은 Vercel, API · DB · 캐시는 AWS 서버 한 대에 있고, 새
-          버전을 올리는 동안에도 손님 요청은 끊기지 않아요.
-        </p>
-        <h3 className={styles.diagramTitle}>지금 돌아가는 모습 + 끊기지 않는 배포</h3>
-        <RuntimeDiagram />
-        <BlueGreenDetails />
-        <h3 className={styles.diagramTitle}>main에 push하면 일어나는 일</h3>
-        <PipelineDiagram />
-      </section>
-
-      <section className={ui.wide}>
-        <h2 className={ui.sectionTitle}>2. 숫자로 본 결과</h2>
+        <h2 className={ui.sectionTitle}>1. 숫자로 본 결과</h2>
         <ResultNumbers
           items={[
             {
@@ -169,10 +172,24 @@ export default function DeployPage() {
       </section>
 
       <section className={ui.wide}>
+        <h2 className={ui.sectionTitle}>2. 그림으로 보는 구조</h2>
+        <p className={ui.lead}>
+          제가 만든 서버의 모습이에요. 화면은 Vercel, API · DB · 캐시는 AWS 서버 한 대에 있고, 새
+          버전을 올리는 동안에도 손님 요청은 끊기지 않아요.
+        </p>
+        <h3 className={styles.diagramTitle}>지금 돌아가는 모습 + 끊기지 않는 배포</h3>
+        <RuntimeDiagram />
+        <BlueGreenDetails />
+        <h3 className={styles.diagramTitle}>main에 push하면 일어나는 일</h3>
+        <PipelineDiagram />
+      </section>
+
+      <section className={ui.wide}>
         <ComicStrip label="4컷 만화: 서버를 빌려서 끊기지 않게 배포하기까지" panels={PANELS} />
       </section>
 
-      <section className={ui.column}>
+      {/* 명령 블록이 넓게 보이도록 wide. 글은 .roadmap에서 본문 폭으로 묶는다 */}
+      <section className={ui.wide}>
         <h2 className={ui.sectionTitle}>3. 순서대로</h2>
         <p className={ui.lead}>
           가입부터 매일 백업까지 한 일이에요. 앞의 세 단계는 브라우저(AWS 콘솔)에서, 그다음부터는
@@ -184,11 +201,11 @@ export default function DeployPage() {
             <li key={step.title} id={`step-${index + 1}`}>
               <p className={styles.roadTitle}>
                 <b>{withCode(step.title)}</b>
-                {step.reason && (
-                  <a href={`#reason-${step.reason}`} className={styles.whyChip}>
-                    왜 이렇게? →
+                {step.reasons?.map((id) => (
+                  <a key={id} href={`#reason-${id}`} className={styles.whyChip}>
+                    {step.reasons!.length > 1 ? `왜 ${REASON_LABEL[id]}? →` : '왜 이렇게? →'}
                   </a>
-                )}
+                ))}
               </p>
               <div className={styles.roadBody}>
                 <p>{withCode(step.plain)}</p>
@@ -199,7 +216,7 @@ export default function DeployPage() {
                       <figure key={blockIndex} className={styles.terminal}>
                         <figcaption>{block.where}</figcaption>
                         <pre tabIndex={0}>
-                          <code>{block.code}</code>
+                          <code>{terminalLines(block.code)}</code>
                         </pre>
                       </figure>
                     ))}
@@ -222,11 +239,18 @@ export default function DeployPage() {
         <h2 className={ui.sectionTitle}>4. 왜 이렇게 했나</h2>
         <div className={styles.reasons}>
           {REASONS.map((reason) => {
-            const step = DEPLOY_STEPS.findIndex((item) => item.reason === reason.id) + 1;
+            const step = DEPLOY_STEPS.findIndex((item) => item.reasons?.includes(reason.id)) + 1;
             return (
               <article key={reason.id} id={`reason-${reason.id}`}>
                 <h3>{withCode(reason.question)}</h3>
                 <p>{withCode(reason.answer)}</p>
+                {reason.snippet && (
+                  <figure className={styles.terminal}>
+                    <pre tabIndex={0}>
+                      <code>{terminalLines(reason.snippet)}</code>
+                    </pre>
+                  </figure>
+                )}
                 {reason.cost && (
                   <p className={styles.cost}>
                     <b>대신 떠안은 것</b> {withCode(reason.cost)}
