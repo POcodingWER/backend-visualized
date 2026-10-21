@@ -24,12 +24,12 @@ export function RuntimeDiagram() {
           <p className={styles.arrowDown}>API 부르기 · HTTPS 443 ↓</p>
           <div className={styles.ec2}>
             <p className={styles.ec2Label}>
-              EC2 t4g.small · 3.35.59.193 · 모두에게 열린 문은 80/443뿐 (SSH는 내 IP만)
+              EC2 t4g.small · 고정 IP(Elastic IP) · 열린 문은 아래 표
             </p>
             <div className={`${styles.box} ${styles.caddy}`}>
               <Marks steps={[4]} />
               <b>Caddy :443</b>
-              <small>인증서 · 3-35-59-193.sslip.io</small>
+              <small>인증서 · sslip.io 주소</small>
             </div>
             <p className={styles.arrowDown}>지금 서비스 중인 색으로 ↓</p>
             <div className={styles.pair}>
@@ -77,6 +77,37 @@ export function RuntimeDiagram() {
           쪽만 꺼져요. 배포 3번 동안 0.2초마다 찔러서 실패한 요청은 0번이었어요.
         </p>
       </div>
+      <div className={styles.ports}>
+        <section>
+          <p className={styles.portsTitle}>밖에서 열린 포트 (보안 그룹)</p>
+          <dl>
+            {PORTS.open.map((port) => (
+              <div key={port.port}>
+                <dt>
+                  <code>{port.port}</code> {port.name}
+                </dt>
+                <dd>{withCode(port.note)}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+        <section>
+          <p className={styles.portsTitle}>서버 안에서만 (밖에서 안 보임)</p>
+          <dl>
+            {PORTS.inside.map((port) => (
+              <div key={port.port}>
+                <dt>
+                  <code>{port.port}</code> {port.name}
+                </dt>
+                <dd>{withCode(port.note)}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+        <p className={styles.portsNote}>
+          배포는 SSM으로 들어와서, 배포 때문에 열어 둔 포트는 없어요.
+        </p>
+      </div>
       <figcaption>
         화면과 API는 따로 살아요. 손님 요청이 서버로 들어오는 길은 Caddy(443) 하나이고, API · MySQL
         · Redis는 서버 안쪽 네트워크에서만 서로 이야기해요.
@@ -84,6 +115,20 @@ export function RuntimeDiagram() {
     </figure>
   );
 }
+
+/** 보안 그룹과 docker-compose 기준 포트 */
+const PORTS = {
+  open: [
+    { port: '22', name: 'SSH', note: '내 IP에서 내 키로만. Workbench DB 터널 · 터미널 접속용' },
+    { port: '80', name: 'HTTP', note: 'Caddy. 인증서 발급, 그리고 HTTPS로 넘기기' },
+    { port: '443', name: 'HTTPS', note: 'Caddy. 서비스로 들어오는 유일한 입구' },
+  ],
+  inside: [
+    { port: '4000', name: 'API', note: 'Docker 내부망. `api_blue` · `api_green`' },
+    { port: '3306', name: 'MySQL', note: '`127.0.0.1`에만 (SSH 터널로만 접속)' },
+    { port: '6379', name: 'Redis', note: 'Docker 내부망' },
+  ],
+} as const;
 
 /** 그림 속 번호 동그라미 (blue-green 교체 순서) */
 function Marks({ steps }: { steps: number[] }) {
