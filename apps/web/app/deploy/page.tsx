@@ -361,12 +361,26 @@ export default function DeployPage() {
           {TROUBLES.map((trouble) => (
             <li key={trouble.symptom}>
               <h3>{withCode(trouble.symptom)}</h3>
-              <dl>
-                <dt>왜</dt>
-                <dd>{withCode(trouble.cause)}</dd>
-                <dt>어떻게</dt>
-                <dd>{withCode(trouble.fix)}</dd>
-              </dl>
+              {'summary' in trouble ? (
+                <>
+                  <p>{withCode(trouble.summary)}</p>
+                  <details className={styles.fold}>
+                    <summary>자세히</summary>
+                    <div className={styles.foldBody}>
+                      {trouble.more.map((line) => (
+                        <p key={line}>{withCode(line)}</p>
+                      ))}
+                    </div>
+                  </details>
+                </>
+              ) : (
+                <dl>
+                  <dt>왜</dt>
+                  <dd>{withCode(trouble.cause)}</dd>
+                  <dt>어떻게</dt>
+                  <dd>{withCode(trouble.fix)}</dd>
+                </dl>
+              )}
             </li>
           ))}
         </ol>

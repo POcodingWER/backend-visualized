@@ -110,11 +110,21 @@ env:
   },
 ];
 
-export interface Trouble {
+/** 막혀서 고친 것: 왜 → 어떻게 */
+export interface FixedTrouble {
   symptom: string;
   cause: string;
   fix: string;
 }
+
+/** 처음엔 다르게 이해했던 것: 한두 줄 요약 + 접어 둔 자세히 */
+export interface LearnedTrouble {
+  symptom: string;
+  summary: string;
+  more: string[];
+}
+
+export type Trouble = FixedTrouble | LearnedTrouble;
 
 export const TROUBLES: Trouble[] = [
   {
@@ -130,16 +140,61 @@ export const TROUBLES: Trouble[] = [
     fix: '배포 역할에 권한(인라인) 정책 `ssm-deploy-only`를 붙였어요. `SendCommand`는 이 인스턴스 하나와 `AWS-RunShellScript` 문서로만 좁히고, 결과 조회(`GetCommandInvocation`)만 전체로 열었어요.',
   },
   {
+    symptom: 'OIDC와 SSM을 한 덩어리로 생각함',
+    summary:
+      '처음엔 "GitHub이 AWS로 배포하는 기능" 하나로 봤어요. 실제로는 OIDC는 출입증 받기, SSM은 그 출입증을 들고 서버에 명령 보내기로 단계가 달랐어요.',
+    more: [
+      'OIDC: GitHub이 "이 저장소의 main"이라고 증명하고, AWS가 1시간짜리 임시 키를 줘요. SSM: 그 키로 `send-command`를 보내면 서버의 SSM Agent가 받아서 실행해요.',
+      'SSM Agent는 Ubuntu EC2 이미지에 기본으로 깔려 있어서, 서버 쪽은 EC2에 역할(`AmazonSSMManagedInstanceCore`)만 붙이면 됐어요.',
+    ],
+  },
+  {
     symptom: 'SSM에 서버가 안 보이고, 메타데이터가 404',
     cause:
       'EC2에 인스턴스 역할이 안 붙어 있었어요. `169.254.169.254`의 `iam/security-credentials/`가 404였고, SSM Agent 로그에 `no EC2 instance role found`, 30분마다 다시 시도한다고 나왔어요.',
     fix: '콘솔에서 `backend-visualized-ec2-ssm` 역할을 붙이고 `sudo snap restart amazon-ssm-agent` → 30분을 안 기다리고 바로 `Credentials ready`.',
   },
   {
+    symptom: '서버가 main을 지켜보다가 알아서 배포하는 줄 앎',
+    summary:
+      '처음엔 서버가 GitHub을 보고 있다가 새 커밋을 당겨 가는 줄 알았어요. 실제로는 반대로, GitHub Actions가 시작해서 SSM으로 `deploy.sh <SHA>`를 보내요. 서버는 명령을 기다리기만 해요.',
+    more: [
+      '그래서 서버에는 주기적으로 GitHub을 확인하는 작업이 없어요. 어떤 커밋을 배포할지도 Actions가 정해서 SHA로 넘기고, 배포 기록은 Actions 실행 목록에 모여요.',
+    ],
+  },
+  {
+    symptom: '이미지와 컨테이너, Compose 명령이 처음엔 헷갈림',
+    summary:
+      '예전엔 이미지만 빌드해서 매니지드 플랫폼(카카오클라우드 PlayMCP)에 올리면 끝이었어요. 이번엔 서버를 직접 운영하니까 이미지(틀)와 컨테이너(틀로 찍어낸 것)를 나눠서 생각해야 했어요.',
+    more: [
+      '처음엔 "이미지를 올리면 돌아간다"로만 알았어요. 실제로는 같은 이미지 하나로 컨테이너를 여러 개 띄울 수 있고, 이 서버도 같은 이미지로 `api_blue`와 `api_green` 두 개를 띄워요.',
+      'Compose는 여러 컨테이너를 한 파일(`docker-compose.prod.yml`)로 다뤄요. `up`은 만들기 · 바꾸기(이미지나 설정이 바뀌면 다시 만듦), `stop` · `start`는 전원만 끄고 켜기, `down`은 지우기예요. 그래서 배포는 새 색을 `up -d --no-deps --force-recreate`로 만들고, 예전 색은 `stop`만 해요.',
+    ],
+  },
+  {
     symptom: 'API는 4000번에서 도는데 밖에서 `:4000`으로는 안 열림',
     cause:
       'API 컨테이너는 Docker 안쪽 네트워크에만 4000을 열고, 보안 그룹도 4000을 막아요. 밖에서 API로 들어오는 길은 Caddy의 443 하나예요.',
     fix: '일부러 그렇게 뒀어요. Caddy가 HTTPS를 받아서 안쪽 `api_blue:4000`으로 넘겨 줘요(리버스 프록시). API는 인증서를 몰라도 되고, 밖에서 `X-Forwarded-For`를 꾸며 바로 들어올 길도 없어요.',
+  },
+  {
+    symptom: 'Caddy는 `api_green:4000`을 어떻게 찾을까?',
+    summary:
+      '처음엔 컨테이너 IP를 어딘가 적어 줘야 하는 줄 알았어요. 실제로는 Compose 서비스 이름이 Docker 내부망의 DNS 이름이 돼요.',
+    more: [
+      'Docker에 내장된 DNS가 `api_green`을 그 컨테이너의 내부 IP로 바꿔 줘요. `docker ps`에 보이는 `backend-visualized-api_green-1`은 Compose가 붙인 표시용 이름이에요.',
+      '`4000`은 DNS가 알려 주는 값이 아니라 `upstream.caddy`에 제가 직접 적은 포트예요. 꺼져 있는 색은 DNS에 안 잡혀서, `getent hosts api_green`으로 지금 떠 있는지 확인할 수 있었어요.',
+    ],
+  },
+  {
+    symptom: '`RedisService`에 `get` · `set`이 없는데 어디서 Redis로 가지?',
+    summary:
+      '처음엔 Redis로 가는 코드가 안 보였어요. 실제로는 `RedisService`가 ioredis의 `Redis`를 상속(`extends Redis`)해서, `get` · `set`은 라이브러리에서 그대로 물려받은 메서드였어요.',
+    more: [
+      '생성자의 `super(redisUrl, { lazyConnect: true, … })`가 연결을 만들고, 첫 명령 때 실제로 접속해요. 그래서 Redis가 꺼져 있어도 API는 떠요.',
+      'Redis 자체 설정은 코드가 아니라 `docker-compose.prod.yml`의 `redis` `command`에 있어요. 메모리 `64mb`, 넘치면 `allkeys-lru`로 오래 안 쓴 키부터 버리고, 디스크에는 저장하지 않아요. 코드는 거기에 접속하는 클라이언트일 뿐이에요.',
+      '6장 캐시는 cache-aside예요. `GET` → 없으면 DB → `SET … EX 5`.',
+    ],
   },
   {
     symptom: '고정 IP가 있는데 왜 `https://<IP>`가 아니라 sslip.io?',
@@ -178,10 +233,27 @@ export const TROUBLES: Trouble[] = [
     fix: '`.gitignore`에 넣고 `deploy.sh`가 배포 때마다 만들어요(임시 파일에 쓰고 `mv`로 한 번에 바꿈). 파일이 없으면 첫 배포로 보고 blue부터 띄워요.',
   },
   {
+    symptom: '서버가 재부팅되면 다시 배포해야 하나?',
+    summary:
+      '처음엔 재부팅하면 손으로 다시 띄워야 하는 줄 알았어요. 실제로는 모든 컨테이너에 `restart: unless-stopped`가 있어서, Docker가 부팅 때 켜지면서 돌던 컨테이너를 다시 띄워요.',
+    more: [
+      '배포 때 `stop`으로 끈 반대 색은 "직접 끈 것"이라 꺼진 채로 남아요. `upstream.caddy`도 디스크에 남아 있어서 Caddy는 원래 보던 색으로 보내요.',
+      'MySQL · Redis는 `deploy.sh`가 `--no-deps`로 건드리지 않고, 재시작 정책에 맡겨요.',
+    ],
+  },
+  {
     symptom: 'Actions 목록엔 1분 12초인데 페이지엔 37~51초?',
     cause:
       'Actions 목록의 시간은 워크플로 전체(커밋 확인 + 이미지 굽기 + 서버 배포)이고, 37~51초는 그중 서버 배포 job만이에요. 처음엔 이 둘을 섞어 적어서 읽는 사람이 헷갈렸어요.',
     fix: '숫자를 나눠 적었어요: 전체 약 1분 10초(API 코드가 바뀌면 2분 23초), 서버 배포 job 135초 → 37~51초.',
+  },
+  {
+    symptom: '`force-static`이면 빌드가 막아 줄 줄 알았음',
+    summary:
+      'API가 필요 없는 메인 · About · 배포 페이지를 SSG로 고정하려고 처음엔 `force-static`을 넣었어요. 실제로는 요청 시점 코드(`cookies()`, `headers()`)가 들어와도 빌드를 실패시키지 않고 빈 값으로 굳혀요.',
+    more: [
+      "빌드에서 바로 잡으려면 `dynamic = 'error'`여야 해서 바꿨어요. 임시로 `headers()`를 넣어 보니 빌드가 `/about` 에러로 멈추는 걸 확인하고 지웠어요.",
+    ],
   },
 ];
 
