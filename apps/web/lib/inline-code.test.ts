@@ -16,7 +16,7 @@ test('배포 페이지 글의 백틱은 모두 짝이 맞다', () => {
   const texts = [
     ...DEPLOY_STEPS.flatMap((step) => [step.title, step.plain, step.result ?? '']),
     ...REASONS.flatMap((reason) => [reason.question, reason.answer, reason.cost ?? '']),
-    ...TROUBLES.flatMap((trouble) => [trouble.symptom, trouble.cause, trouble.fix]),
+    ...TROUBLES.flatMap((trouble) => Object.values(trouble).flat()),
     ...RETRO.hard,
     ...RETRO.learned,
     ...RETRO.next,

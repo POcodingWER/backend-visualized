@@ -314,6 +314,17 @@
   margin: 0;
   overflow-wrap: anywhere;
 }
+/* 처음엔 다르게 이해했던 것: 요약 한두 줄 + 접어 둔 자세히 */
+.troubles li > p,
+.troubles .foldBody p {
+  overflow-wrap: anywhere;
+}
+.troubles li > p {
+  margin-bottom: var(--space-3);
+}
+.troubles .foldBody p {
+  font-size: 0.95rem;
+}
 
 /* ---------- 6. 구조 그림 (HTML 상자라 좁은 화면에선 세로로 쌓인다) ---------- */
 .diagramTitle {
