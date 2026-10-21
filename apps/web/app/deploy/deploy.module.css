@@ -690,3 +690,24 @@
 .portClosed code {
   border-style: dashed;
 }
+
+/* 이유 카드 안의 "다른 선택지와 비교" */
+.compare {
+  margin: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+.compare dt {
+  font-weight: 700;
+}
+.compare dd {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+}
+.verdict {
+  padding-top: var(--space-2);
+  border-top: 1px dashed var(--line-strong);
+  font-size: var(--text-sm);
+  font-weight: 650;
+}

@@ -251,6 +251,24 @@ export default function DeployPage() {
                     </pre>
                   </figure>
                 )}
+                {reason.compare && (
+                  <details className={styles.fold}>
+                    <summary>다른 선택지와 비교</summary>
+                    <div className={styles.foldBody}>
+                      <dl className={styles.compare}>
+                        {reason.compare.map((option) => (
+                          <div key={option.name}>
+                            <dt>{option.name}</dt>
+                            <dd>{withCode(option.note)}</dd>
+                          </div>
+                        ))}
+                      </dl>
+                      {reason.verdict && (
+                        <p className={styles.verdict}>{withCode(reason.verdict)}</p>
+                      )}
+                    </div>
+                  </details>
+                )}
                 {reason.cost && (
                   <p className={styles.cost}>
                     <b>대신 떠안은 것</b> {withCode(reason.cost)}
