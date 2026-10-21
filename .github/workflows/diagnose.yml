@@ -1,0 +1,79 @@
+# 서버 상태 보기 (부하 테스트·장애 때). 손으로만 실행: Actions → Diagnose → Run workflow
+# deploy.yml과 같은 OIDC 역할 · SSM 경로를 쓰고, 정해진 deploy/diagnose.sh 명령만 실행한다 (임의 명령 입력 없음).
+name: Diagnose
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'snapshot(지금 상태) · watch(뒤에서 기록 시작) · report(기록 보기) · recover(API 다시 띄우기)'
+        type: choice
+        options: [snapshot, watch, report, recover]
+        default: snapshot
+      seconds:
+        description: 'watch일 때 기록할 초 (최대 3600)'
+        default: '900'
+
+permissions:
+  contents: read
+
+# 배포와 겹치지 않게 같은 그룹 (recover가 배포 중간에 컨테이너를 건드리지 않도록)
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: ap-northeast-2
+  AWS_ROLE_ARN: arn:aws:iam::071732232414:role/backend-visualized-github-deploy
+  INSTANCE_ID: i-0c7a663e814fc808d
+  APP_DIR: /opt/backend-visualized
+
+jobs:
+  diagnose:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: 입력 확인
+        env:
+          MODE: ${{ inputs.mode }}
+          SECONDS_INPUT: ${{ inputs.seconds }}
+        run: |
+          case "$MODE" in snapshot|watch|report|recover) ;; *) echo "::error::mode"; exit 1 ;; esac
+          [[ "$SECONDS_INPUT" =~ ^[0-9]{1,4}$ ]] || { echo "::error::seconds는 숫자"; exit 1; }
+          echo "ARGS=$MODE $SECONDS_INPUT" >> "$GITHUB_ENV"
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: gh-diagnose-${{ github.run_id }}
+
+      # 서버 checkout은 바꾸지 않는다: main의 diagnose.sh를 받아 임시 파일로 실행 (git reset 없음)
+      - name: Run diagnose on EC2 via SSM
+        run: |
+          # git은 평소 계정(ubuntu)으로: root로 fetch하면 .git 안 파일 주인이 바뀌어 다음 배포가 깨진다
+          remote="cd $APP_DIR && sudo -u ubuntu git fetch -q origin main && sudo -u ubuntu git show origin/main:deploy/diagnose.sh > /tmp/bv-diagnose.sh && APP_DIR=$APP_DIR bash /tmp/bv-diagnose.sh $ARGS"
+          echo "서버에서 실행할 명령: $remote"
+          params=$(jq -nc --arg c "$remote" '{commands: [$c], executionTimeout: ["300"]}')
+          command_id=$(aws ssm send-command --instance-ids "$INSTANCE_ID" --document-name AWS-RunShellScript \
+            --comment "GitHub Actions diagnose ${{ github.run_id }}" --parameters "$params" \
+            --query Command.CommandId --output text)
+          status=Pending
+          for i in $(seq 1 60); do
+            sleep 5
+            status=$(aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" \
+              --query Status --output text 2> /dev/null || echo Pending)
+            case "$status" in Pending|InProgress|Delayed) continue ;; *) break ;; esac
+          done
+          aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" \
+            --query StandardOutputContent --output text
+          echo "::group::stderr"
+          aws ssm get-command-invocation --command-id "$command_id" --instance-id "$INSTANCE_ID" \
+            --query StandardErrorContent --output text || true
+          echo "::endgroup::"
+          [ "$status" = Success ] || { echo "::error::SSM 상태: $status"; exit 1; }
