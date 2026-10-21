@@ -595,4 +595,32 @@ IAM → 역할 backend-visualized-ec2-ssm → 인라인 정책 s3-backup-put-onl
     result:
       '12K · 0.26초 · 메모리 28MB · `RESTORE_TEST=PASS` (11개 테이블 행 수 모두 일치) · S3 업로드 `mysql/backend_visualized-20261021-095322-KST.sql.gz` (10,883 bytes)',
   },
+  {
+    title: '장애 알아채기: 요청 번호 로그 · Sentry · 15분마다 /health',
+    reasons: ['monitoring'],
+    plain:
+      '지금까지는 서버가 죽어도 누가 알려 주지 않았어요. 15분마다 밖에서 살아 있는지 확인하고, 오류는 Sentry로 모으고, 요청마다 번호를 붙여서 "그 오류가 로그의 어느 줄인지" 바로 찾게 했어요.',
+    commands: [
+      {
+        where: '저장소 파일',
+        code: `# .github/workflows/uptime.yml: 15분마다 /health, 3번 연속 200이 아니면 실패 → GitHub이 메일
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+
+# apps/api/src/common/observability/
+#   logger.ts     pino 한 줄 JSON 로그 + x-request-id, 토큰·쿠키·비밀번호는 [가림]
+#   all-exceptions.filter.ts  오류 응답을 { statusCode, message, requestId } 로 통일
+#   sentry.ts     SENTRY_DSN이 있을 때만 켜짐 (없으면 아무것도 안 함)`,
+      },
+      {
+        where: '서버 (ubuntu@EC2)',
+        code: `# Sentry를 켜려면 production.env에 한 줄 추가하고 다시 배포 (비워 두면 꺼짐)
+echo 'SENTRY_DSN=https://<키>@<호스트>/<번호>' >> deploy/production.env
+
+# 시작 로그에서 켜졌는지 확인: [config] … sentry=on
+./deploy/compose.sh logs api_blue | grep sentry=`,
+      },
+    ],
+  },
 ];

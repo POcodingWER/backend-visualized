@@ -146,4 +146,7 @@ docker image prune -f > /dev/null
 ./deploy/install-backup-cron.sh || log "경고: 백업 cron 설치 실패 (./deploy/install-backup-cron.sh 확인)"
 
 compose ps
+# 배포 직후 메모리 (Actions 로그에서 바로 보이게. 실패해도 배포는 성공으로 둔다)
+docker stats --no-stream --format 'MEM {{.Name}} {{.MemUsage}} CPU {{.CPUPerc}}' || true
+free -m | sed -n '1,3p' || true
 echo "DEPLOYED_SHA=$sha COLOR=$next"

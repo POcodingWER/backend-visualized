@@ -22,14 +22,14 @@
 
 ## 기술 스택
 
-| 영역 | 쓴 것                                                                                    |
-| ---- | ---------------------------------------------------------------------------------------- |
-| 화면 | Next.js 15 (App Router) on Vercel · TypeScript · CSS Modules                             |
-| API  | NestJS · Prisma · MySQL 8.4 · Redis 7.4 (ioredis) · `packages/sdk` 이벤트 수집 SDK       |
-| 서버 | AWS EC2 `t4g.small` (ARM, Ubuntu 24.04) 한 대 · Docker Compose · Caddy (HTTPS, sslip.io) |
-| 배포 | GitHub Actions → GHCR(ARM 이미지) → OIDC → SSM → blue-green 무중단 교체                  |
-| 운영 | 매일 MySQL 백업 (서버 7일 + S3 30일) · 복원 테스트                                       |
-| 개발 | pnpm workspace + Turborepo · ESLint · Prettier · `node:test`                             |
+| 영역 | 쓴 것                                                                                                                     |
+| ---- | ------------------------------------------------------------------------------------------------------------------------- |
+| 화면 | Next.js 15 (App Router) on Vercel · TypeScript · CSS Modules                                                              |
+| API  | NestJS · Prisma · MySQL 8.4 · Redis 7.4 (ioredis) · `packages/sdk` 이벤트 수집 SDK                                        |
+| 서버 | AWS EC2 `t4g.small` (ARM, Ubuntu 24.04) 한 대 · Docker Compose · Caddy (HTTPS, sslip.io)                                  |
+| 배포 | GitHub Actions → GHCR(ARM 이미지) → OIDC → SSM → blue-green 무중단 교체                                                   |
+| 운영 | 매일 MySQL 백업 (서버 7일 + S3 30일) · 복원 테스트 · pino JSON 로그 + `x-request-id` · Sentry(선택) · 15분 `/health` 감시 |
+| 개발 | pnpm workspace + Turborepo · ESLint · Prettier · `node:test`                                                              |
 
 ## 구조
 

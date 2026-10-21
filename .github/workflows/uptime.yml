@@ -1,0 +1,36 @@
+# 15분마다 공개 /health를 한 번 찔러 본다. 200이 아니면 이 job이 실패하고,
+# GitHub이 저장소 주인에게 "workflow 실패" 메일을 보낸다 (= 가장 가벼운 장애 알림).
+# 주의: GitHub 예약 실행은 몇 분씩 늦게 돌 수 있고, 저장소에 60일 동안 활동이 없으면 꺼진다.
+name: Uptime
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: uptime
+  cancel-in-progress: true
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    env:
+      # deploy.yml의 HEALTH_URL과 같은 주소 (주소를 바꾸면 둘 다 고친다)
+      HEALTH_URL: https://3-35-59-193.sslip.io/health
+    steps:
+      - name: /health 가 200인지
+        run: |
+          # 잠깐 튀는 것(네트워크 한 번 실패)에 메일이 오지 않게 20초 간격으로 3번까지 다시 본다
+          for attempt in 1 2 3; do
+            code=$(curl -s -o /tmp/health.json -w '%{http_code}' --max-time 10 "$HEALTH_URL" || true)
+            echo "시도 $attempt: HTTP $code $(cat /tmp/health.json 2>/dev/null)"
+            if [ "$code" = "200" ]; then exit 0; fi
+            sleep 20
+          done
+          echo "::error::$HEALTH_URL 가 3번 연속 200을 돌려주지 않았습니다"
+          exit 1
