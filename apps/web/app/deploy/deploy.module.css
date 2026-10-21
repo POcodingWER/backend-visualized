@@ -59,29 +59,68 @@
   background: var(--apricot);
   color: var(--ink);
 }
-.roadmap p {
+.roadBody {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.roadBody > p {
   color: var(--ink-soft);
 }
 
-/* ---------- 2. 명령 ---------- */
-.commands {
-  display: grid;
-  gap: var(--space-12);
+/* 접어 둔 자세히 (단계별 명령, blue-green 순서). 기본은 닫힘 */
+.fold {
   min-width: 0;
 }
-.command {
+.fold summary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0.1rem 0.7rem;
+  border: 1.5px solid var(--ink);
+  border-radius: 999px;
+  background: var(--paper-deep);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+.fold summary::-webkit-details-marker {
+  display: none;
+}
+.fold summary::before {
+  content: '▸';
+  transition: transform 0.15s;
+}
+.fold[open] summary::before {
+  transform: rotate(90deg);
+}
+.fold summary:hover {
+  background: var(--apricot);
+}
+.foldBody {
   display: grid;
   gap: var(--space-3);
   min-width: 0;
-  scroll-margin-top: 6rem;
+  margin-top: var(--space-3);
 }
-.command h3 {
-  font-size: var(--text-lg);
+.foldSteps {
+  margin: 0;
+  padding-left: 1.3rem;
+  display: grid;
+  gap: var(--space-2);
+  font-size: 0.95rem;
 }
-.stepNumber {
-  color: var(--apricot-ink);
-  font-variant-numeric: tabular-nums;
+.foldSteps code,
+.swapCases code {
+  overflow-wrap: anywhere;
 }
+.foldSource {
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+}
+
+/* ---------- 3. 단계별 명령 ---------- */
 /* 터미널: 먹색 바탕에 종이색 글씨 (대비 13:1). 긴 줄은 접지 않고 가로로 스크롤 */
 .terminal {
   margin: 0;
@@ -461,5 +500,114 @@
   .terminal pre {
     padding: var(--space-3);
     font-size: 0.76rem;
+  }
+}
+
+/* ---------- 1. 구조 그림 속 blue-green 번호 ---------- */
+.box {
+  position: relative;
+}
+.marks {
+  position: absolute;
+  top: -0.7rem;
+  right: 0.5rem;
+  display: flex;
+  gap: 0.2rem;
+}
+.marks i,
+.swap li .marks i {
+  display: grid;
+  place-items: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  border: 1.5px solid var(--ink);
+  border-radius: 50%;
+  background: var(--apricot);
+  font-size: 0.78rem;
+  font-style: normal;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.swap {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-6);
+  border: 2px solid var(--ink);
+  border-radius: var(--hand-radius-soft);
+  background: var(--paper-raised);
+}
+.swapTitle {
+  font-weight: 750;
+}
+.swap ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3) var(--space-6);
+}
+.swap li {
+  display: grid;
+  grid-template-columns: 1.6rem minmax(0, 1fr);
+  column-gap: var(--space-2);
+  align-items: start;
+}
+.swap li .marks {
+  position: static;
+  grid-row: span 2;
+}
+.swap li span:last-child {
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+}
+.swapSafe {
+  padding-top: var(--space-2);
+  border-top: 1px dashed var(--line-strong);
+  font-size: var(--text-sm);
+  font-weight: 650;
+  color: var(--sage-ink);
+}
+.swapTable {
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+.swapTable caption {
+  text-align: left;
+  font-weight: 700;
+  margin-bottom: var(--space-1);
+}
+.swapTable th,
+.swapTable td {
+  padding: var(--space-1) var(--space-3);
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+}
+.swapCases {
+  margin: 0;
+  display: grid;
+  gap: var(--space-1);
+}
+.swapCases dt {
+  font-weight: 750;
+  color: var(--apricot-ink);
+}
+.swapCases dd {
+  margin: 0 0 var(--space-2);
+  font-size: 0.95rem;
+}
+@media (max-width: 860px) {
+  .swap ol {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 640px) {
+  .swap {
+    padding: var(--space-4);
+  }
+  .swapTable {
+    display: block;
+    overflow-x: auto;
   }
 }
