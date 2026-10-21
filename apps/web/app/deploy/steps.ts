@@ -19,6 +19,8 @@ export interface DeployStep {
   commands: CommandBlock[];
   /** 실행 결과에서 알아둘 것 (짧게) */
   result?: string;
+  /** 이 단계의 "왜?" 카드 (content.ts REASONS의 id) */
+  reason?: string;
 }
 
 export const API_HOST = 'https://3-35-59-193.sslip.io';
@@ -54,6 +56,7 @@ export const DEPLOY_STEPS: DeployStep[] = [
   },
   {
     title: 'EC2(서버) 만들기',
+    reason: 'ubuntu',
     plain:
       'AWS에서 컴퓨터 한 대를 빌려요. 작고 싼 ARM(Graviton) 컴퓨터, 메모리 2GB짜리예요. 들어갈 열쇠(키 페어)와 문(보안 그룹)도 이때 정해요.',
     commands: [
@@ -191,6 +194,7 @@ git status --short --ignored deploy/                     # !! = git이 무시하
   },
   {
     title: 'MySQL · Redis · API 띄우기 (docker compose)',
+    reason: 'docker-mysql',
     plain:
       '처음에는 서버가 직접 이미지를 만들었어요(2분). DB와 캐시를 먼저 띄우고, API는 켜지면서 테이블을 만드는 작업(마이그레이션)을 알아서 해요.',
     commands: [
@@ -211,6 +215,7 @@ sudo ss -tlnp | grep -E ':(3306|6379|4000)\\b' || echo "밖에서 안 보임 OK"
   },
   {
     title: 'HTTPS: Caddy + sslip.io',
+    reason: 'caddy',
     plain:
       '인증서는 도메인에만 발급돼요. sslip.io는 "13-209-4-20.sslip.io"를 13.209.4.20으로 알려주는 무료 주소라, 도메인 없이도 진짜 인증서를 받았어요. Caddy가 발급과 갱신을 알아서 해요.',
     commands: [
@@ -275,6 +280,7 @@ nc -vz -G 5 3.35.59.193 3306      # 인터넷에서 직접은: Operation timed o
   },
   {
     title: '고정 IP(Elastic IP)로 바꾸고 주소 한 줄 고치기',
+    reason: 'eip',
     plain:
       '일반 공인 IP는 서버를 중지했다 켜면 바뀌어요. 그러면 주소도 인증서도 다 다시 해야 해서, 계정에 묶이는 고정 IP를 붙였어요.',
     commands: [
@@ -293,6 +299,7 @@ nc -vz -G 5 3.35.59.193 3306      # 인터넷에서 직접은: Operation timed o
   },
   {
     title: 'SSM Agent + 서버용 IAM 역할',
+    reason: 'ssm',
     plain:
       '자동 배포는 GitHub가 SSH로 들어오는 대신, 서버 안의 SSM Agent가 AWS에서 명령을 받아 실행하는 방식이에요. 서버가 AWS에 "나 맞아요"라고 증명하려면 역할(IAM Role)을 붙여야 해요.',
     commands: [
@@ -317,6 +324,7 @@ sudo tail -n 30 /var/log/amazon/ssm/amazon-ssm-agent.log | grep -E 'ERROR|Creden
   },
   {
     title: 'GitHub OIDC + 배포용 IAM 역할',
+    reason: 'oidc',
     plain:
       'GitHub에 AWS 열쇠를 저장하지 않아요. 대신 GitHub가 "이건 POcodingWER/backend-visualized의 main이에요"라는 증명서(OIDC 토큰)를 내고, AWS가 그걸 확인한 뒤 1시간짜리 임시 열쇠를 줘요.',
     commands: [
@@ -394,6 +402,7 @@ gh api repos/POcodingWER/backend-visualized/actions/oidc/customization/sub
   },
   {
     title: '이미지는 GitHub에서 굽고, 서버는 받기만 + blue-green 무중단 교체',
+    reason: 'ghcr',
     plain:
       '서버가 직접 빌드하면 2분 동안 바빠지고, 바꿔 끼우는 순간 몇 초 끊겼어요. 그래서 GitHub의 ARM 컴퓨터가 이미지를 만들어 GHCR에 올리고, 서버는 받아서 쉬고 있는 쪽(blue/green)에 먼저 띄운 뒤 문만 바꿔 달아요.',
     commands: [

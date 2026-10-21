@@ -166,10 +166,17 @@ export default function DeployPage() {
         </p>
         <ol className={styles.roadmap}>
           {DEPLOY_STEPS.map((step, index) => (
-            <li key={step.title}>
-              <a href={`#step-${index + 1}`}>
-                <b>{step.title}</b>
-              </a>
+            <li key={step.title} id={`road-${index + 1}`}>
+              <p className={styles.roadTitle}>
+                <a href={`#step-${index + 1}`}>
+                  <b>{step.title}</b>
+                </a>
+                {step.reason && (
+                  <a href={`#reason-${step.reason}`} className={styles.whyChip}>
+                    왜 이렇게? →
+                  </a>
+                )}
+              </p>
               <p>{step.plain}</p>
             </li>
           ))}
@@ -213,17 +220,25 @@ export default function DeployPage() {
       <section className={ui.wide}>
         <h2 className={ui.sectionTitle}>3. 왜 이렇게 했나</h2>
         <div className={styles.reasons}>
-          {REASONS.map((reason) => (
-            <article key={reason.question}>
-              <h3>{reason.question}</h3>
-              <p>{reason.answer}</p>
-              {reason.cost && (
-                <p className={styles.cost}>
-                  <b>대신 떠안은 것</b> {reason.cost}
-                </p>
-              )}
-            </article>
-          ))}
+          {REASONS.map((reason) => {
+            const step = DEPLOY_STEPS.findIndex((item) => item.reason === reason.id) + 1;
+            return (
+              <article key={reason.id} id={`reason-${reason.id}`}>
+                <h3>{reason.question}</h3>
+                <p>{reason.answer}</p>
+                {reason.cost && (
+                  <p className={styles.cost}>
+                    <b>대신 떠안은 것</b> {reason.cost}
+                  </p>
+                )}
+                {step > 0 && (
+                  <a href={`#road-${step}`} className={styles.backLink}>
+                    ↑ {step}단계로 돌아가기
+                  </a>
+                )}
+              </article>
+            );
+          })}
         </div>
       </section>
 
