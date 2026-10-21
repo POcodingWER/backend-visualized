@@ -33,6 +33,13 @@ export class PaymentsController {
     const outcome = await this.payments.pay(dto.orderId, dto.amount, idempotencyKey);
     if (outcome.kind === 'key_reused_for_different_request')
       throw new UnprocessableEntityException('같은 Idempotency-Key로 다른 결제를 보냈습니다');
+    if (outcome.kind === 'previous_attempt_failed')
+      throw new ConflictException({
+        statusCode: 409,
+        reason: 'previous_attempt_failed',
+        message:
+          '같은 키의 첫 결제가 중간에 실패로 끝났습니다. 돈은 나가지 않았으니 새 키로 다시 시도하세요',
+      });
     if (outcome.kind === 'still_processing')
       throw new ConflictException('같은 키의 첫 결제가 아직 처리 중입니다');
     // 재전송이어도 첫 응답과 같은 본문·상태코드. 재생 여부만 헤더로 알려준다

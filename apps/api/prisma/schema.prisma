@@ -115,7 +115,7 @@ model Payment {
   id             Int       @id @default(autoincrement())
   orderId        String    @db.VarChar(64)
   amount         Int
-  /// processing → paid
+  /// processing → paid (정상) | failed (처리 중에 죽어서 정리 잡이 닫음)
   status         String    @db.VarChar(16)
   idempotencyKey String?   @unique @db.VarChar(64)
   createdAt      DateTime  @default(now()) @db.DateTime(3)
