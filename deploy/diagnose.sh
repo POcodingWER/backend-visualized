@@ -5,6 +5,7 @@
 #   sudo ./deploy/diagnose.sh snapshot        # 지금 상태 한 번: 메모리, 재시작/OOM, 에러 로그, MySQL·Redis
 #   sudo ./deploy/diagnose.sh watch 900       # 뒤에서 약 5초마다 기록 시작 (900초 동안) → 바로 끝남
 #   sudo ./deploy/diagnose.sh report          # 마지막 watch 기록의 최고값 + 15초 간격 표 + snapshot
+#   (deploy.sh가 배포 끝에 지난 기록을 report로 보여 주고, 새 watch 1800을 시작한다)
 #   sudo ./deploy/diagnose.sh recover         # API가 응답 없으면 지금 색 API 재시작 + mysql/redis/caddy up -d
 #
 # 비밀값은 출력하지 않는다: MySQL 비밀번호는 컨테이너 안의 환경 변수를 그 안에서만 쓴다 (backup-mysql.sh와 같은 방식).
@@ -90,8 +91,12 @@ case "${1:-snapshot}" in
     echo "== API 컨테이너 메모리 최고"
     grep -oE 'api_(blue|green) [0-9.]+[GM]iB' "$file" |
       awk '{v=$2; u=substr(v,length(v)-2); n=v+0; if (u=="GiB") n*=1024; if (n>m) {m=n; s=v}} END {print "api 최고 " s}'
-    echo "== 15초 간격"
-    awk 'NR==1 || /^#/ || NR%3==2' "$file" | cut -c1-260
+    # 표는 30줄 안팎으로 (Actions 로그에서 한눈에): 기록이 길면 간격을 넓힌다
+    lines=$(grep -vc '^#' "$file")
+    step=$(((lines + 29) / 30))
+    [ "$step" -ge 1 ] || step=1
+    echo "== 약 $((step * 5))초 간격"
+    awk -v step="$step" '/^#/ || (NR-2)%step==0' "$file" | cut -c1-200
     echo
     snapshot
     ;;
