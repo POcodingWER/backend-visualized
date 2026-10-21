@@ -160,6 +160,12 @@ export default function DeployPage() {
               detail: '두 색이 잠깐 같이 떠 있을 때. 스왑 변화 없음',
             },
             {
+              value: '약 620 req/s',
+              label: '서버 한 대가 낸 최대 처리량 (k6 부하 테스트)',
+              detail:
+                '읽기 요청만, 12분 동안 10 → 800 VU. 50 VU까지 p95 0.12초, 100 VU부터 처리량은 그대로고 기다리는 시간만 늘었어요 (p95 0.46초 → 200 VU 1.3초 → 800 VU 10초, 실패 0.89%는 전부 10초 시간 초과). 서버는 끝까지 살아 있었어요',
+            },
+            {
               value: '매일 04:00',
               label: 'DB 백업 (서버 + S3)',
               detail: '12K, 0.3초. 서버 7일 + S3 30일. 임시 DB에 복원해서 11개 테이블 행 수 일치',
@@ -169,7 +175,9 @@ export default function DeployPage() {
             <>
               2026-10-21 측정. 배포 시간은 <a href={ACTIONS_RUNS}>GitHub Actions Deploy 기록</a>,
               요청은 맥에서 <code>https://&lt;IP-대시&gt;.sslip.io/health</code>를 0.2초마다 부른
-              결과, 메모리는 서버에서 1초마다 <code>free -m</code>.
+              결과, 메모리는 서버에서 1초마다 <code>free -m</code>. 처리량은 맥에서 k6로 잰 값이라
+              서버 한 대 · 내 맥 한 대 조건의 작은 측정이고, &quot;동시 사용자 몇 명&quot;을
+              뜻하지는 않아요.
             </>
           }
         />

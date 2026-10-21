@@ -597,6 +597,36 @@ S3에서 받을 때: `aws s3 cp s3://<버킷>/mysql/<파일> backups/` (이 경�
 
 ---
 
+## 7-4. 부하 테스트 (k6, 2026-10-21)
+
+```bash
+# 내 맥에서 (서버에서 돌리지 않는다: 같은 CPU를 나눠 쓰면 결과가 틀어짐). <API_HOST>는 실제 주소로
+brew install k6
+k6 run -e API_URL=https://<API_HOST> --summary-export=/tmp/k6-summary.json --out csv=/tmp/k6.csv load/breakpoint.js
+```
+
+- 읽기만 부른다 (`/health`, `/events/stats`) → 끝나도 DB에 남는 데이터 없음. IP별 한도(429)가 걸린 엔드포인트는 뺐다 (내 맥 한 대에서 보내면 한도에 먼저 막힘)
+- 단계: 10 → 50 → 100 → 200 → 400 → 800 VU, 실패율 50%가 30초 넘으면 스스로 중단
+
+| VU  | 처리량 (req/s) | p50       | p95      | 실패                       |
+| --- | -------------- | --------- | -------- | -------------------------- |
+| 10  | 약 164         | 13ms      | 90ms     | 0                          |
+| 50  | 약 530~545     | 41ms      | 약 120ms | 0                          |
+| 100 | 약 600~620     | 76ms      | 약 460ms | 0                          |
+| 200 | 약 620~630     | 약 88ms   | 약 1.3초 | 0                          |
+| 400 | 약 635         | 약 90ms   | 약 3.1초 | 0                          |
+| 800 | 약 645~655     | 190~350ms | 7~10초   | 4~6% (전부 10초 시간 초과) |
+
+전체: 12분, 389,658 요청, 평균 541 req/s, 실패 0.89%, 중앙값 86ms, p95 2.64초, p99 7.22초, 최대 10초. 테스트 뒤 재시작 0번, `OOMKilled` 없음, MySQL `Max_used_connections` 14, `Slow_queries` 0, Redis `rejected_connections` 0, `/health` 200.
+
+**원인**: 처리량이 100 VU부터 약 620 req/s에서 멈추고 기다리는 시간만 늘었다. 그동안 API 컨테이너 CPU는 100~120% (2코어라 최대 200%). Node는 요청을 이벤트 루프 하나에서 처리해서, 코어 하나가 꽉 차면 그 뒤 요청은 줄을 선다. 메모리·DB·Redis는 여유가 있었다.
+
+**다음 단계 (아직 안 함)**: API 복제본 2개 + Caddy 분산(또는 Node `cluster`)으로 코어 2개 사용, `/events/stats`처럼 무거운 읽기는 Redis에 몇 초 캐시. 단, 프로세스 메모리에 있는 "한 번에 하나"·쿨다운·SSE 상태(handover 7. 알려진 한계)는 Redis로 옮겨야 한다.
+
+서버 쪽 기록: `deploy/diagnose.sh` (`snapshot` · `watch` · `report` · `recover`). 배포 끝에 `deploy.sh`가 지난 30분 기록을 요약하고 새 `watch 1800`을 시작한다. Actions의 **Diagnose** workflow(손으로 실행)로도 돌릴 수 있다. 이번 테스트 때는 `watch`가 `local` 한 줄 계산 버그로 바로 끝나서 5초 간격 기록이 없었고(고침), CPU는 서버에서 직접 본 `docker stats` 값이다.
+
+---
+
 ## 8. 문제 해결
 
 | 증상                                                                                        | 확인                                                                                                                                          |
