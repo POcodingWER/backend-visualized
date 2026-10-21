@@ -12,7 +12,7 @@ import JwtDecoder from './JwtDecoder';
 import StorageComparison from './StorageComparison';
 import styles from './auth.module.css';
 import TheftDemo from './TheftDemo';
-import type { AddLogEntry, RequestLogEntry } from './types';
+import type { AddLogEntry, RequestLogEntry, RideResult } from './types';
 import WristbandStory from './WristbandStory';
 
 /** 화면에 그대로 안내하는 데모 계정 */
@@ -133,10 +133,10 @@ export default function AuthDemo() {
     };
   }, [applySession, logRefreshOnce]);
 
-  /** GET /auth/me → 401(만료)이면 refresh 후 1번 재시도 */
-  const callMe = useCallback(async () => {
+  /** GET /auth/me → 401(만료)이면 refresh 후 1번 재시도. 결과는 위쪽 "입구" 화면이 문장으로 보여준다 */
+  const callMe = useCallback(async (): Promise<RideResult> => {
     const current = sessionRef.current;
-    if (!current) return;
+    if (!current) return 'kicked-out';
     const first = await authApi.me(current.accessToken);
     addLog({
       actor: 'user',
@@ -146,9 +146,10 @@ export default function AuthDemo() {
       reason: errorReason(first.body),
       durationMs: first.durationMs,
     });
-    if (first.status !== 401 || errorReason(first.body) !== 'access_token_expired') return;
+    if (first.ok) return 'passed';
+    if (errorReason(first.body) !== 'access_token_expired') return 'kicked-out';
     const refreshed = await refreshSession();
-    if (!refreshed) return;
+    if (!refreshed) return 'kicked-out';
     const retry = await authApi.me(refreshed.accessToken);
     addLog({
       actor: 'user',
@@ -158,6 +159,7 @@ export default function AuthDemo() {
       reason: errorReason(retry.body),
       durationMs: retry.durationMs,
     });
+    return retry.ok ? 'refreshed' : 'kicked-out';
   }, [addLog, labelFor, refreshSession]);
 
   useEffect(() => {
@@ -230,6 +232,8 @@ export default function AuthDemo() {
         labelFor={labelFor}
         accessTokenTtlSeconds={accessTokenTtlSeconds}
         restoreState={restoreState}
+        callMe={callMe}
+        logout={logout}
       />
       <section style={{ maxWidth: 'var(--wide)', margin: '0 auto' }}>
         <DevDetails description="토큰 수명 타임라인과 로그인, 요청 기록, 동시 갱신 경주, 토큰 묶음(family) 표, JWT 디코더">

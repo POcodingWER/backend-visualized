@@ -1,14 +1,14 @@
 'use client';
 
-import { useState } from 'react';
-import { authApi, errorReason, isSession, type Session } from './api';
+import { useEffect, useState } from 'react';
+import { authApi, errorReason, isSession, shortToken, type Session } from './api';
 import { GITHUB_URL } from '../../lib/site';
 import { ResultNumbers } from '../components/molecules/ResultNumbers';
 import ui from '../components/ui.module.css';
 import styles from './auth.module.css';
 import { applyRaceOutcome, runRefreshRace, type RefreshMode } from './ConcurrencyRace';
 import { readTokensLikeXss, type AttackOutcome, type StorageKind } from './StorageComparison';
-import type { AddLogEntry } from './types';
+import type { AddLogEntry, RideResult } from './types';
 import { Button } from '../components/atoms/Button';
 import { Conclusion } from '../components/atoms/Conclusion';
 import { INK } from '../components/atoms/ink';
@@ -24,6 +24,8 @@ type StoryProps = {
   labelFor: (accessToken: string) => string;
   accessTokenTtlSeconds: number;
   restoreState: 'restoring' | 'restored' | 'none';
+  callMe: () => Promise<RideResult>;
+  logout: () => Promise<void>;
 };
 
 /** 복사된 영수증 이야기의 네 장면. 서버 응답 코드만 실제 결과에서 채운다. */
@@ -56,6 +58,7 @@ const RECORDED_THEFT: TheftStep[] = [
 export default function WristbandStory(props: StoryProps) {
   return (
     <>
+      <LoginEntrance {...props} />
       <CopiedReceiptStage {...props} />
       <RefreshCrowd {...props} />
       <ReloadRecovery {...props} />
@@ -99,6 +102,140 @@ export default function WristbandStory(props: StoryProps) {
         />
       </section>
     </>
+  );
+}
+
+const RIDE_MESSAGE: Record<RideResult, string> = {
+  passed: '손목밴드를 보여주고 통과했어요.',
+  refreshed: '밴드가 바래 있어서, 금고 속 영수증으로 새 밴드를 받아 통과했어요.',
+  'kicked-out':
+    '밴드도 영수증도 통하지 않아 로그아웃됐어요. 다시 로그인해 보세요. (Safari처럼 다른 사이트 쿠키를 막는 브라우저라면 영수증이 금고에 저장되지 않았을 수 있어요.)',
+};
+
+/** 장의 시작점: 데모 계정으로 실제 로그인하고, 받은 손목밴드(액세스 토큰)와 영수증(리프레시 토큰)을 보여준다 */
+function LoginEntrance({ session, ensureSession, restoreState, callMe, logout }: StoryProps) {
+  const [isBusy, setIsBusy] = useState(false);
+  const [notice, setNotice] = useState<{ text: string; isError: boolean } | null>(null);
+  const [nowMs, setNowMs] = useState(() => Date.now());
+
+  // 손목밴드 남은 시간: 로그인돼 있을 때만 1초마다 다시 그린다
+  useEffect(() => {
+    if (!session) return;
+    const intervalId = setInterval(() => setNowMs(Date.now()), 1000);
+    return () => clearInterval(intervalId);
+  }, [session]);
+
+  const runAction = async (action: () => Promise<{ text: string; isError: boolean } | null>) => {
+    setIsBusy(true);
+    try {
+      setNotice(await action());
+    } catch {
+      setNotice({ text: '서버에 연결하지 못했어요. 잠시 후 다시 눌러 주세요.', isError: true });
+    } finally {
+      setIsBusy(false);
+    }
+  };
+
+  const login = () =>
+    runAction(async () =>
+      (await ensureSession())
+        ? null
+        : { text: '로그인하지 못했어요. 잠시 후 다시 눌러 주세요.', isError: true },
+    );
+  const ride = () =>
+    runAction(async () => {
+      const result = await callMe();
+      return { text: RIDE_MESSAGE[result], isError: result === 'kicked-out' };
+    });
+  const leave = () =>
+    runAction(async () => {
+      await logout();
+      return { text: '로그아웃했어요. 영수증은 서버에서 무효가 됐어요.', isError: false };
+    });
+
+  const secondsLeft = session
+    ? Math.max(0, Math.ceil((new Date(session.accessTokenExpiresAt).getTime() - nowMs) / 1000))
+    : 0;
+
+  return (
+    <section className={ui.column}>
+      <h2 className={ui.sectionTitle}>먼저 입구에서 로그인해 보세요</h2>
+      <p className={ui.lead}>
+        아이디와 비밀번호를 내면 서버가 두 가지를 줘요. 놀이기구마다 보여줄 <b>손목밴드</b>(액세스
+        토큰)와, 밴드가 바래면 새 밴드로 바꿔 줄 <b>재발급 영수증</b>(리프레시 토큰)이에요.
+      </p>
+      <dl className={styles.entrance}>
+        <div>
+          <dt>지금 상태</dt>
+          <dd className={session ? ui.goodText : undefined}>
+            {session
+              ? `로그인됨 (${session.user.displayName})`
+              : restoreState === 'restoring'
+                ? '확인하는 중…'
+                : '로그인 안 됨'}
+          </dd>
+        </div>
+        <div>
+          <dt>
+            손목밴드 <small>액세스 토큰</small>
+          </dt>
+          <dd>
+            {session ? (
+              <>
+                <span
+                  key={session.accessToken}
+                  className={secondsLeft > 0 ? styles.wristband : styles.wristbandFaded}
+                >
+                  {shortToken(session.accessToken)}
+                </span>{' '}
+                {secondsLeft > 0
+                  ? `${secondsLeft}초 남음`
+                  : '색이 바랬어요 (만료). 다음에 보여줄 때 영수증으로 새로 받아요.'}
+              </>
+            ) : (
+              '없음'
+            )}
+          </dd>
+        </div>
+        <div>
+          <dt>
+            재발급 영수증 <small>리프레시 토큰</small>
+          </dt>
+          <dd>
+            {session
+              ? '브라우저 금고(httpOnly 쿠키)에 보관했어요. 자바스크립트로는 못 읽어요.'
+              : '없음'}
+          </dd>
+        </div>
+      </dl>
+      <div className={styles.entranceActions}>
+        {session ? (
+          <>
+            <Button size="small" onClick={() => void ride()} disabled={isBusy}>
+              손목밴드 보여주고 놀이기구 타기
+            </Button>
+            <Button size="small" onClick={() => void leave()} disabled={isBusy}>
+              로그아웃
+            </Button>
+          </>
+        ) : (
+          <Button size="big" onClick={() => void login()} disabled={isBusy}>
+            {isBusy ? '로그인하는 중…' : '로그인해 보기'}
+          </Button>
+        )}
+      </div>
+      {notice ? (
+        <p className={notice.isError ? ui.errorLine : ui.hint} role="status">
+          {notice.text}
+        </p>
+      ) : (
+        <p className={ui.hint}>
+          {session
+            ? '밴드가 바랜 뒤에 놀이기구를 타 보면, 영수증으로 새 밴드를 받는 걸 볼 수 있어요. 아래 이야기도 이 로그인으로 이어져요.'
+            : '데모 계정(아이디 demo, 비밀번호 demo1234)으로 실제 서버에 로그인해요.'}
+        </p>
+      )}
+    </section>
   );
 }
 
@@ -511,7 +648,7 @@ function ReloadRecovery({ session, ensureSession, restoreState }: StoryProps) {
       ? '이 페이지가 열릴 때 영수증을 확인하는 중…'
       : restoreState === 'restored'
         ? '방금 이 페이지를 열 때, 금고 속 영수증으로 새 손목밴드를 받아서 로그인이 그대로 이어졌어요.'
-        : '이번에 열 때는 금고에 영수증이 없었어요. 들어간 뒤 새로고침해 보세요.';
+        : '이번에 열 때는 금고에 영수증이 없었어요. 들어간 뒤 새로고침해 보세요. (Safari처럼 다른 사이트 쿠키를 막는 브라우저에서는 영수증이 저장되지 않아, 새로고침하면 로그인이 풀려요.)';
   return (
     <section className={ui.column}>
       <h2 className={ui.sectionTitle}>새로고침해도 로그인 유지</h2>

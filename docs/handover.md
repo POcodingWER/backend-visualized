@@ -130,6 +130,7 @@ docs/                         이 문서, architecture, deploy, auth-tokens, cha
 ### 2장 손목밴드 `/wristband` — 로그인이 유지되는 원리
 
 - 화면: `AuthDemo.tsx`(로그인·요청 기록) · `WristbandStory.tsx` · `TheftDemo.tsx` · `ConcurrencyRace.tsx` · `JwtDecoder.tsx`
+  - 만화 바로 아래 `LoginEntrance`(WristbandStory.tsx)가 장의 시작점: "로그인해 보기"(데모 계정) → 손목밴드·영수증 상태표 → "놀이기구 타기"(`GET /auth/me`, 만료면 재발급 후 재시도) · 로그아웃
 - `wristband/api.ts`의 `authApi.*` (모든 요청 `credentials: 'include'` — 리프레시 토큰이 httpOnly 쿠키라서)
   - `POST /auth/login` → `AuthService.login`: 비밀번호 확인(`auth/lib/password.ts`, scrypt) → 액세스 토큰(JWT, 짧음) + 리프레시 토큰(쿠키, `RefreshTokenStore.issueNewFamily`)
   - `GET /auth/me` → `AccessTokenGuard`(Bearer JWT 검증)
