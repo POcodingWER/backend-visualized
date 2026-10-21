@@ -475,3 +475,4 @@ GHCR 이미지는 서버에 최근 3개만 남깁니다. 그보다 오래된 SHA
 | Deploy: `FALLBACK_LOCAL_BUILD` 경고, 배포가 느림                                            | GHCR 패키지가 private → 7-1장 「GHCR 패키지 공개」                                                                                            |
 | Deploy: `api_<색> 가 건강해지지 않았습니다`                                                 | 출력에 붙은 새 컨테이너 로그 (마이그레이션 오류, `[config]` env 오류). 서비스는 예전 색이 계속 함                                             |
 | 502가 계속 남                                                                               | `cat deploy/caddy/upstream.caddy`의 색이 실제로 떠 있는지 `./deploy/compose.sh ps`. 아니면 `./deploy/deploy.sh current`                       |
+| Deploy: `caddy reload` 가 `localhost:2019 ... connection refused`                           | caddy가 막 다시 만들어져 관리 API가 아직 안 뜬 상태. deploy.sh가 15초까지 다시 시도함. 그래도 실패하면 `./deploy/deploy.sh current`           |
