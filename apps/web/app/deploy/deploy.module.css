@@ -659,3 +659,34 @@
     padding: var(--space-4);
   }
 }
+
+/* (A) 요청 흐름: 한 줄로 내려가는 그림 */
+.request {
+  display: grid;
+  gap: var(--space-2);
+  max-width: 46rem;
+  width: 100%;
+  margin-inline: auto;
+}
+.request .browser {
+  justify-self: stretch;
+}
+.portOpen,
+.portClosed {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  justify-self: center;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.portOpen code {
+  background: var(--sage);
+}
+.portClosed {
+  color: var(--ink-soft);
+}
+.portClosed code {
+  border-style: dashed;
+}

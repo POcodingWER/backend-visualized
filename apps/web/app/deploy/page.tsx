@@ -8,7 +8,7 @@ import { ComicStrip } from '../components/organisms/ComicStrip';
 import ui from '../components/ui.module.css';
 import { REASONS, RESTORE_ROWS, RETRO, TROUBLES } from './content';
 import { BlueGreenDetails } from './BlueGreenDetails';
-import { PipelineDiagram, RuntimeDiagram } from './Diagrams';
+import { DeployDiagram, RequestDiagram } from './Diagrams';
 import { DEPLOY_STEPS } from './steps';
 import { withCode } from '../../lib/inline-code';
 import styles from './deploy.module.css';
@@ -164,7 +164,7 @@ export default function DeployPage() {
           source={
             <>
               2026-10-21 측정. 배포 시간은 <a href={ACTIONS_RUNS}>GitHub Actions Deploy 기록</a>,
-              요청은 맥에서 <code>https://3-35-59-193.sslip.io/health</code>를 0.2초마다 부른 결과,
+              요청은 맥에서 <code>https://&lt;IP&gt;.sslip.io/health</code>를 0.2초마다 부른 결과,
               메모리는 서버에서 1초마다 <code>free -m</code>.
             </>
           }
@@ -177,11 +177,11 @@ export default function DeployPage() {
           제가 만든 서버의 모습이에요. 화면은 Vercel, API · DB · 캐시는 AWS 서버 한 대에 있고, 새
           버전을 올리는 동안에도 손님 요청은 끊기지 않아요.
         </p>
-        <h3 className={styles.diagramTitle}>지금 돌아가는 모습 + 끊기지 않는 배포</h3>
-        <RuntimeDiagram />
+        <h3 className={styles.diagramTitle}>요청이 들어오는 길</h3>
+        <RequestDiagram />
+        <h3 className={styles.diagramTitle}>배포가 들어오는 길</h3>
+        <DeployDiagram />
         <BlueGreenDetails />
-        <h3 className={styles.diagramTitle}>main에 push하면 일어나는 일</h3>
-        <PipelineDiagram />
       </section>
 
       <section className={ui.wide}>

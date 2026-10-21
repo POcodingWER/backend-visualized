@@ -115,10 +115,10 @@ export const TROUBLES: Trouble[] = [
     fix: '일부러 그렇게 뒀어요. Caddy가 HTTPS를 받아서 안쪽 `api_blue:4000`으로 넘겨 줘요(리버스 프록시). API는 인증서를 몰라도 되고, 밖에서 `X-Forwarded-For`를 꾸며 바로 들어올 길도 없어요.',
   },
   {
-    symptom: '고정 IP가 있는데 왜 `https://3.35.59.193`이 아니라 sslip.io?',
+    symptom: '고정 IP가 있는데 왜 `https://<IP>`가 아니라 sslip.io?',
     cause:
       'Vercel 화면은 https라서 API를 http로 부르면 브라우저가 막아요(mixed content). 그런데 Caddy가 기본으로 받는 Let’s Encrypt 인증서는 도메인 이름이 있어야 해요.',
-    fix: '`3-35-59-193.sslip.io`처럼 IP를 이름으로 바꿔 주는 무료 DNS를 쓰고, Caddy가 그 이름으로 인증서를 받아요. 제 도메인이 생기면 `API_DOMAIN` 한 줄만 바꾸면 돼요.',
+    fix: '`1-2-3-4.sslip.io`처럼(IP `1.2.3.4`의 점을 -로) IP를 이름으로 바꿔 주는 무료 DNS를 쓰고, Caddy가 그 이름으로 인증서를 받아요. 제 도메인이 생기면 `API_DOMAIN` 한 줄만 바꾸면 돼요.',
   },
   {
     symptom: '화면(vercel.app)과 API(sslip.io)가 다른 사이트: CORS와 로그인 쿠키',
@@ -130,7 +130,7 @@ export const TROUBLES: Trouble[] = [
     symptom: 'Elastic IP로 바꾼 뒤 Workbench가 갑자기 접속 실패 (API도 잠깐 503)',
     cause:
       'Workbench의 SSH Hostname이 아직 예전 IP `13.209.4.20`을 가리키고 있었어요. API는 새 주소로 다시 뜨는 동안 Caddy가 잠깐 503을 돌려줬어요.',
-    fix: 'SSH Hostname을 `3.35.59.193:22`로 바꿨고, 503은 API가 healthy가 되자 사라졌어요. IP를 바꾸면 sslip.io 주소, Vercel, Workbench, `ssh` 명령을 한 번에 같이 고쳐야 해요.',
+    fix: 'Workbench의 SSH Hostname을 새 IP로 바꿨고, 503은 API가 healthy가 되자 사라졌어요. IP를 바꾸면 sslip.io 주소, Vercel, Workbench, `ssh` 명령을 한 번에 같이 고쳐야 해요.',
   },
   {
     symptom: 'MySQL Workbench가 서버 MySQL에 접속을 못 함',
