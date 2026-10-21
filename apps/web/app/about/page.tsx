@@ -8,8 +8,8 @@ import { AUTHOR, DECISIONS, type TextLink } from '../landing-content';
 import styles from './about.module.css';
 
 // API를 부르지 않는 페이지라 빌드할 때 HTML을 미리 만들어 둔다(SSG).
-// 나중에 cookies() · headers()처럼 요청마다 다른 값을 쓰는 코드가 들어와도 요청 시 렌더링으로 바뀌지 않게 고정 (그 값은 빈 값으로 보인다)
-export const dynamic = 'force-static';
+// cookies() · headers()처럼 요청마다 다른 값을 쓰는 코드가 들어오면 빌드가 실패해서 바로 알 수 있다
+export const dynamic = 'error';
 
 export const metadata = {
   title: `About me · ${AUTHOR.name} — 버튼 하나 뒤에서`,
