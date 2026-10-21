@@ -459,7 +459,7 @@ GHCR 이미지는 서버에 최근 3개만 남깁니다. 그보다 오래된 SHA
 
 ---
 
-## 7-2. DB 백업과 복원 (mysqldump + cron, 선택: S3)
+## 7-2. DB 백업과 복원 (mysqldump + cron + S3)
 
 같은 EC2의 MySQL 컨테이너를 쓰기 때문에(3장), **디스크가 망가지거나 실수로 지우면 데이터가 같이 사라집니다.** 그래서 매일 백업하고, 그 백업이 정말 복원되는지도 확인합니다.
 
@@ -515,11 +515,11 @@ zcat backups/backend_visualized-<시각>-KST.sql.gz \
 
 S3에서 받을 때: `aws s3 cp s3://<버킷>/mysql/<파일> backups/` (이 경우 역할에 `s3:GetObject`가 필요하므로 콘솔에서 받거나 로컬 PC 자격 증명으로 받는 것을 권장).
 
-### (선택) 서버 밖 S3에 한 부 더: 콘솔에서 1회
+### 서버 밖 S3에 한 부 더: 콘솔에서 1회 (2026-10-21 설정 완료)
 
 서버 디스크에만 있으면 EC2를 잃을 때 백업도 같이 잃습니다. S3 업로드는 스크립트에 이미 들어 있고 **`BACKUP_S3_BUCKET`을 넣을 때만** 동작합니다.
 
-1. **S3 → 버킷 만들기**: 이름 예) `backend-visualized-backups-071732232414`, 리전 **아시아 태평양(서울) ap-northeast-2**
+1. **S3 → 버킷 만들기**: 이름 `backend-visualized-db-backups` (실제로 만든 버킷), 리전 **아시아 태평양(서울) ap-northeast-2**
    - 모든 퍼블릭 액세스 차단: **켜기**(기본값) / 버킷 버전 관리: **활성화** / 기본 암호화: **SSE-S3**(기본값)
 2. **버킷 → 관리 → 수명 주기 규칙 만들기**: 이름 `expire-mysql-backups`, 접두사 `mysql/`
    - 객체의 현재 버전 만료: **30일** / 객체의 이전 버전 영구 삭제: **7일** / 불완전한 멀티파트 업로드 삭제: **1일**
@@ -533,7 +533,7 @@ S3에서 받을 때: `aws s3 cp s3://<버킷>/mysql/<파일> backups/` (이 경�
          "Sid": "PutMysqlBackupsOnly",
          "Effect": "Allow",
          "Action": "s3:PutObject",
-         "Resource": "arn:aws:s3:::backend-visualized-backups-071732232414/mysql/*"
+         "Resource": "arn:aws:s3:::backend-visualized-db-backups/mysql/*"
        }
      ]
    }
@@ -544,9 +544,10 @@ S3에서 받을 때: `aws s3 cp s3://<버킷>/mysql/<파일> backups/` (이 경�
 4. **서버**: `deploy/production.env`에 한 줄 추가 → 바로 확인
 
    ```bash
-   echo 'BACKUP_S3_BUCKET=backend-visualized-backups-071732232414' >> deploy/production.env
+   echo 'BACKUP_S3_BUCKET=backend-visualized-db-backups' >> deploy/production.env
    aws --version || sudo snap install aws-cli --classic
    ./deploy/backup-mysql.sh     # 마지막에 "S3 업로드: s3://…" 가 나오면 성공
+   aws s3api head-object --bucket backend-visualized-db-backups --key mysql/<파일>   # 403이 정상 (쓰기 전용 역할)
    ```
 
    (API 컨테이너에는 이 값이 쓰이지 않으므로 다시 띄울 필요 없음)

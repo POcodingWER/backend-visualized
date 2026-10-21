@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { CHAPTERS, GITHUB_URL } from '../lib/site';
+import { CHAPTERS, DEPLOY_PAGE, GITHUB_URL } from '../lib/site';
 import { ResultNumbers } from './components/molecules/ResultNumbers';
 import ui from './components/ui.module.css';
 import styles from './landing.module.css';
@@ -117,6 +117,19 @@ export default function Home() {
             );
           })}
         </ol>
+        {/* 장 번호 없는 따로 페이지: 여섯 편 목록 밖에 둔다 */}
+        <Link href={DEPLOY_PAGE.href} className={styles.extra}>
+          <span className={styles.teaserNumber}>번외</span>
+          <h3>
+            {DEPLOY_PAGE.title} <small>{DEPLOY_PAGE.subtitle}</small>
+          </h3>
+          <p>
+            AWS 가입부터 끊기지 않는 배포, 매일 DB 백업까지. 친 명령 그대로와 막혔던 것, 배운 것을
+            적었어요.
+          </p>
+          <p className={styles.teaserValue}>실패한 요청 0번</p>
+          <p className={styles.teaserLabel}>배포 중 0.2초마다 찔러 본 결과 (배포 3번)</p>
+        </Link>
       </section>
 
       <section className={ui.wide}>
@@ -301,7 +314,7 @@ export default function Home() {
           <li>
             <b>데이터베이스 · 캐시</b>
             <span>MySQL 8 · Redis 7</span>
-            <small>RDS · Docker</small>
+            <small>Docker · 같은 EC2</small>
           </li>
         </ol>
         <ul className={styles.facts}>
@@ -317,7 +330,8 @@ export default function Home() {
           <li>
             배포 구성은 저장소의{' '}
             <a href={`${GITHUB_URL}/blob/main/docs/deploy.md`}>docs/deploy.md</a>에 있어요 (pnpm +
-            Turborepo 모노레포)
+            Turborepo 모노레포). 한 일과 회고는{' '}
+            <Link href={DEPLOY_PAGE.href}>{DEPLOY_PAGE.title}</Link>
           </li>
         </ul>
       </section>
