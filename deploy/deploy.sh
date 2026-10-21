@@ -103,7 +103,20 @@ log "api_$next 정상"
 write_upstream "$next"
 # caddy 컨테이너 설정(마운트 등)이 바뀐 커밋이면 여기서 한 번 다시 만들어진다 (평소엔 아무 일 없음)
 compose up -d caddy
-compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
+# 방금 새로 만들어진 caddy는 관리 API(:2019)가 뜨기까지 1~2초 걸려서 reload가 거절될 수 있다 → 몇 번 다시 시도
+reloaded=0
+for _ in $(seq 1 15); do
+  if compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile 2> /dev/null; then
+    reloaded=1
+    break
+  fi
+  sleep 1
+done
+if [ "$reloaded" != 1 ]; then
+  echo "caddy reload 실패 (upstream.caddy는 이미 api_$next 를 가리킴)" >&2
+  compose logs --tail 30 caddy >&2
+  exit 1
+fi
 log "Caddy → api_$next 로 전환"
 
 # 바깥에서 들어오는 길(Caddy, HTTPS)로도 확인
