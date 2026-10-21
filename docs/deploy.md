@@ -23,7 +23,7 @@
 | 3   | **API 도메인** 1개 (예: `api.example.com`)와 그 DNS를 수정할 수 있는 권한 (가비아, Route 53, Cloudflare 등) | HTTPS 인증서는 도메인이 있어야 발급됩니다. 도메인이 아직 없으면 `<IP를-로>.sslip.io`로 임시 HTTPS 가능 (1장 Ubuntu 절) |
 | 4   | **Vercel 계정** + 이 GitHub 저장소 접근 연결                                                                | 웹 배포                                                                                                                |
 | 5   | DB 방식 선택: **RDS** 또는 **EC2 안의 MySQL 컨테이너**                                                      | 비용/관리 트레이드오프 (아래 3장)                                                                                      |
-| 6   | (선택) 웹 커스텀 도메인 (예: `app.example.com`)                                                             | 쿠키를 같은 사이트로 만들어 Safari 등에서도 로그인 유지가 확실해짐 (4장)                                               |
+| 6   | (선택) 웹 커스텀 도메인 (예: `app.example.com`)                                                             | 쿠키를 같은 사이트로 만들어 엄격한 쿠키 설정에서도 로그인 유지가 확실해짐 (4장)                                        |
 | 7   | Let's Encrypt 알림용 이메일 (`ACME_EMAIL`)                                                                  | 인증서 만료 경고 수신                                                                                                  |
 
 비밀값(`JWT_ACCESS_SECRET`, `ADMIN_API_KEY`, DB 비밀번호)은 EC2에서 직접 생성하면 되므로 따로 전달하지 않아도 됩니다.
@@ -280,7 +280,7 @@ AWS 공식 가격표(aws.amazon.com 가격 페이지가 쓰는 공개 가격 데
 | `my-app.vercel.app` ↔ `api.example.com`                     | **다른 사이트**         | `none` + Secure (+ Partitioned) — 운영 기본값 |
 | `app.example.com`(Vercel 커스텀 도메인) ↔ `api.example.com` | 같은 사이트             | `lax` **권장**                                |
 
-- `none`이면 쿠키가 "서드파티 쿠키"가 됩니다. 이 API는 `Partitioned`(CHIPS) 속성을 붙여 Chrome 계열에서 서드파티 쿠키 제한이 있어도 동작하게 했지만, **Safari 등 서드파티 쿠키를 막는 브라우저에서는 새로고침 후 로그인 복구가 실패할 수 있습니다** (로그인 직후 동작은 액세스 토큰이 메모리에 있어 정상).
+- `none`이면 쿠키가 "서드파티 쿠키"가 됩니다. 이 API는 `Partitioned`(CHIPS) 속성을 붙여 서드파티 쿠키 제한이 있어도 동작하게 했습니다. 2026-10-21 실제 Safari(현재 버전)에서 `backend-visualized.vercel.app` 로그인 → 새로고침 후에도 로그인이 유지되는 것을 확인했습니다 (Partitioned 덕분으로 보임). 다만 **"모든 쿠키 차단" 같은 엄격한 설정이나 오래된 브라우저에서는 새로고침 후 로그인 복구가 실패할 수 있습니다** (로그인 직후 동작은 액세스 토큰이 메모리에 있어 정상). 가장 튼튼한 해결은 커스텀 도메인으로 같은 사이트를 만들고 `lax`를 쓰는 것입니다.
 - 확실하게 하려면 웹에 커스텀 도메인(`app.example.com`)을 연결하고 `REFRESH_COOKIE_SAME_SITE=lax`로 바꾸세요. Vercel → Project → Settings → Domains에서 추가하고 안내대로 DNS(CNAME)를 설정하면 됩니다.
 
 ---
@@ -579,7 +579,7 @@ S3에서 받을 때: `aws s3 cp s3://<버킷>/mysql/<파일> backups/` (이 경�
 | API 컨테이너가 바로 종료                                                                    | `./deploy/compose.sh logs api_blue`(또는 `api_green`) 의 `[config] 환경 변수 설정 오류` 목록                                                  |
 | 인증서 발급 실패                                                                            | DNS A 레코드가 Elastic IP인지, 보안 그룹 80/443 열림 확인. `logs caddy`                                                                       |
 | 브라우저 CORS 오류                                                                          | `WEB_ORIGIN`이 Vercel 주소와 **정확히** 같은지 (https, 끝 슬래시 없음)                                                                        |
-| 새로고침하면 로그아웃                                                                       | 4장: `none`+Secure인지, Safari면 커스텀 도메인 + `lax`                                                                                        |
+| 새로고침하면 로그아웃                                                                       | 4장: `none`+Secure+Partitioned인지. 엄격한 쿠키 설정·오래된 브라우저면 커스텀 도메인 + `lax`                                                  |
 | 모든 사용자가 429                                                                           | `TRUST_PROXY` 값 (Caddy 뒤면 1)                                                                                                               |
 | `prisma migrate deploy` 반복 실패                                                           | RDS 보안 그룹이 EC2 보안 그룹을 허용하는지, 비밀번호 URL 인코딩                                                                               |
 | Deploy: `Could not assume role` / `Not authorized to perform sts:AssumeRoleWithWebIdentity` | 신뢰 정책의 `sub`가 immutable 형식(`repo:POcodingWER@89626659/backend-visualized@1425018571:ref:refs/heads/main`)인지, `aud`, OIDC 공급자 ARN |
