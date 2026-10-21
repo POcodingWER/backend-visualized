@@ -149,4 +149,12 @@ compose ps
 # 배포 직후 메모리 (Actions 로그에서 바로 보이게. 실패해도 배포는 성공으로 둔다)
 docker stats --no-stream --format 'MEM {{.Name}} {{.MemUsage}} CPU {{.CPUPerc}}' || true
 free -m | sed -n '1,3p' || true
+
+# 배포 뒤 30분 동안 5초마다 서버 상태를 기록한다 (메모리·/health·컨테이너별 CPU). 다음 배포 때 그 기록을 요약해서 보여 준다.
+# → 배포 직후 문제나 부하 테스트 때 무슨 일이 있었는지 서버에 들어가지 않고 Actions 로그로 본다
+if ls /tmp/bv-watch/*.log > /dev/null 2>&1; then
+  echo "── 지난 배포 뒤 기록 ──"
+  ./deploy/diagnose.sh report 2>&1 | tail -n 75 || true
+fi
+./deploy/diagnose.sh watch 1800 || true
 echo "DEPLOYED_SHA=$sha COLOR=$next"
