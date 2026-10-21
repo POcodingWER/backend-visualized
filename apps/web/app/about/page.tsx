@@ -14,7 +14,7 @@ export const metadata = {
 /** 장 번호 없는 따로 페이지. 글은 모두 landing-content.ts의 AUTHOR에서 온다 */
 export default function AboutPage() {
   return (
-    <main className={ui.page}>
+    <main className={`${ui.page} ${ui.codeChips}`}>
       <header className={`${ui.wide} ${styles.intro}`}>
         <Image
           src="/author.jpg"

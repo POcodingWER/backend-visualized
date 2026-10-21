@@ -17,7 +17,7 @@ export const REASONS: Reason[] = [
     id: 'ssm',
     question: '왜 SSH가 아니라 SSM으로 배포하나요?',
     answer:
-      'SSH로 배포하려면 GitHub 쪽 컴퓨터(IP가 매번 바뀜)에 22번 문을 열어 주고, 서버 열쇠(.pem)를 GitHub에 맡겨야 해요. SSM은 서버 안의 에이전트가 AWS로 나가는 연결만 써서 문을 하나도 더 안 열어요. 누가 언제 무슨 명령을 보냈는지 AWS에 기록이 남고, 배포 역할은 "이 서버 한 대에 셸 명령 보내기"만 할 수 있어요.',
+      'SSH로 배포하려면 GitHub 쪽 컴퓨터(IP가 매번 바뀜)에 22번 문을 열어 주고, 서버 열쇠(`.pem`)를 GitHub에 맡겨야 해요. SSM은 서버 안의 에이전트가 AWS로 나가는 연결만 써서 문을 하나도 더 안 열어요. 누가 언제 무슨 명령을 보냈는지 AWS에 기록이 남고, 배포 역할은 "이 서버 한 대에 셸 명령 보내기"만 할 수 있어요.',
     cost: 'IAM 역할 두 개와 정책을 직접 이해해야 했어요. 처음 설정이 SSH보다 훨씬 오래 걸렸어요.',
   },
   {
@@ -38,8 +38,8 @@ export const REASONS: Reason[] = [
     id: 'caddy',
     question: '왜 sslip.io + Caddy인가요?',
     answer:
-      'Vercel 화면은 https라서 API도 https여야 브라우저가 막지 않고, 로그인 쿠키(Secure)도 https에서만 돼요. 그런데 Let’s Encrypt는 IP 주소에는 인증서를 안 줘요. sslip.io는 IP를 이름으로 바꿔 주는 무료 주소라 도메인을 사지 않고도 진짜 인증서를 받을 수 있었어요. Caddy는 설정 몇 줄로 인증서 발급과 갱신, http→https 이동까지 해 줘요.',
-    cost: 'sslip.io는 남의 무료 서비스라 멈추면 API 주소도 멈춰요. 제 도메인이 생기면 API_DOMAIN 한 줄만 바꾸면 돼요.',
+      'Vercel 화면은 https라서 API도 https여야 브라우저가 막지 않고, 로그인 쿠키(`Secure`)도 https에서만 돼요. 그런데 Let’s Encrypt는 IP 주소에는 인증서를 안 줘요. sslip.io는 IP를 이름으로 바꿔 주는 무료 주소라 도메인을 사지 않고도 진짜 인증서를 받을 수 있었어요. Caddy는 설정 몇 줄로 인증서 발급과 갱신, http→https 이동까지 해 줘요.',
+    cost: 'sslip.io는 남의 무료 서비스라 멈추면 API 주소도 멈춰요. 제 도메인이 생기면 `API_DOMAIN` 한 줄만 바꾸면 돼요.',
   },
   {
     id: 'eip',
@@ -53,7 +53,7 @@ export const REASONS: Reason[] = [
     question: '왜 GitHub OIDC인가요?',
     answer:
       'AWS 열쇠(Access Key)를 GitHub Secret에 넣어 두면 언젠가 새거나 잊힌 채로 남아요. OIDC는 배포할 때마다 GitHub가 증명서를 내고 AWS가 1시간짜리 임시 열쇠를 줘요. 저장해 둔 비밀값이 아예 없어요.',
-    cost: '증명서의 sub 글자 하나만 달라도 거절돼서, 처음엔 왜 안 되는지 찾는 데 시간이 걸렸어요.',
+    cost: '증명서의 `sub` 글자 하나만 달라도 거절돼서, 처음엔 왜 안 되는지 찾는 데 시간이 걸렸어요.',
   },
   {
     id: 'ghcr',
@@ -81,43 +81,43 @@ export const TROUBLES: Trouble[] = [
     symptom: 'MySQL Workbench가 서버 MySQL에 접속을 못 함',
     cause:
       'MySQL 컨테이너는 Docker 안쪽 네트워크에만 열려 있었어요. 보안 그룹도 3306을 막고 있어서 바깥에서는 길이 아예 없었어요(그게 맞는 상태였어요).',
-    fix: "3306을 인터넷에 여는 대신 '127.0.0.1:3306:3306'으로 서버 자기 자신에만 열고, Workbench는 Standard TCP/IP over SSH로 SSH 터널을 타고 들어가요.",
+    fix: '3306을 인터넷에 여는 대신 `127.0.0.1:3306:3306`으로 서버 자기 자신에만 열고, Workbench는 Standard TCP/IP over SSH로 SSH 터널을 타고 들어가요.',
   },
   {
     symptom: '고정 IP로 바꾼 뒤 잠깐 503, Workbench는 계속 접속 실패',
     cause:
-      '주소를 바꾸고 다시 띄우는 동안 API가 아직 켜지는 중이라 Caddy가 503을 돌려줬어요. 곧 새 주소로 인증서를 다시 받고 정상이 됐어요. Workbench는 예전 IP 13.209.4.20을 그대로 가리키고 있었어요.',
-    fix: 'API가 healthy가 될 때까지 기다리면 돼요. Workbench의 SSH Hostname을 3.35.59.193:22로 바꿨어요. IP를 바꾸면 sslip.io 주소, Vercel, Workbench, ssh 명령을 한 번에 같이 고쳐야 해요.',
+      '주소를 바꾸고 다시 띄우는 동안 API가 아직 켜지는 중이라 Caddy가 503을 돌려줬어요. 곧 새 주소로 인증서를 다시 받고 정상이 됐어요. Workbench는 예전 IP `13.209.4.20`을 그대로 가리키고 있었어요.',
+    fix: 'API가 healthy가 될 때까지 기다리면 돼요. Workbench의 SSH Hostname을 `3.35.59.193:22`로 바꿨어요. IP를 바꾸면 sslip.io 주소, Vercel, Workbench, `ssh` 명령을 한 번에 같이 고쳐야 해요.',
   },
   {
-    symptom: 'Not authorized to perform sts:AssumeRoleWithWebIdentity',
+    symptom: '`Not authorized to perform sts:AssumeRoleWithWebIdentity`',
     cause:
-      '이 저장소는 GitHub OIDC의 immutable subject 형식이라 sub에 소유자·저장소 ID가 붙어요(repo:POcodingWER@89626659/backend-visualized@1425018571:ref:refs/heads/main). 신뢰 정책에는 이름만 있는 예전 형식이 적혀 있어서 글자가 달랐어요.',
-    fix: 'gh api …/oidc/customization/sub 로 실제 형식을 확인하고, GitHub 설정을 되돌리는 대신(그게 덜 안전해요) AWS 신뢰 정책의 sub를 새 형식으로 고쳤어요.',
+      '이 저장소는 GitHub OIDC의 immutable subject 형식이라 `sub`에 소유자·저장소 ID가 붙어요(`repo:POcodingWER@89626659/backend-visualized@1425018571:ref:refs/heads/main`). 신뢰 정책에는 이름만 있는 예전 형식이 적혀 있어서 글자가 달랐어요.',
+    fix: '`gh api …/oidc/customization/sub`로 실제 형식을 확인하고, GitHub 설정을 되돌리는 대신(그게 덜 안전해요) AWS 신뢰 정책의 `sub`를 새 형식으로 고쳤어요.',
   },
   {
     symptom: 'SSM에 서버가 안 보이고, 메타데이터가 404',
     cause:
-      'EC2에 인스턴스 역할이 안 붙어 있었어요. 169.254.169.254의 iam/security-credentials/가 404였고, SSM Agent 로그에 "no EC2 instance role found", 30분마다 다시 시도한다고 나왔어요.',
-    fix: '콘솔에서 backend-visualized-ec2-ssm 역할을 붙이고 sudo snap restart amazon-ssm-agent → 30분을 안 기다리고 바로 Credentials ready.',
+      'EC2에 인스턴스 역할이 안 붙어 있었어요. `169.254.169.254`의 `iam/security-credentials/`가 404였고, SSM Agent 로그에 `no EC2 instance role found`, 30분마다 다시 시도한다고 나왔어요.',
+    fix: '콘솔에서 `backend-visualized-ec2-ssm` 역할을 붙이고 `sudo snap restart amazon-ssm-agent` → 30분을 안 기다리고 바로 `Credentials ready`.',
   },
   {
-    symptom: 'AccessDenied: ssm:SendCommand',
+    symptom: '`AccessDenied: ssm:SendCommand`',
     cause:
       'GitHub가 OIDC로 배포 역할을 받는 데까지는 성공했는데, 그 역할에 SSM 명령을 보낼 권한(인라인 정책)이 없었어요.',
-    fix: '배포 역할에 인라인 정책 ssm-deploy-only를 붙였어요. SendCommand는 이 인스턴스 하나와 AWS-RunShellScript 문서로만 좁히고, 조회(GetCommandInvocation)만 전체로 열었어요.',
+    fix: '배포 역할에 인라인 정책 `ssm-deploy-only`를 붙였어요. `SendCommand`는 이 인스턴스 하나와 `AWS-RunShellScript` 문서로만 좁히고, 조회(`GetCommandInvocation`)만 전체로 열었어요.',
   },
   {
-    symptom: 'caddy reload: connection refused (첫 blue-green 배포 실패)',
+    symptom: '`caddy reload: connection refused` (첫 blue-green 배포 실패)',
     cause:
-      '그 배포에서만 Caddy 컨테이너가 새로 만들어졌는데, 관리 API(:2019)가 뜨기 1~2초 전에 reload를 불러서 거절당했어요. 서비스는 이미 새 쪽을 보고 있었고, 끊긴 건 Caddy가 다시 뜨는 순간의 요청 4번(약 0.8초)이었어요.',
-    fix: 'deploy.sh가 reload를 1초 간격으로 최대 15번 다시 시도하게 고쳤어요. 그 뒤 배포는 전부 통과했어요.',
+      '그 배포에서만 Caddy 컨테이너가 새로 만들어졌는데, 관리 API(`:2019`)가 뜨기 1~2초 전에 `reload`를 불러서 거절당했어요. 서비스는 이미 새 쪽을 보고 있었고, 끊긴 건 Caddy가 다시 뜨는 순간의 요청 4번(약 0.8초)이었어요.',
+    fix: '`deploy.sh`가 `reload`를 1초 간격으로 최대 15번 다시 시도하게 고쳤어요. 그 뒤 배포는 전부 통과했어요.',
   },
   {
     symptom: 'Safari에서 새로고침하면 로그인이 풀리지 않을까 걱정했던 것',
     cause:
       '화면(vercel.app)과 API(sslip.io)가 서로 다른 사이트라 로그인 쿠키가 "제3자 쿠키"가 돼요. Safari는 원래 제3자 쿠키를 기본으로 막아서(ITP) 새로고침하면 로그인이 풀릴 거라고 생각했어요.',
-    fix: '쿠키에 SameSite=None; Secure; Partitioned를 붙였고, 실제 Safari에서 새로고침해도 로그인이 유지되는 걸 확인했어요 (Partitioned 덕분으로 보여요). 다만 "모든 쿠키 차단" 같은 엄격한 설정이나 오래된 버전에서는 여전히 막힐 수 있어서, 제 도메인으로 화면과 API를 같은 사이트로 묶고 SameSite=Lax로 바꾸는 게 가장 튼튼한 해결이에요.',
+    fix: '쿠키에 `SameSite=None; Secure; Partitioned`를 붙였고, 실제 Safari에서 새로고침해도 로그인이 유지되는 걸 확인했어요 (Partitioned 덕분으로 보여요). 다만 "모든 쿠키 차단" 같은 엄격한 설정이나 오래된 버전에서는 여전히 막힐 수 있어서, 제 도메인으로 화면과 API를 같은 사이트로 묶고 `SameSite=Lax`로 바꾸는 게 가장 튼튼한 해결이에요.',
   },
 ];
 
@@ -130,7 +130,7 @@ export const RETRO = {
   ],
   learned: [
     '프론트에서 쓰던 "배포 버튼"이 실제로는 빌드, 이미지 저장, 권한 확인, 명령 전달, 건강 확인, 문 바꿔 달기로 쪼개진다는 걸 직접 만들어 보고 알았어요.',
-    '"돌아간다"와 "운영할 수 있다"는 달랐어요. 재부팅 테스트, 0.2초마다 health 찌르기, 복원 테스트처럼 일부러 깨 보고 숫자로 확인해야 마음이 놓였어요.',
+    '"돌아간다"와 "운영할 수 있다"는 달랐어요. 재부팅 테스트, 0.2초마다 `/health` 찌르기, 복원 테스트처럼 일부러 깨 보고 숫자로 확인해야 마음이 놓였어요.',
     '비밀값은 처음부터 서버 안에서 만들고, 화면에는 이름만 찍는 습관이 생겼어요.',
     'CORS, SameSite 쿠키처럼 프론트에서 "서버가 막아요"라고 넘기던 것들이 서버 쪽에서는 한 줄 설정이라는 것, 그리고 그 한 줄의 의미를 이제는 설명할 수 있어요.',
   ],
