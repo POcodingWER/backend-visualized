@@ -114,10 +114,10 @@ export const TROUBLES: Trouble[] = [
     fix: 'deploy.sh가 reload를 1초 간격으로 최대 15번 다시 시도하게 고쳤어요. 그 뒤 배포는 전부 통과했어요.',
   },
   {
-    symptom: 'Safari에서 새로고침하면 로그인이 풀릴 수 있음',
+    symptom: 'Safari에서 새로고침하면 로그인이 풀리지 않을까 걱정했던 것',
     cause:
-      '화면(vercel.app)과 API(sslip.io)가 서로 다른 사이트라 로그인 쿠키가 "제3자 쿠키"가 돼요. Chrome·Firefox는 SameSite=None; Secure; Partitioned면 보내 주지만, Safari(ITP)는 기본으로 막아요.',
-    fix: '아직 남은 숙제예요. 제 도메인을 사서 app.내도메인 + api.내도메인처럼 같은 사이트로 묶고 SameSite=Lax로 바꾸는 게 확실한 해결이에요.',
+      '화면(vercel.app)과 API(sslip.io)가 서로 다른 사이트라 로그인 쿠키가 "제3자 쿠키"가 돼요. Safari는 원래 제3자 쿠키를 기본으로 막아서(ITP) 새로고침하면 로그인이 풀릴 거라고 생각했어요.',
+    fix: '쿠키에 SameSite=None; Secure; Partitioned를 붙였고, 실제 Safari에서 새로고침해도 로그인이 유지되는 걸 확인했어요 (Partitioned 덕분으로 보여요). 다만 "모든 쿠키 차단" 같은 엄격한 설정이나 오래된 버전에서는 여전히 막힐 수 있어서, 제 도메인으로 화면과 API를 같은 사이트로 묶고 SameSite=Lax로 바꾸는 게 가장 튼튼한 해결이에요.',
   },
 ];
 
@@ -135,7 +135,7 @@ export const RETRO = {
     'CORS, SameSite 쿠키처럼 프론트에서 "서버가 막아요"라고 넘기던 것들이 서버 쪽에서는 한 줄 설정이라는 것, 그리고 그 한 줄의 의미를 이제는 설명할 수 있어요.',
   ],
   next: [
-    '제 도메인 사기: Safari 쿠키 문제를 끝내고 sslip.io 의존도 없애기',
+    '제 도메인 사기: 화면과 API를 같은 사이트로 묶어 엄격한 쿠키 설정에서도 로그인이 유지되게 하고, sslip.io 의존도 없애기',
     '롤백 연습: 일부러 예전 커밋으로 되돌려 보고 몇 초 걸리는지 재기',
     '모니터링과 알림: 서버가 죽거나 디스크·메모리가 차면 메일이 오게 (CloudWatch 경보)',
     'GitHub Actions의 Node 20 경고 정리: checkout, build-push, login, setup-buildx 액션 버전 올리기',
