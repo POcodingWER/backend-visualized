@@ -26,18 +26,21 @@ export function RuntimeDiagram() {
               EC2 t4g.small · 3.35.59.193 · 밖으로 열린 문은 80/443뿐
             </p>
             <div className={`${styles.box} ${styles.caddy}`}>
+              <Marks steps={[4]} />
               <b>Caddy :443</b>
               <small>인증서 · 3-35-59-193.sslip.io</small>
             </div>
             <p className={styles.arrowDown}>지금 서비스 중인 색으로 ↓</p>
             <div className={styles.pair}>
               <div className={`${styles.box} ${styles.blue}`}>
+                <Marks steps={[5, 6]} />
                 <b>api_blue :4000</b>
-                <small>NestJS</small>
+                <small>NestJS · 지금 서비스 중</small>
               </div>
               <div className={`${styles.box} ${styles.green}`}>
+                <Marks steps={[1, 2, 3]} />
                 <b>api_green :4000</b>
-                <small>다음 배포 때 켜짐</small>
+                <small>쉬는 중 · 다음 배포 때 켜짐</small>
               </div>
             </div>
             <p className={styles.arrowDown}>Docker 내부 네트워크 (밖에서 안 보임) ↓</p>
@@ -54,6 +57,25 @@ export function RuntimeDiagram() {
           </div>
         </div>
       </div>
+      <div className={styles.swap}>
+        <p className={styles.swapTitle}>
+          끊기지 않는 배포(blue-green): 서버 안에서 일어나는 순서. 번호는 위 그림의 동그라미예요
+          (blue가 서비스 중일 때의 예).
+        </p>
+        <ol>
+          {SWAP.map((step, index) => (
+            <li key={step.what}>
+              <Marks steps={[index + 1]} />
+              <b>{step.what}</b>
+              <span>{step.detail}</span>
+            </li>
+          ))}
+        </ol>
+        <p className={styles.swapSafe}>
+          3에서 200이 안 나오면 4로 넘어가지 않아요. 손님은 계속 api_blue를 쓰고, 새 쪽만 꺼져요.
+          배포 3번 동안 0.2초마다 찔러서 실패한 요청은 0번이었어요.
+        </p>
+      </div>
       <figcaption>
         화면과 API는 따로 살아요. 인터넷에서 서버로 들어오는 길은 Caddy(443) 하나이고, API · MySQL ·
         Redis는 서버 안쪽 네트워크에서만 서로 이야기해요.
@@ -61,6 +83,40 @@ export function RuntimeDiagram() {
     </figure>
   );
 }
+
+/** 그림 속 번호 동그라미 (blue-green 교체 순서) */
+function Marks({ steps }: { steps: number[] }) {
+  return (
+    <span className={styles.marks} aria-hidden="true">
+      {steps.map((step) => (
+        <i key={step}>{step}</i>
+      ))}
+    </span>
+  );
+}
+
+/** deploy/deploy.sh가 하는 일. 시간은 2026-10-21 Deploy 기록 (새 이미지 #8 / 이미지 그대로 #9~#11) */
+const SWAP = [
+  {
+    what: '새 이미지 받기',
+    detail: 'GitHub가 구워 둔 이번 버전을 받아요. 새로 구운 이미지면 19초, 그대로면 2~3초',
+  },
+  {
+    what: '쉬던 쪽에 켜기',
+    detail:
+      '손님이 없는 api_green에 새 버전을 켜요. 켜지면서 DB 구조 변경(마이그레이션)을 한 번 해요',
+  },
+  {
+    what: '건강한지 확인',
+    detail: '서버 안쪽에서 /health가 200이 될 때까지 2초마다 물어봐요. 4~8초',
+  },
+  {
+    what: '문 바꾸기',
+    detail: 'Caddy가 보낼 곳을 api_green으로 바꾸고 설정만 다시 읽어요. 연결은 안 끊겨요',
+  },
+  { what: '하던 일 마무리', detail: 'api_blue가 처리 중이던 요청이 끝나게 10초 기다려요' },
+  { what: '예전 쪽 끄기', detail: 'api_blue를 꺼요. 다음 배포 때는 이쪽이 "쉬던 쪽"이 돼요' },
+] as const;
 
 const PIPELINE = [
   { who: '내 맥', what: 'git push origin main' },

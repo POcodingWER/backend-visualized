@@ -2,11 +2,11 @@ import Link from 'next/link';
 import { DEPLOY_PAGE, githubFile } from '../../lib/site';
 import { Conclusion } from '../components/atoms/Conclusion';
 import { INK, inkStroke } from '../components/atoms/ink';
-import { DevDetails } from '../components/molecules/DevDetails';
 import { ResultNumbers } from '../components/molecules/ResultNumbers';
 import { ComicStrip } from '../components/organisms/ComicStrip';
 import ui from '../components/ui.module.css';
 import { REASONS, RESTORE_ROWS, RETRO, TROUBLES } from './content';
+import { BlueGreenDetails } from './BlueGreenDetails';
 import { PipelineDiagram, RuntimeDiagram } from './Diagrams';
 import { DEPLOY_STEPS } from './steps';
 import styles from './deploy.module.css';
@@ -117,11 +117,20 @@ export default function DeployPage() {
       </header>
 
       <section className={ui.wide}>
-        <ComicStrip label="4컷 만화: 서버를 빌려서 끊기지 않게 배포하기까지" panels={PANELS} />
+        <h2 className={ui.sectionTitle}>1. 그림으로 보는 구조</h2>
+        <p className={ui.lead}>
+          제가 만든 서버의 모습이에요. 화면은 Vercel, API · DB · 캐시는 AWS 서버 한 대에 있고, 새
+          버전을 올리는 동안에도 손님 요청은 끊기지 않아요.
+        </p>
+        <h3 className={styles.diagramTitle}>지금 돌아가는 모습 + 끊기지 않는 배포</h3>
+        <RuntimeDiagram />
+        <BlueGreenDetails />
+        <h3 className={styles.diagramTitle}>main에 push하면 일어나는 일</h3>
+        <PipelineDiagram />
       </section>
 
       <section className={ui.wide}>
-        <h2 className={ui.sectionTitle}>숫자로 본 결과</h2>
+        <h2 className={ui.sectionTitle}>2. 숫자로 본 결과</h2>
         <ResultNumbers
           items={[
             {
@@ -158,67 +167,58 @@ export default function DeployPage() {
         />
       </section>
 
+      <section className={ui.wide}>
+        <ComicStrip label="4컷 만화: 서버를 빌려서 끊기지 않게 배포하기까지" panels={PANELS} />
+      </section>
+
       <section className={ui.column}>
-        <h2 className={ui.sectionTitle}>1. 순서대로</h2>
+        <h2 className={ui.sectionTitle}>3. 순서대로</h2>
         <p className={ui.lead}>
           가입부터 매일 백업까지 한 일이에요. 앞의 세 단계는 브라우저(AWS 콘솔)에서, 그다음부터는
-          대부분 터미널에서 했어요. 제목을 누르면 그 단계의 명령으로 가요.
+          대부분 터미널에서 했어요. 단계마다 &quot;실행한 명령어 보기&quot;를 열면 친 그대로 나와요.
+          비밀번호 · 토큰 · 서버 설정 파일의 값은 전부 <code>&lt;가림&gt;</code>으로 바꿨어요.
         </p>
         <ol className={styles.roadmap}>
           {DEPLOY_STEPS.map((step, index) => (
-            <li key={step.title} id={`road-${index + 1}`}>
+            <li key={step.title} id={`step-${index + 1}`}>
               <p className={styles.roadTitle}>
-                <a href={`#step-${index + 1}`}>
-                  <b>{step.title}</b>
-                </a>
+                <b>{step.title}</b>
                 {step.reason && (
                   <a href={`#reason-${step.reason}`} className={styles.whyChip}>
                     왜 이렇게? →
                   </a>
                 )}
               </p>
-              <p>{step.plain}</p>
+              <div className={styles.roadBody}>
+                <p>{step.plain}</p>
+                <details className={styles.fold}>
+                  <summary>실행한 명령어 보기</summary>
+                  <div className={styles.foldBody}>
+                    {step.commands.map((block, blockIndex) => (
+                      <figure key={blockIndex} className={styles.terminal}>
+                        <figcaption>{block.where}</figcaption>
+                        <pre tabIndex={0}>
+                          <code>{block.code}</code>
+                        </pre>
+                      </figure>
+                    ))}
+                    {step.result && <p className={styles.result}>결과 · {step.result}</p>}
+                  </div>
+                </details>
+              </div>
             </li>
           ))}
         </ol>
-      </section>
-
-      <section className={ui.wide}>
-        <h2 className={ui.sectionTitle}>2. 터미널에서 친 명령 그대로</h2>
-        <p className={ui.lead}>
-          실제로 친 순서 그대로 옮겼어요. 비밀번호 · 토큰 · 서버 설정 파일의 값은 전부{' '}
-          <code>&lt;가림&gt;</code>으로 바꿨어요.
+        <p className={ui.source}>
+          전체 설명은 저장소의 <a href={githubFile('docs/deploy.md')}>docs/deploy.md</a>, 스크립트는{' '}
+          <a href={githubFile('deploy/deploy.sh')}>deploy/deploy.sh</a> ·{' '}
+          <a href={githubFile('deploy/backup-mysql.sh')}>deploy/backup-mysql.sh</a> ·{' '}
+          <a href={githubFile('.github/workflows/deploy.yml')}>.github/workflows/deploy.yml</a>
         </p>
-        <DevDetails description="AWS 콘솔 클릭 순서, 셸 명령, IAM 정책 JSON">
-          <div className={styles.commands}>
-            {DEPLOY_STEPS.map((step, index) => (
-              <section key={step.title} id={`step-${index + 1}`} className={styles.command}>
-                <h3>
-                  <span className={styles.stepNumber}>{index + 1}</span> {step.title}
-                </h3>
-                {step.commands.map((block, blockIndex) => (
-                  <figure key={blockIndex} className={styles.terminal}>
-                    <figcaption>{block.where}</figcaption>
-                    <pre tabIndex={0}>
-                      <code>{block.code}</code>
-                    </pre>
-                  </figure>
-                ))}
-                {step.result && <p className={styles.result}>결과 · {step.result}</p>}
-              </section>
-            ))}
-          </div>
-          <p className={ui.source}>
-            전체 설명은 저장소의 <a href={githubFile('docs/deploy.md')}>docs/deploy.md</a>,
-            스크립트는 <a href={githubFile('deploy/deploy.sh')}>deploy/deploy.sh</a> ·{' '}
-            <a href={githubFile('deploy/backup-mysql.sh')}>deploy/backup-mysql.sh</a> ·{' '}
-            <a href={githubFile('.github/workflows/deploy.yml')}>.github/workflows/deploy.yml</a>
-          </p>
-        </DevDetails>
       </section>
 
       <section className={ui.wide}>
-        <h2 className={ui.sectionTitle}>3. 왜 이렇게 했나</h2>
+        <h2 className={ui.sectionTitle}>4. 왜 이렇게 했나</h2>
         <div className={styles.reasons}>
           {REASONS.map((reason) => {
             const step = DEPLOY_STEPS.findIndex((item) => item.reason === reason.id) + 1;
@@ -232,7 +232,7 @@ export default function DeployPage() {
                   </p>
                 )}
                 {step > 0 && (
-                  <a href={`#road-${step}`} className={styles.backLink}>
+                  <a href={`#step-${step}`} className={styles.backLink}>
                     ↑ {step}단계로 돌아가기
                   </a>
                 )}
@@ -243,7 +243,7 @@ export default function DeployPage() {
       </section>
 
       <section className={ui.wide}>
-        <h2 className={ui.sectionTitle}>4. DB 백업은 언제, 어떻게</h2>
+        <h2 className={ui.sectionTitle}>5. DB 백업은 언제, 어떻게</h2>
         <div className={styles.backup}>
           <dl className={styles.facts}>
             <div>
@@ -308,7 +308,7 @@ export default function DeployPage() {
       </section>
 
       <section className={ui.wide}>
-        <h2 className={ui.sectionTitle}>5. 막혔던 것들</h2>
+        <h2 className={ui.sectionTitle}>6. 막혔던 것들</h2>
         <ol className={styles.troubles}>
           {TROUBLES.map((trouble) => (
             <li key={trouble.symptom}>
@@ -322,14 +322,6 @@ export default function DeployPage() {
             </li>
           ))}
         </ol>
-      </section>
-
-      <section className={ui.wide}>
-        <h2 className={ui.sectionTitle}>6. 그림으로 보는 구조</h2>
-        <h3 className={styles.diagramTitle}>지금 돌아가는 모습</h3>
-        <RuntimeDiagram />
-        <h3 className={styles.diagramTitle}>main에 push하면 일어나는 일</h3>
-        <PipelineDiagram />
       </section>
 
       <section className={ui.column}>
