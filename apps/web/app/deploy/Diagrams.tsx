@@ -130,6 +130,30 @@ const PIPELINE = [
   { who: 'GitHub', what: '바깥에서 `https://…/health` 200 확인' },
 ] as const;
 
+/** OIDC → SSM: deploy.yml의 deploy job (계정 ID는 자리표시자) */
+const ACCESS = [
+  {
+    what: '출입증 받기',
+    detail: 'main 브랜치의 Actions가 GitHub에서 "이 저장소 main" 증명서(OIDC 토큰)를 받아요',
+  },
+  {
+    what: 'AWS에 제출',
+    detail:
+      'IAM이 신뢰 정책으로 저장소·브랜치를 확인해요 (`repo:<오너>@<ID>/<저장소>@<ID>:ref:refs/heads/main`)',
+  },
+  { what: '임시 키 발급', detail: '1시간짜리 임시 키를 줘요. GitHub에 저장해 둔 비밀키는 없어요' },
+  {
+    what: '일 시키기',
+    detail:
+      '임시 키로 SSM에 "`deploy.sh` 실행"을 요청해요. 권한 정책이 이 서버 + `AWS-RunShellScript`만 허락해요',
+  },
+  {
+    what: '서버에 전달',
+    detail: 'SSM이 서버의 에이전트에 넘기고, `deploy.sh`가 blue-green을 시작해요',
+  },
+  { what: '결과 돌려받기', detail: '실행 결과와 로그를 Actions가 받아 와서 성공/실패를 표시해요' },
+] as const;
+
 /** 배포가 흘러가는 순서 */
 export function PipelineDiagram() {
   return (
@@ -142,6 +166,20 @@ export function PipelineDiagram() {
           </li>
         ))}
       </ol>
+      <div className={styles.swap}>
+        <p className={styles.swapTitle}>
+          위 4·5번 자세히: OIDC는 출입증 받기, SSM은 출입증 들고 서버에 일 시키기.
+        </p>
+        <ol>
+          {ACCESS.map((step, index) => (
+            <li key={step.what}>
+              <Marks steps={[index + 1]} />
+              <b>{step.what}</b>
+              <span>{withCode(step.detail)}</span>
+            </li>
+          ))}
+        </ol>
+      </div>
       <figcaption>
         main에 push하면 사람 손 없이 여기까지 가요. 중간 어디서 실패하면 Caddy는 계속 예전 색을 보고
         있어서 서비스는 그대로예요.
