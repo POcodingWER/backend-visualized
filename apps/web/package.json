@@ -15,7 +15,8 @@
     "next": "^15.1.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "recharts": "^3.10.1"
+    "recharts": "^3.10.1",
+    "simple-icons": "^16.35.0"
   },
   "devDependencies": {
     "@bv/tsconfig": "workspace:*",

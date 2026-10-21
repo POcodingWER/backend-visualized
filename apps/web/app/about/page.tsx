@@ -2,10 +2,12 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { DEPLOY_PAGE, GITHUB_URL } from '../../lib/site';
 import { buttonClassName } from '../components/atoms/Button';
+import { TechChip } from '../components/atoms/TechChip';
 import { ResultNumbers } from '../components/molecules/ResultNumbers';
 import ui from '../components/ui.module.css';
 import { AUTHOR, DECISIONS, type TextLink } from '../landing-content';
 import styles from './about.module.css';
+import { TECH_ICONS } from './tech-icons';
 
 // API를 부르지 않는 페이지라 빌드할 때 HTML을 미리 만들어 둔다(SSG).
 // cookies() · headers()처럼 요청마다 다른 값을 쓰는 코드가 들어오면 빌드가 실패해서 바로 알 수 있다
@@ -64,7 +66,9 @@ export default function AboutPage() {
               <dd>
                 <ul>
                   {items.map((item) => (
-                    <li key={item}>{item}</li>
+                    <li key={item}>
+                      <TechChip label={item} icon={TECH_ICONS[item]} className={styles.chip} />
+                    </li>
                   ))}
                 </ul>
               </dd>

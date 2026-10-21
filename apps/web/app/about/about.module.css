@@ -65,12 +65,24 @@
   gap: var(--space-2);
 }
 .stack li {
+  display: flex;
+}
+/* 로고가 있든 없든 칩 높이·안쪽 여백은 같다 (로고는 글자 앞 14px) */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   padding: 0.05rem 0.6rem;
   border: 1.5px solid var(--ink);
   border-radius: 999px;
   background: var(--paper-raised);
   font-size: var(--text-sm);
   font-weight: 600;
+  white-space: nowrap;
+}
+.chip svg {
+  flex: none;
+  opacity: 0.85;
 }
 
 /* 이 프로젝트에서 한 것: 장 카드 */
