@@ -56,7 +56,9 @@ snapshot() {
 }
 
 watch_loop() {
-  local seconds=$1 file=$2 end=$(($(date +%s) + seconds))
+  # local 한 줄에 같이 쓰면 end를 계산할 때 seconds가 아직 비어 있다 (0초 → 바로 끝남). 그래서 나눠 쓴다
+  local seconds=$1 file=$2
+  local end=$(($(date +%s) + seconds))
   echo "# time health secs memUsedMB availMB swapMB load1 | 컨테이너 mem cpu …" > "$file"
   while [ "$(date +%s)" -lt "$end" ]; do
     local mem swap containers
