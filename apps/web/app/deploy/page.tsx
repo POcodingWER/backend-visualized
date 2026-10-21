@@ -9,6 +9,7 @@ import { REASONS, RESTORE_ROWS, RETRO, TROUBLES } from './content';
 import { BlueGreenDetails } from './BlueGreenDetails';
 import { PipelineDiagram, RuntimeDiagram } from './Diagrams';
 import { DEPLOY_STEPS } from './steps';
+import { withCode } from '../../lib/inline-code';
 import styles from './deploy.module.css';
 
 export const metadata = {
@@ -104,7 +105,7 @@ const PANELS = [
 
 export default function DeployPage() {
   return (
-    <main className={ui.page}>
+    <main className={`${ui.page} ${ui.codeChips}`}>
       <header className={ui.column}>
         <p className={ui.eyebrow}>번외 · 장 번호 없음</p>
         <h1 className={ui.title}>
@@ -182,7 +183,7 @@ export default function DeployPage() {
           {DEPLOY_STEPS.map((step, index) => (
             <li key={step.title} id={`step-${index + 1}`}>
               <p className={styles.roadTitle}>
-                <b>{step.title}</b>
+                <b>{withCode(step.title)}</b>
                 {step.reason && (
                   <a href={`#reason-${step.reason}`} className={styles.whyChip}>
                     왜 이렇게? →
@@ -190,7 +191,7 @@ export default function DeployPage() {
                 )}
               </p>
               <div className={styles.roadBody}>
-                <p>{step.plain}</p>
+                <p>{withCode(step.plain)}</p>
                 <details className={styles.fold}>
                   <summary>실행한 명령어 보기</summary>
                   <div className={styles.foldBody}>
@@ -202,7 +203,7 @@ export default function DeployPage() {
                         </pre>
                       </figure>
                     ))}
-                    {step.result && <p className={styles.result}>결과 · {step.result}</p>}
+                    {step.result && <p className={styles.result}>결과 · {withCode(step.result)}</p>}
                   </div>
                 </details>
               </div>
@@ -224,11 +225,11 @@ export default function DeployPage() {
             const step = DEPLOY_STEPS.findIndex((item) => item.reason === reason.id) + 1;
             return (
               <article key={reason.id} id={`reason-${reason.id}`}>
-                <h3>{reason.question}</h3>
-                <p>{reason.answer}</p>
+                <h3>{withCode(reason.question)}</h3>
+                <p>{withCode(reason.answer)}</p>
                 {reason.cost && (
                   <p className={styles.cost}>
-                    <b>대신 떠안은 것</b> {reason.cost}
+                    <b>대신 떠안은 것</b> {withCode(reason.cost)}
                   </p>
                 )}
                 {step > 0 && (
@@ -249,21 +250,22 @@ export default function DeployPage() {
             <div>
               <dt>언제</dt>
               <dd>
-                매일 04:00 (한국 시간). 서버 시계가 Asia/Seoul이라 cron의 4시가 곧 새벽 4시예요.
+                매일 04:00 (한국 시간). 서버 시계가 <code>Asia/Seoul</code>이라 cron의 4시가 곧 새벽
+                4시예요.
               </dd>
             </div>
             <div>
               <dt>무엇을</dt>
               <dd>
-                <code>backend_visualized</code> DB 전체를 mysqldump로. 테이블을 잠그지 않아서 백업
-                중에도 사이트는 그대로예요.
+                <code>backend_visualized</code> DB 전체를 <code>mysqldump</code>로. 테이블을 잠그지
+                않아서 백업 중에도 사이트는 그대로예요.
               </dd>
             </div>
             <div>
               <dt>어디에</dt>
               <dd>
                 서버의 <code>/opt/backend-visualized/backups/</code>, 파일 이름에 한국 시간. 나만
-                읽을 수 있게(600) 저장하고 7일 지난 건 지워요.
+                읽을 수 있게(<code>chmod 600</code>) 저장하고 7일 지난 건 지워요.
               </dd>
             </div>
             <div>
@@ -312,12 +314,12 @@ export default function DeployPage() {
         <ol className={styles.troubles}>
           {TROUBLES.map((trouble) => (
             <li key={trouble.symptom}>
-              <h3>{trouble.symptom}</h3>
+              <h3>{withCode(trouble.symptom)}</h3>
               <dl>
                 <dt>왜</dt>
-                <dd>{trouble.cause}</dd>
+                <dd>{withCode(trouble.cause)}</dd>
                 <dt>어떻게</dt>
-                <dd>{trouble.fix}</dd>
+                <dd>{withCode(trouble.fix)}</dd>
               </dl>
             </li>
           ))}
@@ -334,19 +336,19 @@ export default function DeployPage() {
           <h3>어려웠던 것</h3>
           <ul>
             {RETRO.hard.map((line) => (
-              <li key={line}>{line}</li>
+              <li key={line}>{withCode(line)}</li>
             ))}
           </ul>
           <h3>프론트엔드 개발자로서 배운 것</h3>
           <ul>
             {RETRO.learned.map((line) => (
-              <li key={line}>{line}</li>
+              <li key={line}>{withCode(line)}</li>
             ))}
           </ul>
           <h3>다음에 할 것</h3>
           <ul>
             {RETRO.next.map((line) => (
-              <li key={line}>{line}</li>
+              <li key={line}>{withCode(line)}</li>
             ))}
           </ul>
           <p className={ui.source}>— 임철순</p>

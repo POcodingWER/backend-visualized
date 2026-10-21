@@ -9,13 +9,13 @@ export function BlueGreenDetails() {
       <div className={styles.foldBody}>
         <ol className={styles.foldSteps}>
           <li>
-            <b>GitHub: 어떤 커밋인지 확인.</b> SHA를 40자로 풀고{' '}
+            <b>GitHub: 어떤 커밋인지 확인.</b> 커밋 SHA를 40자로 풀고{' '}
             <code>git merge-base --is-ancestor &lt;SHA&gt; origin/main</code>으로 main에 있는
             커밋인지 본다. 아니면 여기서 멈춤.
           </li>
           <li>
             <b>GitHub → AWS → 서버.</b> OIDC로 1시간짜리 역할을 받아{' '}
-            <code>aws ssm send-command</code>(AWS-RunShellScript). 서버에서는{' '}
+            <code>aws ssm send-command</code>(<code>AWS-RunShellScript</code>). 서버에서는{' '}
             <code>
               sudo -u ubuntu bash -lc &apos;git fetch origin main; git reset --hard origin/main;
               ./deploy/deploy.sh &lt;SHA&gt;&apos;
@@ -45,9 +45,9 @@ export function BlueGreenDetails() {
             멈춘다.
           </li>
           <li>
-            <b>문 바꾸기.</b> upstream.caddy를 임시 파일에 쓰고 <code>mv</code>(한 번에 바뀜) →{' '}
-            <code>caddy reload</code>. Caddy가 막 새로 만들어졌으면 관리 API가 늦게 떠서 1초 간격
-            15번까지 다시 시도. 이어서 <code>curl --resolve</code>로 HTTPS 443을 거친{' '}
+            <b>문 바꾸기.</b> <code>upstream.caddy</code>를 임시 파일에 쓰고 <code>mv</code>(한 번에
+            바뀜) → <code>caddy reload</code>. Caddy가 막 새로 만들어졌으면 관리 API가 늦게 떠서 1초
+            간격 15번까지 다시 시도. 이어서 <code>curl --resolve</code>로 HTTPS 443을 거친{' '}
             <code>/health</code>도 확인.
           </li>
           <li>
@@ -91,15 +91,16 @@ export function BlueGreenDetails() {
           <dt>실패하면</dt>
           <dd>
             새 색이 2분 안에 건강해지지 않으면 그 색의 로그 40줄을 남기고 그 색만 멈춘 뒤 실패로
-            끝난다. upstream.caddy를 건드리기 전이라 Caddy는 계속 예전 색으로 보낸다. GitHub에는
-            빨간 불이 켜진다.
+            끝난다. <code>upstream.caddy</code>를 건드리기 전이라 Caddy는 계속 예전 색으로 보낸다.
+            GitHub에는 빨간 불이 켜진다.
           </dd>
           <dt>롤백</dt>
           <dd>
-            GitHub Actions에서 Deploy를 수동 실행하고 ref에 예전 커밋 SHA를 넣는다 (이미지 굽기는
-            건너뜀). 서버에서 직접 하려면 <code>./deploy/deploy.sh &lt;예전 SHA&gt;</code>. 순서는
-            위와 똑같은 blue-green이라 롤백도 안 끊긴다. 서버에 최근 이미지 3개가 남아 있고, 그보다
-            오래된 건 GHCR에서 다시 받는다. DB 마이그레이션은 되돌아가지 않는다.
+            GitHub Actions에서 Deploy를 수동 실행하고 <code>ref</code>에 예전 커밋 SHA를 넣는다
+            (이미지 굽기는 건너뜀). 서버에서 직접 하려면{' '}
+            <code>./deploy/deploy.sh &lt;예전 SHA&gt;</code>. 순서는 위와 똑같은 blue-green이라
+            롤백도 안 끊긴다. 서버에 최근 이미지 3개가 남아 있고, 그보다 오래된 건 GHCR에서 다시
+            받는다. DB 마이그레이션은 되돌아가지 않는다.
           </dd>
         </dl>
         <p className={styles.foldSource}>

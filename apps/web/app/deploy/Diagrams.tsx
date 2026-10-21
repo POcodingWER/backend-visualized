@@ -1,3 +1,4 @@
+import { withCode } from '../../lib/inline-code';
 import styles from './deploy.module.css';
 
 /** 지금 돌아가는 모습: 화면은 Vercel, API는 EC2 한 대 안의 Docker 네트워크 */
@@ -67,13 +68,13 @@ export function RuntimeDiagram() {
             <li key={step.what}>
               <Marks steps={[index + 1]} />
               <b>{step.what}</b>
-              <span>{step.detail}</span>
+              <span>{withCode(step.detail)}</span>
             </li>
           ))}
         </ol>
         <p className={styles.swapSafe}>
-          3에서 200이 안 나오면 4로 넘어가지 않아요. 손님은 계속 api_blue를 쓰고, 새 쪽만 꺼져요.
-          배포 3번 동안 0.2초마다 찔러서 실패한 요청은 0번이었어요.
+          3에서 200이 안 나오면 4로 넘어가지 않아요. 손님은 계속 <code>api_blue</code>를 쓰고, 새
+          쪽만 꺼져요. 배포 3번 동안 0.2초마다 찔러서 실패한 요청은 0번이었어요.
         </p>
       </div>
       <figcaption>
@@ -104,29 +105,29 @@ const SWAP = [
   {
     what: '쉬던 쪽에 켜기',
     detail:
-      '손님이 없는 api_green에 새 버전을 켜요. 켜지면서 DB 구조 변경(마이그레이션)을 한 번 해요',
+      '손님이 없는 `api_green`에 새 버전을 켜요. 켜지면서 DB 구조 변경(마이그레이션)을 한 번 해요',
   },
   {
     what: '건강한지 확인',
-    detail: '서버 안쪽에서 /health가 200이 될 때까지 2초마다 물어봐요. 4~8초',
+    detail: '서버 안쪽에서 `/health`가 200이 될 때까지 2초마다 물어봐요. 4~8초',
   },
   {
     what: '문 바꾸기',
-    detail: 'Caddy가 보낼 곳을 api_green으로 바꾸고 설정만 다시 읽어요. 연결은 안 끊겨요',
+    detail: 'Caddy가 보낼 곳을 `api_green`으로 바꾸고 설정만 다시 읽어요. 연결은 안 끊겨요',
   },
-  { what: '하던 일 마무리', detail: 'api_blue가 처리 중이던 요청이 끝나게 10초 기다려요' },
-  { what: '예전 쪽 끄기', detail: 'api_blue를 꺼요. 다음 배포 때는 이쪽이 "쉬던 쪽"이 돼요' },
+  { what: '하던 일 마무리', detail: '`api_blue`가 처리 중이던 요청이 끝나게 10초 기다려요' },
+  { what: '예전 쪽 끄기', detail: '`api_blue`를 꺼요. 다음 배포 때는 이쪽이 "쉬던 쪽"이 돼요' },
 ] as const;
 
 const PIPELINE = [
-  { who: '내 맥', what: 'git push origin main' },
+  { who: '내 맥', what: '`git push origin main`' },
   { who: 'GitHub', what: 'CI: 포맷 · 타입 · 린트 · 테스트 · 빌드' },
-  { who: 'GitHub', what: 'ARM 러너가 이미지 굽기 → GHCR (:SHA, :main)' },
+  { who: 'GitHub', what: 'ARM 러너가 이미지 굽기 → GHCR (`:SHA`, `:main`)' },
   { who: 'GitHub → AWS', what: 'OIDC 증명서 → 1시간짜리 배포 역할' },
-  { who: 'AWS', what: 'SSM send-command → 서버의 SSM Agent' },
-  { who: '서버', what: 'deploy.sh: 이미지 받기 → 쉬던 색에 띄우기' },
-  { who: '서버', what: '/health 200 확인 → Caddy 문 바꾸기 → 옛 색 끄기' },
-  { who: 'GitHub', what: '바깥에서 https://…/health 200 확인' },
+  { who: 'AWS', what: 'SSM `send-command` → 서버의 SSM Agent' },
+  { who: '서버', what: '`deploy.sh`: 이미지 받기 → 쉬던 색에 띄우기' },
+  { who: '서버', what: '`/health` 200 확인 → Caddy 문 바꾸기 → 옛 색 끄기' },
+  { who: 'GitHub', what: '바깥에서 `https://…/health` 200 확인' },
 ] as const;
 
 /** 배포가 흘러가는 순서 */
@@ -137,7 +138,7 @@ export function PipelineDiagram() {
         {PIPELINE.map((step, index) => (
           <li key={index}>
             <small>{step.who}</small>
-            <span>{step.what}</span>
+            <span>{withCode(step.what)}</span>
           </li>
         ))}
       </ol>

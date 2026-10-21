@@ -115,7 +115,7 @@ printf 'APT::Periodic::Update-Package-Lists "1";\nAPT::Periodic::Unattended-Upgr
 swapon --show; free -h`,
       },
     ],
-    result: '/swapfile 2G · swappiness 10 · Time zone: Asia/Seoul (KST)',
+    result: '`/swapfile` 2G · `swappiness` 10 · `Time zone: Asia/Seoul (KST)`',
   },
   {
     title: 'Docker 설치',
@@ -139,9 +139,9 @@ sudo systemctl enable --now docker containerd`,
     result: 'Docker 29.9.1 · Compose v5.6.0 · 부팅하면 Docker가 자동으로 켜짐',
   },
   {
-    title: '코드 받기: /opt/backend-visualized',
+    title: '코드 받기: `/opt/backend-visualized`',
     plain:
-      '공개 저장소라 토큰 없이 받을 수 있어요. /opt는 따로 설치한 프로그램을 두는 리눅스 관례 자리예요.',
+      '공개 저장소라 토큰 없이 받을 수 있어요. `/opt`는 따로 설치한 프로그램을 두는 리눅스 관례 자리예요.',
     commands: [
       {
         where: '서버 (ubuntu@EC2)',
@@ -153,7 +153,7 @@ cd /opt/backend-visualized && git log --oneline -1`,
     ],
   },
   {
-    title: '비밀값 파일 만들기: deploy/production.env',
+    title: '비밀값 파일 만들기: `deploy/production.env`',
     plain:
       'DB 비밀번호와 로그인 서명 키는 서버 안에서 바로 만들어 파일에만 적었어요. 깃에도, 채팅에도, 내 맥에도 남지 않아요. 아래 값 자리는 전부 가렸어요.',
     commands: [
@@ -190,10 +190,10 @@ git status --short --ignored deploy/                     # !! = git이 무시하
       },
     ],
     result:
-      '실제 파일에서는 <가림> 자리에 openssl이 만든 값이 들어가요. 화면에는 "이름"만 찍어서 확인했어요.',
+      '실제 파일에서는 `<가림>` 자리에 `openssl`이 만든 값이 들어가요. 화면에는 "이름"만 찍어서 확인했어요.',
   },
   {
-    title: 'MySQL · Redis · API 띄우기 (docker compose)',
+    title: 'MySQL · Redis · API 띄우기 (`docker compose`)',
     reason: 'docker-mysql',
     plain:
       '처음에는 서버가 직접 이미지를 만들었어요(2분). DB와 캐시를 먼저 띄우고, API는 켜지면서 테이블을 만드는 작업(마이그레이션)을 알아서 해요.',
@@ -211,13 +211,13 @@ sudo ss -tlnp | grep -E ':(3306|6379|4000)\\b' || echo "밖에서 안 보임 OK"
       },
     ],
     result:
-      'All migrations have been successfully applied · [config] mode=production … · DB·Redis·API 포트는 서버 밖으로 안 열림',
+      '`All migrations have been successfully applied` · `[config] mode=production …` · DB·Redis·API 포트는 서버 밖으로 안 열림',
   },
   {
     title: 'HTTPS: Caddy + sslip.io',
     reason: 'caddy',
     plain:
-      '인증서는 도메인에만 발급돼요. sslip.io는 "13-209-4-20.sslip.io"를 13.209.4.20으로 알려주는 무료 주소라, 도메인 없이도 진짜 인증서를 받았어요. Caddy가 발급과 갱신을 알아서 해요.',
+      '인증서는 도메인에만 발급돼요. sslip.io는 `13-209-4-20.sslip.io`를 `13.209.4.20`으로 알려주는 무료 주소라, 도메인 없이도 진짜 인증서를 받았어요. Caddy가 발급과 갱신을 알아서 해요.',
     commands: [
       {
         where: '서버 (ubuntu@EC2)',
@@ -233,7 +233,7 @@ curl -sSv https://13-209-4-20.sslip.io/health 2>&1 | grep -E 'subject:|issuer:|e
       },
     ],
     result:
-      'certificate obtained successfully · issuer Let’s Encrypt · {"status":"ok","db":{"status":"up"}}',
+      '`certificate obtained successfully` · issuer Let’s Encrypt · `{"status":"ok","db":{"status":"up"}}`',
   },
   {
     title: '꺼졌다 켜져도 살아나는지 (재부팅 테스트)',
@@ -253,9 +253,9 @@ sudo systemctl reboot`,
     result: '16:11:08 재부팅 → 16:12:04 다시 200. 약 1분. 넣어 둔 데이터도 그대로였어요.',
   },
   {
-    title: 'MySQL Workbench: 127.0.0.1에만 열고 SSH 터널로',
+    title: 'MySQL Workbench: `127.0.0.1`에만 열고 SSH 터널로',
     plain:
-      'DB를 그림으로 보고 싶었지만 3306을 인터넷에 열면 위험해요. 서버 자기 자신(127.0.0.1)에만 열고, 이미 있는 SSH 길을 터널로 써서 들어가요.',
+      'DB를 그림으로 보고 싶었지만 3306을 인터넷에 열면 위험해요. 서버 자기 자신(`127.0.0.1`)에만 열고, 이미 있는 SSH 길을 터널로 써서 들어가요.',
     commands: [
       {
         where: '저장소 파일',
@@ -295,7 +295,7 @@ nc -vz -G 5 3.35.59.193 3306      # 인터넷에서 직접은: Operation timed o
 ./deploy/compose.sh up -d          # Caddy가 새 주소로 인증서를 다시 받음`,
       },
     ],
-    result: `API 주소: ${API_HOST}`,
+    result: 'API 주소: `' + API_HOST + '`',
   },
   {
     title: 'SSM Agent + 서버용 IAM 역할',
@@ -320,7 +320,7 @@ sudo snap restart amazon-ssm-agent
 sudo tail -n 30 /var/log/amazon/ssm/amazon-ssm-agent.log | grep -E 'ERROR|Credentials'`,
       },
     ],
-    result: 'backend-visualized-ec2-ssm (HTTP 200) · [CredentialRefresher] Credentials ready',
+    result: '`backend-visualized-ec2-ssm` (HTTP 200) · `[CredentialRefresher] Credentials ready`',
   },
   {
     title: 'GitHub OIDC + 배포용 IAM 역할',
@@ -398,7 +398,7 @@ gh api repos/POcodingWER/backend-visualized/actions/oidc/customization/sub
       },
     ],
     result:
-      '204 · access-control-allow-origin: https://backend-visualized.vercel.app · allow-credentials: true',
+      '204 · `access-control-allow-origin: https://backend-visualized.vercel.app` · `access-control-allow-credentials: true`',
   },
   {
     title: '이미지는 GitHub에서 굽고, 서버는 받기만 + blue-green 무중단 교체',
@@ -490,6 +490,6 @@ IAM → 역할 backend-visualized-ec2-ssm → 인라인 정책 s3-backup-put-onl
       },
     ],
     result:
-      '12K · 0.26초 · 메모리 28MB · RESTORE_TEST=PASS (11개 테이블 행 수 모두 일치) · S3 업로드 mysql/backend_visualized-20261021-095322-KST.sql.gz (10,883 bytes)',
+      '12K · 0.26초 · 메모리 28MB · `RESTORE_TEST=PASS` (11개 테이블 행 수 모두 일치) · S3 업로드 `mysql/backend_visualized-20261021-095322-KST.sql.gz` (10,883 bytes)',
   },
 ];
