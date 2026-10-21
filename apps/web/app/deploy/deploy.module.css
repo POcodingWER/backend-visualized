@@ -28,8 +28,36 @@
   font-weight: 750;
   font-variant-numeric: tabular-nums;
 }
+.roadmap li {
+  scroll-margin-top: 8rem;
+}
 .roadmap a {
   text-decoration-color: var(--line-strong);
+}
+.roadmap li:target b {
+  background: var(--apricot);
+}
+.roadTitle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-3);
+}
+/* 단계 → 이유 카드로 가는 작은 칩 */
+.roadmap .whyChip {
+  padding: 0 0.55rem;
+  border: 1.5px solid var(--ink);
+  border-radius: 999px;
+  background: var(--paper-raised);
+  color: var(--apricot-ink);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.roadmap .whyChip:hover {
+  background: var(--apricot);
+  color: var(--ink);
 }
 .roadmap p {
   color: var(--ink-soft);
@@ -105,8 +133,33 @@
   border-radius: var(--hand-radius-soft);
   background: var(--paper-raised);
 }
+.reasons article {
+  scroll-margin-top: 8rem;
+}
+/* 단계에서 칩을 눌러 왔을 때: 어느 카드인지 잠깐 보이게 */
+.reasons article:target {
+  animation: landed 1.6s ease-out;
+}
+@keyframes landed {
+  0%,
+  40% {
+    background: var(--apricot);
+    box-shadow: 0 0 0 4px var(--apricot);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reasons article:target {
+    animation: none;
+    box-shadow: 0 0 0 4px var(--apricot);
+  }
+}
 .reasons h3 {
   font-size: var(--text-lg);
+}
+.backLink {
+  justify-self: start;
+  font-size: var(--text-sm);
+  font-weight: 650;
 }
 .cost {
   padding-top: var(--space-2);

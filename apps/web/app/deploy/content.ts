@@ -4,6 +4,8 @@
  */
 
 export interface Reason {
+  /** 주소 끝 #reason-<id>. 단계(steps.ts의 reason)에서 이 카드로 바로 온다 */
+  id: string;
   question: string;
   answer: string;
   /** 대신 떠안은 것 */
@@ -12,42 +14,49 @@ export interface Reason {
 
 export const REASONS: Reason[] = [
   {
+    id: 'ssm',
     question: '왜 SSH가 아니라 SSM으로 배포하나요?',
     answer:
       'SSH로 배포하려면 GitHub 쪽 컴퓨터(IP가 매번 바뀜)에 22번 문을 열어 주고, 서버 열쇠(.pem)를 GitHub에 맡겨야 해요. SSM은 서버 안의 에이전트가 AWS로 나가는 연결만 써서 문을 하나도 더 안 열어요. 누가 언제 무슨 명령을 보냈는지 AWS에 기록이 남고, 배포 역할은 "이 서버 한 대에 셸 명령 보내기"만 할 수 있어요.',
     cost: 'IAM 역할 두 개와 정책을 직접 이해해야 했어요. 처음 설정이 SSH보다 훨씬 오래 걸렸어요.',
   },
   {
+    id: 'ubuntu',
     question: '왜 Ubuntu 24.04인가요?',
     answer:
       '검색하면 나오는 자료가 제일 많고, Docker 공식 설치 문서가 그대로 맞고, SSM Agent가 AMI에 이미 깔려 있어요. LTS라 2029년까지 보안 업데이트가 나와요. 처음 서버를 만지는 저한테는 "막혔을 때 답을 찾을 수 있는가"가 제일 중요했어요.',
     cost: '저장소 문서는 원래 Amazon Linux 기준이라 설치 명령을 우분투에 맞게 다시 써야 했어요.',
   },
   {
+    id: 'docker-mysql',
     question: '왜 RDS 대신 같은 EC2의 Docker MySQL인가요?',
     answer:
       '돈과 공부 두 가지예요. t4g.small + MySQL 컨테이너는 월 $21 정도인데, RDS db.t4g.micro를 붙이면 $41 정도로 두 배가 돼요. 그리고 RDS가 대신 해 주는 일(백업, 복원, 패치)을 한 번은 제 손으로 해 보고 싶었어요.',
     cost: '백업과 패치는 제 몫이에요. 서버 한 대가 죽으면 API와 DB가 같이 죽어요(단일 장애점). 그래서 매일 백업(서버 + S3)과 복원 테스트를 만들었고, 진짜 서비스라면 RDS로 옮길 거예요.',
   },
   {
+    id: 'caddy',
     question: '왜 sslip.io + Caddy인가요?',
     answer:
       'Vercel 화면은 https라서 API도 https여야 브라우저가 막지 않고, 로그인 쿠키(Secure)도 https에서만 돼요. 그런데 Let’s Encrypt는 IP 주소에는 인증서를 안 줘요. sslip.io는 IP를 이름으로 바꿔 주는 무료 주소라 도메인을 사지 않고도 진짜 인증서를 받을 수 있었어요. Caddy는 설정 몇 줄로 인증서 발급과 갱신, http→https 이동까지 해 줘요.',
     cost: 'sslip.io는 남의 무료 서비스라 멈추면 API 주소도 멈춰요. 제 도메인이 생기면 API_DOMAIN 한 줄만 바꾸면 돼요.',
   },
   {
+    id: 'eip',
     question: '왜 Elastic IP(고정 IP)를 붙였나요?',
     answer:
       '일반 공인 IP는 서버를 중지했다 켜면 바뀌어요. 주소가 바뀌면 sslip.io 주소, 인증서, Vercel 설정, Workbench 접속까지 다 고쳐야 해요. 실제로 한 번 바꿔 보고 나서 고정했어요.',
     cost: '공인 IPv4는 고정이든 아니든 시간당 $0.005(월 약 $3.7)가 나가요.',
   },
   {
+    id: 'oidc',
     question: '왜 GitHub OIDC인가요?',
     answer:
       'AWS 열쇠(Access Key)를 GitHub Secret에 넣어 두면 언젠가 새거나 잊힌 채로 남아요. OIDC는 배포할 때마다 GitHub가 증명서를 내고 AWS가 1시간짜리 임시 열쇠를 줘요. 저장해 둔 비밀값이 아예 없어요.',
     cost: '증명서의 sub 글자 하나만 달라도 거절돼서, 처음엔 왜 안 되는지 찾는 데 시간이 걸렸어요.',
   },
   {
+    id: 'ghcr',
     question: '왜 이미지를 미리 구워 두고(GHCR), blue-green으로 바꾸나요?',
     answer:
       '서버가 직접 빌드하면 2GB 서버가 2분 동안 바쁘고, 컨테이너를 바꿔 끼우는 순간 몇 초 끊겼어요. 이제 빌드는 GitHub의 ARM 컴퓨터가 하고, 서버는 받아서 쉬고 있던 쪽에 먼저 띄운 뒤 건강하면 문(Caddy)만 돌려요. Actions의 Deploy 전체는 예전 2분 18초(서버에서 빌드하는 job 하나)에서 약 1분 10초가 됐어요. API 코드가 바뀌어 이미지를 새로 구우면 2분 23초로 예전과 비슷하지만, 그중 서버가 하는 배포 job은 135초에서 37~51초로 줄었어요. 배포 3번 동안 862 · 705 · 565번 찔러서 실패는 0번이었어요. 두 쪽이 잠깐 같이 떠도 메모리는 최고 869MiB / 1836MiB였어요.',
