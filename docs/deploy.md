@@ -459,6 +459,100 @@ GHCR 이미지는 서버에 최근 3개만 남깁니다. 그보다 오래된 SHA
 
 ---
 
+## 7-2. DB 백업과 복원 (mysqldump + cron, 선택: S3)
+
+같은 EC2의 MySQL 컨테이너를 쓰기 때문에(3장), **디스크가 망가지거나 실수로 지우면 데이터가 같이 사라집니다.** 그래서 매일 백업하고, 그 백업이 정말 복원되는지도 확인합니다.
+
+| 파일                                    | 하는 일                                                                                        |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `deploy/backup-mysql.sh`                | mysql 컨테이너 안에서 `mysqldump` → gzip → `backups/<db>-YYYYMMDD-HHMMSS-KST.sql.gz` (600)     |
+| `deploy/restore-test.sh`                | 최신 백업을 임시 DB `backend_visualized_restore_test`에 복원 → 테이블별 `COUNT(*)` 비교 → DROP |
+| `deploy/cron/backend-visualized-backup` | `/etc/cron.d`에 들어갈 cron 파일: **매일 04:00 KST**, ubuntu 사용자                            |
+| `deploy/install-backup-cron.sh`         | 위 cron 파일을 설치/갱신 (몇 번 실행해도 같음). `deploy.sh`가 배포 때마다 부름                 |
+
+```
+04:00 KST cron ─▶ backup-mysql.sh
+                   │ docker compose exec mysql  mysqldump --single-transaction --routines --triggers --events
+                   ▼ (컨테이너 밖에서) nice/ionice gzip
+            backups/backend_visualized-20261021-093620-KST.sql.gz  (chmod 600, 폴더 700)
+                   │ 7일 지난 파일 삭제
+                   └─▶ (BACKUP_S3_BUCKET 있으면) aws s3 cp → s3://<버킷>/mysql/
+```
+
+- **잠금 없음**: InnoDB라 `--single-transaction`이면 테이블을 잠그지 않고 한 시점의 스냅샷을 뜹니다. 백업 중에도 API는 그대로 동작합니다.
+- **비밀번호 노출 없음**: `MYSQL_ROOT_PASSWORD`는 **컨테이너 안의 환경 변수**를 그 안에서 `MYSQL_PWD`로 넘깁니다. 서버 셸, `ps`, 로그에 값이 나오지 않습니다. `production.env`도 필요한 키만 `sed`로 읽고 통째로 `source`하지 않습니다.
+- **2GB 서버 부담**: `mysqldump`는 `nice -n 19`, gzip은 `nice`+`ionice -c3`(유휴 I/O). 현재 DB(0.5MB)는 0.4초, 메모리 28MB 정도입니다.
+- **반쯤 쓰인 백업 방지**: `.partial`로 쓰고 `gzip -t` + 마지막 줄 `-- Dump completed`를 확인한 뒤에만 이름을 바꿉니다. 겹쳐 실행되면 `flock`으로 막습니다.
+- **다른 이름으로 복원 가능**: `--databases`를 안 써서 덤프에 `CREATE DATABASE`/`USE`가 없습니다.
+- **백업 파일도 민감 정보**: 비밀번호 해시(`passwordHash`), refresh 토큰 기록이 들어 있으므로 600 권한이고 git에는 안 올라갑니다(`backups/`는 .gitignore).
+- **시간대**: cron은 서버 시간대를 따릅니다. 서버가 `Asia/Seoul`이라 `0 4 * * *` = 04:00 KST (`timedatectl`로 확인, 아니면 설치 스크립트가 경고).
+
+### 명령 모음 (서버에서, `/opt/backend-visualized`)
+
+```bash
+./deploy/install-backup-cron.sh        # cron 설치 (배포 때 자동으로도 실행됨)
+./deploy/backup-mysql.sh               # 지금 바로 백업
+tail -n 20 backups/backup.log          # cron 실행 기록 (성공/실패, 크기, 걸린 시간)
+journalctl -t backend-visualized-backup --since today   # syslog에도 OK / FAILED 한 줄씩
+ls -lh backups/
+./deploy/restore-test.sh               # 최신 백업 복원 테스트 (운영 DB는 안 건드림)
+```
+
+`restore-test.sh`는 백업 **이후** 운영 DB에 쓰기가 있으면 그 테이블 숫자가 달라 `RESTORE_TEST=DIFF`가 나올 수 있습니다(데모 쿠폰 발급 등). 백업 직후 바로 돌리면 일치해야 합니다.
+
+### 진짜로 복원해야 할 때 (운영 DB 덮어쓰기)
+
+덤프에는 `DROP TABLE IF EXISTS`가 들어 있어 **기존 테이블을 덮어씁니다.** 되돌릴 수 있게 지금 상태부터 백업하세요.
+
+```bash
+cd /opt/backend-visualized
+./deploy/backup-mysql.sh                                   # 1) 지금 상태도 한 부
+./deploy/compose.sh stop api_blue api_green                # 2) 쓰기 멈춤 (잠깐 502)
+zcat backups/backend_visualized-<시각>-KST.sql.gz \
+  | ./deploy/compose.sh exec -T mysql sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" exec mysql -uroot backend_visualized'
+./deploy/deploy.sh current                                 # 3) API 다시 띄우기 (blue-green)
+```
+
+S3에서 받을 때: `aws s3 cp s3://<버킷>/mysql/<파일> backups/` (이 경우 역할에 `s3:GetObject`가 필요하므로 콘솔에서 받거나 로컬 PC 자격 증명으로 받는 것을 권장).
+
+### (선택) 서버 밖 S3에 한 부 더: 콘솔에서 1회
+
+서버 디스크에만 있으면 EC2를 잃을 때 백업도 같이 잃습니다. S3 업로드는 스크립트에 이미 들어 있고 **`BACKUP_S3_BUCKET`을 넣을 때만** 동작합니다.
+
+1. **S3 → 버킷 만들기**: 이름 예) `backend-visualized-backups-071732232414`, 리전 **아시아 태평양(서울) ap-northeast-2**
+   - 모든 퍼블릭 액세스 차단: **켜기**(기본값) / 버킷 버전 관리: **활성화** / 기본 암호화: **SSE-S3**(기본값)
+2. **버킷 → 관리 → 수명 주기 규칙 만들기**: 이름 `expire-mysql-backups`, 접두사 `mysql/`
+   - 객체의 현재 버전 만료: **30일** / 객체의 이전 버전 영구 삭제: **7일** / 불완전한 멀티파트 업로드 삭제: **1일**
+3. **IAM → 역할 → `backend-visualized-ec2-ssm` → 권한 추가 → 인라인 정책 생성 → JSON**, 이름 `s3-backup-put-only`
+
+   ```json
+   {
+     "Version": "2012-10-17",
+     "Statement": [
+       {
+         "Sid": "PutMysqlBackupsOnly",
+         "Effect": "Allow",
+         "Action": "s3:PutObject",
+         "Resource": "arn:aws:s3:::backend-visualized-backups-071732232414/mysql/*"
+       }
+     ]
+   }
+   ```
+
+   **쓰기만** 허용합니다. 서버가 털려도 S3의 백업을 읽거나 지울 수 없고, 같은 이름으로 덮어써도 버전 관리가 예전 버전을 남깁니다.
+
+4. **서버**: `deploy/production.env`에 한 줄 추가 → 바로 확인
+
+   ```bash
+   echo 'BACKUP_S3_BUCKET=backend-visualized-backups-071732232414' >> deploy/production.env
+   aws --version || sudo snap install aws-cli --classic
+   ./deploy/backup-mysql.sh     # 마지막에 "S3 업로드: s3://…" 가 나오면 성공
+   ```
+
+   (API 컨테이너에는 이 값이 쓰이지 않으므로 다시 띄울 필요 없음)
+
+---
+
 ## 8. 문제 해결
 
 | 증상                                                                                        | 확인                                                                                                                                          |
@@ -476,3 +570,5 @@ GHCR 이미지는 서버에 최근 3개만 남깁니다. 그보다 오래된 SHA
 | Deploy: `api_<색> 가 건강해지지 않았습니다`                                                 | 출력에 붙은 새 컨테이너 로그 (마이그레이션 오류, `[config]` env 오류). 서비스는 예전 색이 계속 함                                             |
 | 502가 계속 남                                                                               | `cat deploy/caddy/upstream.caddy`의 색이 실제로 떠 있는지 `./deploy/compose.sh ps`. 아니면 `./deploy/deploy.sh current`                       |
 | Deploy: `caddy reload` 가 `localhost:2019 ... connection refused`                           | caddy가 막 다시 만들어져 관리 API가 아직 안 뜬 상태. deploy.sh가 15초까지 다시 시도함. 그래도 실패하면 `./deploy/deploy.sh current`           |
+| `backups/backup.log`에 `실패:`                                                              | `mysqldump 오류`면 `./deploy/compose.sh ps mysql`(healthy?), `S3 업로드 실패`면 역할의 `s3:PutObject`와 버킷 이름                             |
+| 04:00에 백업이 안 생김                                                                      | `cat /etc/cron.d/backend-visualized-backup`, `timedatectl`(Asia/Seoul?), `grep CRON /var/log/syslog`                                          |

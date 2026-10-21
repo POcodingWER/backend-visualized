@@ -142,5 +142,8 @@ docker images "$registry_image" --format '{{.Tag}}' | tail -n +4 | while read -r
 done
 docker image prune -f > /dev/null
 
+# DB 백업 cron도 repo의 내용과 맞춘다 (실패해도 배포는 성공으로 둔다)
+./deploy/install-backup-cron.sh || log "경고: 백업 cron 설치 실패 (./deploy/install-backup-cron.sh 확인)"
+
 compose ps
 echo "DEPLOYED_SHA=$sha COLOR=$next"
