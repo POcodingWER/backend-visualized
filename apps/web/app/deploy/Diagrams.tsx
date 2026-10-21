@@ -18,7 +18,7 @@ export function RequestDiagram() {
         <div className={`${styles.box} ${styles.browser}`}>
           <b>브라우저 · Vercel 화면</b>
           <small>
-            <code>https://&lt;IP&gt;.sslip.io</code>로 API 부르기
+            <code>https://&lt;IP-대시&gt;.sslip.io</code>로 API 부르기
           </small>
         </div>
         <p className={styles.arrowDown}>sslip.io가 주소 안 숫자를 IP로 바꿔 줌 ↓</p>

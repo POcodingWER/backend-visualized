@@ -129,7 +129,7 @@ export const TROUBLES: Trouble[] = [
   {
     symptom: 'Elastic IP로 바꾼 뒤 Workbench가 갑자기 접속 실패 (API도 잠깐 503)',
     cause:
-      'Workbench의 SSH Hostname이 아직 예전 IP `13.209.4.20`을 가리키고 있었어요. API는 새 주소로 다시 뜨는 동안 Caddy가 잠깐 503을 돌려줬어요.',
+      'Workbench의 SSH Hostname이 아직 예전 IP를 가리키고 있었어요. API는 새 주소로 다시 뜨는 동안 Caddy가 잠깐 503을 돌려줬어요.',
     fix: 'Workbench의 SSH Hostname을 새 IP로 바꿨고, 503은 API가 healthy가 되자 사라졌어요. IP를 바꾸면 sslip.io 주소, Vercel, Workbench, `ssh` 명령을 한 번에 같이 고쳐야 해요.',
   },
   {
