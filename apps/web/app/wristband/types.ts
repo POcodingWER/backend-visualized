@@ -13,3 +13,6 @@ export interface RequestLogEntry {
 }
 
 export type AddLogEntry = (entry: Omit<RequestLogEntry, 'id' | 'at'>) => void;
+
+/** 손목밴드를 보여주고 놀이기구를 탄 결과 (GET /auth/me, 만료면 재발급 후 한 번 더) */
+export type RideResult = 'passed' | 'refreshed' | 'kicked-out';
