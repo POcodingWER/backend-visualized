@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { CHAPTERS } from '../../../lib/site';
+import { CHAPTERS, DEPLOY_PAGE } from '../../../lib/site';
 import styles from '../ui.module.css';
 
 export default function SiteHeader() {
@@ -23,6 +23,12 @@ export default function SiteHeader() {
             <span className={styles.navNumber}>{chapter.number}</span> {chapter.title}
           </Link>
         ))}
+        <Link
+          href={DEPLOY_PAGE.href}
+          aria-current={pathname.startsWith(DEPLOY_PAGE.href) ? 'page' : undefined}
+        >
+          {DEPLOY_PAGE.title}
+        </Link>
         <Link href="/#author">About me</Link>
       </nav>
     </header>

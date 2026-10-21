@@ -76,6 +76,13 @@
   font-size: var(--text-sm);
   color: var(--ink-soft);
 }
+/* 여섯 편 목록 밖의 번외 카드 (배포 및 회고). 점선 테두리로 "장"과 구분 */
+.extra {
+  composes: teaser;
+  margin-top: var(--space-6);
+  border-style: dashed;
+  background: var(--paper-deep);
+}
 
 .author {
   display: grid;

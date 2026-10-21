@@ -1,0 +1,412 @@
+/* 배포 및 회고 페이지 (/deploy). 색·간격은 globals.css 토큰만 쓴다 */
+
+/* ---------- 1. 순서대로 ---------- */
+.roadmap {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+  display: grid;
+  gap: var(--space-4);
+}
+.roadmap li {
+  counter-increment: step;
+  display: grid;
+  grid-template-columns: 2.2rem minmax(0, 1fr);
+  column-gap: var(--space-3);
+}
+.roadmap li::before {
+  content: counter(step);
+  grid-row: span 2;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1.5px solid var(--ink);
+  border-radius: 50%;
+  background: var(--apricot);
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+.roadmap a {
+  text-decoration-color: var(--line-strong);
+}
+.roadmap p {
+  color: var(--ink-soft);
+}
+
+/* ---------- 2. 명령 ---------- */
+.commands {
+  display: grid;
+  gap: var(--space-12);
+  min-width: 0;
+}
+.command {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+  scroll-margin-top: 6rem;
+}
+.command h3 {
+  font-size: var(--text-lg);
+}
+.stepNumber {
+  color: var(--apricot-ink);
+  font-variant-numeric: tabular-nums;
+}
+/* 터미널: 먹색 바탕에 종이색 글씨 (대비 13:1). 긴 줄은 접지 않고 가로로 스크롤 */
+.terminal {
+  margin: 0;
+  min-width: 0;
+  border: 1.5px solid var(--ink);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--ink);
+}
+.terminal figcaption {
+  padding: var(--space-1) var(--space-3);
+  background: var(--paper-deep);
+  border-bottom: 1.5px solid var(--ink);
+  font-size: var(--text-sm);
+  font-weight: 650;
+}
+.terminal pre {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  overflow-x: auto;
+  color: var(--paper);
+  font-size: 0.82rem;
+  line-height: 1.65;
+  tab-size: 2;
+}
+.terminal code {
+  font-size: inherit;
+  white-space: pre;
+  word-break: normal;
+}
+.result {
+  font-size: var(--text-sm);
+  color: var(--sage-ink);
+  font-weight: 600;
+}
+
+/* ---------- 3. 이유 ---------- */
+.reasons {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-6);
+}
+.reasons article {
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+  padding: var(--space-6);
+  border: 2px solid var(--ink);
+  border-radius: var(--hand-radius-soft);
+  background: var(--paper-raised);
+}
+.reasons h3 {
+  font-size: var(--text-lg);
+}
+.cost {
+  padding-top: var(--space-2);
+  border-top: 1px dashed var(--line-strong);
+  color: var(--ink-soft);
+  font-size: var(--text-sm);
+}
+.cost b {
+  display: block;
+  color: var(--apricot-ink);
+}
+
+/* ---------- 4. 백업 ---------- */
+.backup {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: var(--space-8);
+  align-items: start;
+}
+.facts {
+  margin: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+.facts div {
+  display: grid;
+  grid-template-columns: 6rem minmax(0, 1fr);
+  gap: var(--space-3);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px dashed var(--line);
+}
+.facts dt {
+  font-weight: 700;
+}
+.facts dd {
+  margin: 0;
+}
+.restore {
+  margin: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+.restore figcaption {
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+}
+.restore table {
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+.restore th,
+.restore td {
+  padding: var(--space-1) var(--space-3);
+  border-bottom: 1px solid var(--line);
+  text-align: right;
+}
+.restore th[scope='row'],
+.restore th:first-child {
+  text-align: left;
+  font-weight: 500;
+}
+.restore thead th {
+  border-bottom: 1.5px solid var(--ink);
+  font-weight: 700;
+}
+.facts code,
+.restore code {
+  font-size: 0.85em;
+}
+
+/* ---------- 5. 막혔던 것들 ---------- */
+.troubles {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-6);
+}
+.troubles li {
+  padding: var(--space-4) var(--space-6) var(--space-6);
+  border-top: 3px solid var(--fail);
+  background: var(--paper-raised);
+}
+.troubles h3 {
+  font-size: 1.05rem;
+  margin-bottom: var(--space-2);
+  overflow-wrap: anywhere;
+}
+.troubles dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 3.5rem minmax(0, 1fr);
+  gap: var(--space-2) var(--space-3);
+}
+.troubles dt {
+  font-weight: 700;
+  font-size: var(--text-sm);
+  padding-top: 0.15em;
+}
+.troubles dt:nth-of-type(2) {
+  color: var(--sage-ink);
+}
+.troubles dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- 6. 구조 그림 (HTML 상자라 좁은 화면에선 세로로 쌓인다) ---------- */
+.diagramTitle {
+  font-size: var(--text-lg);
+  margin: var(--space-8) 0 var(--space-3);
+}
+.diagram {
+  margin: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+.diagram figcaption {
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+}
+.runtime {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: var(--space-2) var(--space-6);
+}
+.box {
+  display: grid;
+  gap: 0.1rem;
+  padding: var(--space-3) var(--space-4);
+  border: 2px solid var(--ink);
+  border-radius: var(--hand-radius-soft);
+  background: var(--paper-raised);
+  text-align: center;
+}
+.box small {
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+}
+.browser {
+  grid-column: 1 / -1;
+  justify-self: center;
+  min-width: 14rem;
+  background: var(--apricot);
+}
+.browser small {
+  color: var(--ink);
+}
+.branch {
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.arrowDown {
+  text-align: center;
+  font-size: var(--text-sm);
+  font-weight: 650;
+  color: var(--ink-soft);
+}
+.vercel {
+  background: var(--paper-deep);
+}
+.ec2 {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 2px dashed var(--ink);
+  border-radius: 12px;
+}
+.ec2Label {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.caddy {
+  background: var(--paper-deep);
+}
+.pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+.blue {
+  background: var(--sky);
+}
+.green {
+  background: var(--sage);
+  border-style: dashed;
+}
+.green small,
+.blue small {
+  color: var(--ink);
+}
+.db {
+  background: var(--paper-raised);
+}
+.pipeline {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-4) var(--space-6);
+  counter-reset: hop;
+}
+.pipeline li {
+  counter-increment: hop;
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 0.1rem;
+  padding: var(--space-3) var(--space-4);
+  border: 2px solid var(--ink);
+  border-radius: var(--hand-radius-soft);
+  background: var(--paper-raised);
+}
+.pipeline li::before {
+  content: counter(hop);
+  font-weight: 750;
+  color: var(--apricot-ink);
+}
+/* 다음 상자로 가는 화살표 (줄 끝 상자 제외) */
+.pipeline li:not(:nth-child(4n)):not(:last-child)::after {
+  content: '→';
+  position: absolute;
+  right: calc(-1 * var(--space-6) + 0.2rem);
+  top: 50%;
+  transform: translateY(-50%);
+  font-weight: 700;
+}
+.pipeline li:nth-child(n + 6) {
+  background: var(--sage);
+}
+.pipeline small {
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+  font-weight: 650;
+}
+.pipeline li:nth-child(n + 6) small {
+  color: var(--ink);
+}
+
+/* ---------- 7. 회고 ---------- */
+.retro {
+  display: grid;
+  gap: var(--space-3);
+}
+.retro h3 {
+  margin-top: var(--space-4);
+  font-size: var(--text-lg);
+}
+.retro ul {
+  margin: 0;
+  padding-left: 1.3rem;
+  display: grid;
+  gap: var(--space-2);
+}
+
+@media (max-width: 860px) {
+  .reasons,
+  .backup,
+  .troubles,
+  .runtime {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .pipeline {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-6);
+  }
+  .pipeline li:not(:last-child)::after {
+    content: '↓';
+    position: absolute;
+    right: auto;
+    left: 50%;
+    top: auto;
+    bottom: calc(-1 * var(--space-6) + 0.1rem);
+    transform: translateX(-50%);
+  }
+}
+@media (max-width: 640px) {
+  .reasons article {
+    padding: var(--space-4);
+  }
+  .troubles li {
+    padding: var(--space-3) var(--space-4) var(--space-4);
+  }
+  .facts div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+  .browser {
+    min-width: 0;
+    justify-self: stretch;
+  }
+  .terminal pre {
+    padding: var(--space-3);
+    font-size: 0.76rem;
+  }
+}
