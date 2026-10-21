@@ -13,5 +13,7 @@ next-env.d.ts
 *.log
 dist-test/
 deploy/production.env
+*.pem
+*.key
 deploy/caddy/upstream.caddy
 backups/

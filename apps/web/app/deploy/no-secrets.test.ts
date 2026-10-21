@@ -18,6 +18,9 @@ const FORBIDDEN: [string, RegExp][] = [
   ['긴 base64 (openssl rand -base64)', /[A-Za-z0-9+/]{48,}={0,2}/],
   ['메일 주소', /[\w.+-]+@users\.noreply\.github\.com/],
   ['DB URL 안의 비밀번호', /mysql:\/\/[^:\s]+:(?!<)[^@\s]+@/],
+  ['AWS 계정 ID', /arn:aws:[a-z0-9-]+:[a-z0-9-]*:\d{12}:/],
+  ['EC2 인스턴스 ID', /\bi-[0-9a-f]{8,17}\b/],
+  ['GitHub 숫자 ID (OIDC sub)', /@\d{5,}\//],
 ];
 // 비밀값이 들어가는 줄은 반드시 <가림> 또는 $(openssl …)이어야 한다
 const SECRET_KEYS = /^(MYSQL_ROOT_PASSWORD|MYSQL_PASSWORD|JWT_ACCESS_SECRET|ADMIN_API_KEY)=(.*)$/gm;

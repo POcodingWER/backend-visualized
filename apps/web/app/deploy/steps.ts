@@ -405,7 +405,7 @@ IAM → 역할 생성 → 웹 자격 증명 → 위 공급자 → 이름 backend
 {
   "Effect": "Allow",
   "Principal": {
-    "Federated": "arn:aws:iam::071732232414:oidc-provider/token.actions.githubusercontent.com"
+    "Federated": "arn:aws:iam::<계정ID>:oidc-provider/token.actions.githubusercontent.com"
   },
   "Action": "sts:AssumeRoleWithWebIdentity",
   // 이 저장소(ID까지)의 main 브랜치에서 온 증명서만
@@ -413,7 +413,7 @@ IAM → 역할 생성 → 웹 자격 증명 → 위 공급자 → 이름 backend
     "StringEquals": {
       "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
       "token.actions.githubusercontent.com:sub":
-        "repo:POcodingWER@89626659/backend-visualized@1425018571:ref:refs/heads/main"
+        "repo:POcodingWER@<오너ID>/backend-visualized@<저장소ID>:ref:refs/heads/main"
     }
   }
 }`,
@@ -429,7 +429,7 @@ IAM → 역할 생성 → 웹 자격 증명 → 위 공급자 → 이름 backend
       "Effect": "Allow",
       "Action": "ssm:SendCommand",
       "Resource": [
-        "arn:aws:ec2:ap-northeast-2:071732232414:instance/i-0c7a663e814fc808d",
+        "arn:aws:ec2:ap-northeast-2:<계정ID>:instance/<인스턴스ID>",
         "arn:aws:ssm:ap-northeast-2::document/AWS-RunShellScript"
       ]
     },
@@ -446,7 +446,7 @@ IAM → 역할 생성 → 웹 자격 증명 → 위 공급자 → 이름 backend
         where: '내 맥',
         code: `# GitHub가 실제로 만드는 sub 형식 확인 (읽기 전용 API)
 gh api repos/POcodingWER/backend-visualized/actions/oidc/customization/sub
-#   {"use_immutable_subject":true,"sub_claim_prefix":"repo:POcodingWER@89626659/backend-visualized@1425018571"}`,
+#   {"use_immutable_subject":true,"sub_claim_prefix":"repo:POcodingWER@<오너ID>/backend-visualized@<저장소ID>"}`,
       },
     ],
   },
@@ -495,7 +495,7 @@ image   → runs-on: ubuntu-24.04-arm, permissions: packages: write
 deploy  → permissions: id-token: write
           aws-actions/configure-aws-credentials (OIDC)
           aws ssm send-command --document-name AWS-RunShellScript \\
-            --instance-ids i-0c7a663e814fc808d
+            --instance-ids <인스턴스ID>
           → get-command-invocation 5초마다 확인
           → https://…/health 200 확인`,
       },
