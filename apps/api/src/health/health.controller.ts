@@ -11,7 +11,7 @@ export class HealthController {
     const started = Date.now();
     try {
       await this.prisma.$queryRaw`SELECT 1`;
-      return { status: 'ok', db: { status: 'CICD Test', latencyMs: Date.now() - started } };
+      return { status: 'ok', db: { status: 'up', latencyMs: Date.now() - started } };
     } catch (err) {
       res.status(HttpStatus.SERVICE_UNAVAILABLE);
       return {
