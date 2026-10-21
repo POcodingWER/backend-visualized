@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readdirSync, readFileSync } from 'node:fs';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { AUTHOR } from '../landing-content';
@@ -40,5 +40,29 @@ test('연락처는 공개된 것만 (개인 메일 · GitHub · 블로그 · Ins
       ].includes(host),
       `모르는 연락처: ${host}`,
     );
+  }
+});
+
+// 경력 햇수("N년 차", "N년 가까이" 같은 총 연차)는 공개 글 어디에도 쓰지 않는다. 기간(2022.09~)은 괜찮다
+const YEARS_CLAIM =
+  /년\s?차|\d+\s?년\s?(가까이|넘게|이상|동안|간|째|경력)|\d+\+?\s?years?(\s+of)?\s+experience/i;
+function walk(dir: string): string[] {
+  return readdirSync(dir).flatMap((name) => {
+    const path = join(dir, name);
+    if (statSync(path).isDirectory()) return walk(path);
+    return /\.(ts|tsx|css|txt)$/.test(name) && !name.endsWith('.test.ts') ? [path] : [];
+  });
+}
+
+test('공개 글과 README에 경력 햇수가 없다', () => {
+  const web = join(folder, '..', '..');
+  const files = [
+    ...walk(join(web, 'app')),
+    ...walk(join(web, 'lib')),
+    join(web, '..', '..', 'README.md'),
+  ];
+  assert.ok(files.length > 20, '검사할 파일을 못 찾음');
+  for (const path of files) {
+    assert.doesNotMatch(readFileSync(path, 'utf8'), YEARS_CLAIM, `${path}: 경력 햇수`);
   }
 });

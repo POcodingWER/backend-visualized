@@ -390,7 +390,7 @@ export default function DeployPage() {
         <h2 className={ui.sectionTitle}>7. 회고</h2>
         <div className={styles.retro}>
           <p>
-            저는 4년 가까이 프론트엔드만 했어요. 서버는 &quot;API 주소&quot;로만 알고 있었고, 배포는
+            저는 그동안 프론트엔드만 했어요. 서버는 &quot;API 주소&quot;로만 알고 있었고, 배포는
             버튼을 누르면 되는 일이었어요. 이번에 처음으로 그 버튼 뒤를 직접 만들었어요.
           </p>
           <h3>어려웠던 것</h3>
