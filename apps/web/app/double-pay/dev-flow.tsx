@@ -95,6 +95,10 @@ export const DOUBLE_PAY_DEV_FLOW: DevFlowContent = {
             </li>
             <li>같은 키인데 주문이나 금액이 다르면 422</li>
             <li>5초가 지나도 processing이면 409</li>
+            <li>
+              정리 잡이 <code>failed</code>로 닫은 키면 409 <code>previous_attempt_failed</code> (새
+              키로 다시)
+            </li>
           </ul>
         </>,
         <>
@@ -158,8 +162,12 @@ export const DOUBLE_PAY_DEV_FLOW: DevFlowContent = {
       title: '한계·운영에선',
       items: [
         <>
-          첫 요청이 PG 호출 중에 죽으면 키가 processing으로 남아요. 운영에선 오래된 processing을
-          결제사에 조회해 정리하는 잡이 필요해요.
+          첫 요청이 PG 호출 중에 죽으면 키가 processing으로 남아요. 매분 도는 정리 잡이 5분 넘은
+          processing을{' '}
+          <code>UPDATE … SET status=&apos;failed&apos; WHERE status=&apos;processing&apos;</code>로
+          닫아요. 조건부 UPDATE 한 문장이라 blue-green 배포 중 두 컨테이너가 같이 돌려도 한 번만
+          바뀌어요. 가짜 PG라 &quot;승인 기록 없음 = 돈 안 나감&quot;으로 보지만, 진짜 PG라면 여기서
+          결제사 조회 API로 승인 여부를 물어 <code>paid</code>/<code>failed</code>를 정해야 해요.
         </>,
         <>기다리는 요청은 최대 5초 동안 서버 연결을 잡고 있어요.</>,
         <>데모 행은 30분 뒤 자동으로 지워져요 (10분마다 도는 정리 잡).</>,

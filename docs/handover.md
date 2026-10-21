@@ -168,7 +168,7 @@ docs/                         이 문서, architecture, deploy, auth-tokens, cha
 
 - 화면: `PaymentDemo.tsx` (연타 + 앱 자동 재시도 시나리오를 실험 A 키 없이 / 실험 B 키 있게, 버튼 한 번에 나란히). Network 탭의 `POST /payments` 8개 중 빨간(canceled) 2개는 앱이 0.6초에 끊은 첫 요청 — 정상
 - `double-pay/api.ts` `pay` → `POST /payments` (`PayDto` + `Idempotency-Key` 헤더) → `PaymentsService.pay`
-  - 키가 없으면 누를 때마다 새 결제. 키가 있으면 `(idempotencyKey)` 유니크 행을 먼저 `processing`으로 INSERT → 가짜 PG 대기 → `paid`. 같은 키가 또 오면 처음 결과를 다시 돌려줌(`replayed`, `Idempotent-Replayed` 헤더), 처리 중이면 409, 같은 키로 다른 주문·금액이면 422. 동시에 같은 키가 와도 `idempotencyKey` **unique 제약**이 INSERT를 하나만 통과시킵니다
+  - 키가 없으면 누를 때마다 새 결제. 키가 있으면 `(idempotencyKey)` 유니크 행을 먼저 `processing`으로 INSERT → 가짜 PG 대기 → `paid`. 같은 키가 또 오면 처음 결과를 다시 돌려줌(`replayed`, `Idempotent-Replayed` 헤더), 처리 중이면 409, 같은 키로 다른 주문·금액이면 422. PG 호출 중 죽어 5분 넘게 `processing`인 행은 `closeStalePayments`(매분)가 조건부 UPDATE로 `failed` 처리 → 같은 키 재전송은 409 `previous_attempt_failed`. 동시에 같은 키가 와도 `idempotencyKey` **unique 제약**이 INSERT를 하나만 통과시킵니다
 - `listPayments` → `GET /payments?orderId=` 로 실제 생긴 행을 0.2초마다 확인
 - 테이블: `Payment` (오래된 데모 행은 서비스가 정리)
 
@@ -218,6 +218,7 @@ docs/                         이 문서, architecture, deploy, auth-tokens, cha
 ## 7. 알려진 한계
 
 - **서버 한 대 전제**: 시뮬레이션 "한 번에 하나"·쿨다운·전역 한도(`common/rate-limit`)와 3장 SSE 알림(`EventBus`)은 프로세스 메모리에 있습니다. API를 여러 대로 늘리면 Redis 등으로 옮겨야 합니다.
+- **결제 정리 잡은 가짜 PG 기준**: `PaymentsService.closeStalePayments`는 "PG에 승인 기록 없음"을 전제로 오래된 `processing`을 `failed`로 닫습니다. 진짜 PG를 붙이면 닫기 전에 결제사 조회 API로 승인 여부를 확인해야 합니다. 기준 시간은 `STALE_PROCESSING_MS`(5분).
 - **IP별 한도**는 `@nestjs/throttler` 메모리 저장소. 프록시 뒤에선 `TRUST_PROXY`가 맞아야 합니다.
 - **시뮬레이션은 공용 데이터**: 1·4장 버튼은 `sim-*` 쿠폰·지갑을 매번 리셋합니다. 여러 사람이 동시에 보면 서로의 결과를 덮어씁니다(그래서 한 번에 하나 + 쿨다운).
 - **single-flight 코드가 두 벌**: `apps/api/src/common/utils/single-flight.ts`와 `apps/web/lib/single-flight.ts`(같은 내용, 각자 테스트). 공유 패키지로 뺄 만큼 크지 않아 그대로 둡니다.
