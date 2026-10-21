@@ -39,9 +39,16 @@ export default function AboutPage() {
           <p className={styles.lead}>{AUTHOR.intro}</p>
           <p className={ui.source}>{AUTHOR.career}</p>
           <p className={styles.buttons}>
-            <a href={AUTHOR.resumeUrl} className={buttonClassName.small}>
-              이력서 보기
-            </a>
+            {AUTHOR.resumePdf && (
+              <a
+                href={AUTHOR.resumePdf}
+                className={buttonClassName.small}
+                target="_blank"
+                rel="noopener"
+              >
+                이력서 (PDF)
+              </a>
+            )}
             <a href="https://github.com/POcodingWER">GitHub</a>
             <a href="https://pocodingwer.github.io">블로그</a>
           </p>
@@ -184,6 +191,13 @@ export default function AboutPage() {
               <a href={link.href}>{link.label}</a>
             </li>
           ))}
+          {AUTHOR.resumePdf && (
+            <li>
+              <a href={AUTHOR.resumePdf} target="_blank" rel="noopener">
+                이력서 (PDF)
+              </a>
+            </li>
+          )}
           <li>
             <a href={AUTHOR.resumeUrl}>웹 이력서</a>
           </li>
