@@ -83,6 +83,105 @@ export const AUTHOR = {
     '세탁기 블루투스 연결 실패(하루 40~50건 이상)를 2개월 추적: Sentry 도입을 제안·구축하고 앱 개발자와 로그 구조를 설계해 특정 기기·OS에서만 나는 걸 찾아 타임아웃·재시도를 넣었어요. 연결 실패율 80%, 고객 문의 90% 감소, 장애 대응 2시간 → 40분.',
     'AI 코드 리뷰 하네스: PR 리뷰를 Critical/Medium/Low로 자동 분류해, 150개 파일·8,000줄 PR에서 사람이 놓치기 쉬운 Critical 버그를 머지 전에 찾아 고쳤어요.',
   ],
+  /**
+   * /about "왜 백엔드로". 초안: AUTHOR·이력서·/deploy 회고에 있는 사실만으로 쓴 글이라 본인 확인이 필요하다.
+   */
+  whyBackend: [
+    '회사에서 충전·포인트·티켓 화면을 만들면서도, 버튼 뒤에서 서버가 한꺼번에 몰린 요청을 어떻게 지키는지는 "API 주소" 너머의 일이었어요.',
+    'CloudFront 캐시로 요청을 90% 줄여 본 뒤로, 같은 문제를 서버 쪽에서는 어떻게 푸는지 직접 재 보고 싶어졌어요.',
+    '그래서 이 사이트에서 API와 데이터베이스를 만들고, AWS에 올려 끊기지 않게 배포하는 일까지 혼자 해 봤어요.',
+  ],
+  /** 이력서의 기술 스택 + 이 저장소에서 쓴 것 */
+  stack: [
+    {
+      group: '프론트엔드',
+      items: ['React', 'TypeScript', 'Vite', 'React Query', 'Nuxt.js', 'Vue.js', 'Next.js'],
+    },
+    { group: '빌드 · 모노레포', items: ['PNPM workspace', 'Turborepo'] },
+    { group: '프론트 배포 (회사)', items: ['AWS Lambda@Edge', 'S3', 'CloudFront'] },
+    {
+      group: '품질 · 협업',
+      items: ['Sentry', 'Storybook', 'style-dictionary', 'Node.js 스크립트'],
+    },
+    { group: '백엔드 (이 사이트)', items: ['NestJS 11', 'Prisma 6', 'MySQL 8', 'Redis 7'] },
+    {
+      group: '배포 · 운영 (이 사이트)',
+      items: ['Docker', 'Caddy', 'EC2', 'SSM', 'IAM OIDC', 'GitHub Actions', 'GHCR', 'S3 백업'],
+    },
+    { group: '블록체인', items: ['Solidity', 'Ethereum', 'Web3.js', 'ethers.js'] },
+  ],
+  /** 경력 (이력서 그대로, 회사 이름은 쓰지 않는다) */
+  timeline: [
+    {
+      period: '2022.09 ~ 현재',
+      role: '프론트엔드 개발자',
+      place: '캠퍼스 중심 B2C 모바일 앱 회사',
+      summary: '독립 서비스 10개를 운영하며 기술 전환과 최적화를 맡았어요.',
+      projects: [
+        '2025.01~11 Nuxt.js → React 전환 리드 (서비스 10개, 2인 팀, Lambda@Edge + S3 페이지 단위 배포)',
+        '2025.01~11 CloudFront 캐시 정책 세분화: CloudFront 비용 월 $500 → $120, 요청 월 1,200만 → 100만',
+        '2025.04~06 세탁기 블루투스 연결 실패 추적: Sentry 도입, 연결 실패율 80% · 고객 문의 90% 감소',
+        '2023.07~2024.08 언어팩(Excel → JSON) · 약관(노션 → HTML) 자동화: 업데이트 시간 70% · 90% 단축',
+        'PNPM workspace + Turborepo 모노레포: CI 빌드 시간 80% 단축',
+        'AI 에이전트 하네스: PR 리뷰 Critical/Medium/Low 자동 분류',
+      ],
+    },
+    {
+      period: '2022.06 ~ 2022.09',
+      role: '블록체인(Solidity) 개발자',
+      place: 'NFT 프로젝트',
+      summary: 'Solidity 스마트 컨트랙트와 NFT 민팅 플랫폼을 만들었어요.',
+      projects: [
+        'Delica NFT 민팅 플랫폼: 스마트 컨트랙트 설계 + React 화면',
+        'Bellygom NFT: 이더리움 기반 NFT 발행',
+      ],
+    },
+  ],
+  /** 이력서의 기술 블로그 목록과 공모전 (링크도 이력서에 있는 그대로) */
+  writing: [
+    {
+      group: 'AWS · 프론트엔드',
+      posts: [
+        {
+          label: 'CloudFront 캐시 최적화',
+          href: 'https://pocodingwer.github.io/aws/2025/12/02/cloudfront_cache/',
+        },
+        {
+          label: 'CloudFront 비용 절감',
+          href: 'https://pocodingwer.github.io/aws/2025/12/10/cloudfront_cost_savings/',
+        },
+        {
+          label: 'Cookie 보안 완벽 가이드',
+          href: 'https://pocodingwer.github.io/front/2025/08/07/cookie/',
+        },
+        {
+          label: 'React Query 사용법',
+          href: 'https://pocodingwer.github.io/reactguide/2025/08/01/reactQuery/',
+        },
+      ],
+    },
+    {
+      group: 'MCP · AI 에이전트',
+      posts: [
+        {
+          label: '찾아줘 주차장! 개발 회고',
+          href: 'https://pocodingwer.github.io/mcp/2026/07/10/find-parking-mcp-dev-history/',
+        },
+        {
+          label: 'Cursor MCP OAuth 인증',
+          href: 'https://pocodingwer.github.io/mcp/2026/07/14/cursor-mcp-oauth/',
+        },
+        {
+          label: 'MCP 시리즈 전체',
+          href: 'https://pocodingwer.github.io/mcp/2026/03/19/mcp_recommend3/',
+        },
+      ],
+    },
+  ],
+  contest: {
+    text: '카카오 Agentic Player 10 공모전에 "찾아줘 주차장!" MCP를 냈어요 (PlayMCP 전체 공개 · 예선 접수 완료).',
+    href: 'https://playmcp.kakao.com/mcp/68948413827338498',
+  },
   links: [
     { label: '블로그', href: 'https://pocodingwer.github.io' },
     { label: 'GitHub', href: 'https://github.com/POcodingWER' },

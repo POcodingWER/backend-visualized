@@ -125,10 +125,11 @@ export default function DeployPage() {
         <ResultNumbers
           items={[
             {
-              value: '37~51초',
+              value: '약 1분 10초',
               tone: 'good',
-              label: '배포 한 번 (예전 135초)',
-              detail: '서버에서 직접 빌드하던 걸, GitHub가 구운 이미지를 받기만 하게 바꿨어요',
+              label: 'push 뒤 배포 끝까지 (Actions의 Deploy 전체)',
+              detail:
+                '이미지 굽기 + 서버 배포. API 코드가 바뀌면 2분 23초. 서버 배포 job은 135초 → 37~51초 (예전엔 job 하나로 전체 2분 18초)',
             },
             {
               value: '0번',
