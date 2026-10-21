@@ -16,21 +16,6 @@
   color: var(--ink-soft);
   max-width: 36rem;
 }
-.role {
-  margin: calc(-1 * var(--space-4)) 0 var(--space-6);
-  font-weight: 700;
-}
-.actions,
-.secondary {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-3);
-}
-.actions {
-  flex-direction: column;
-  align-items: flex-start;
-}
 .cta {
   display: inline-block;
   text-align: center;
@@ -231,15 +216,6 @@
   }
   .cta {
     width: 100%;
-  }
-  .actions,
-  .secondary {
-    align-items: stretch;
-    width: 100%;
-  }
-  .secondary .cta {
-    width: auto;
-    flex: 1;
   }
   .stack {
     flex-direction: column;
