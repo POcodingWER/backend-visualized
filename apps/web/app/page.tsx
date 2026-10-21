@@ -63,21 +63,9 @@ export default function Home() {
             실수하는 순간을 실제 서버와 데이터베이스에서 일부러 일으켜 보고, 고친 뒤 얼마나
             나아졌는지 숫자로 확인하는 그림책 여섯 편이에요.
           </p>
-          <p className={styles.role}>혼자 기획 · 개발 · 배포까지 직접 한 프로젝트예요.</p>
-          {/* 처음 온 사람(채용 담당자 포함)이 바로 갈 곳: 1장이 주인공, 코드와 연락처는 보조 */}
-          <div className={styles.actions}>
-            <Link href="/ticketing" className={`${buttonClassName.big} ${styles.cta}`}>
-              1장 티켓팅부터 보기 →
-            </Link>
-            <div className={styles.secondary}>
-              <a href={GITHUB_URL} className={`${buttonClassName.small} ${styles.cta}`}>
-                GitHub 코드 보기
-              </a>
-              <Link href="/about" className={`${buttonClassName.small} ${styles.cta}`}>
-                About · 연락처
-              </Link>
-            </div>
-          </div>
+          <Link href="/ticketing" className={`${buttonClassName.big} ${styles.cta}`}>
+            1장 티켓팅부터 보기 →
+          </Link>
         </div>
         <svg
           className={styles.heroArt}
