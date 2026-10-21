@@ -1,0 +1,5 @@
+# /etc/cron.d/backend-visualized-backup  ← deploy/install-backup-cron.sh 가 이 파일을 복사한다 (직접 고치지 말 것)
+# 서버 시간대가 Asia/Seoul(KST)이라 04:00 = 새벽 4시 KST. 트래픽이 가장 적은 시간.
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin
+0 4 * * * ubuntu /opt/backend-visualized/deploy/backup-mysql.sh >> /opt/backend-visualized/backups/backup.log 2>&1
