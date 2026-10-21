@@ -28,7 +28,7 @@ export const REASONS: Reason[] = [
     id: 'ubuntu',
     question: '왜 Ubuntu 24.04인가요?',
     answer:
-      '검색하면 나오는 자료가 제일 많고, Docker 공식 설치 문서가 그대로 맞고, SSM Agent가 AMI에 이미 깔려 있어요. LTS라 2029년까지 보안 업데이트가 나와요. 처음 서버를 만지는 저한테는 "막혔을 때 답을 찾을 수 있는가"가 제일 중요했어요.',
+      '자료와 문서가 제일 많아서 막혔을 때 답을 찾기 쉬워요. 처음 서버를 만지는 저한테는 이게 제일 중요했어요. LTS(장기 지원) 버전이라 2029년까지 보안 업데이트가 나오고, OS 라이선스 비용도 없어요(EC2 사용료는 따로예요). Docker 공식 설치 문서가 그대로 맞고, SSM Agent도 AMI에 이미 깔려 있어요.',
     cost: '저장소 문서는 원래 Amazon Linux 기준이라 설치 명령을 우분투에 맞게 다시 써야 했어요.',
   },
   {
@@ -57,7 +57,7 @@ export const REASONS: Reason[] = [
     question: '왜 GitHub OIDC인가요?',
     answer:
       'AWS 열쇠(Access Key)를 GitHub Secret에 넣어 두면 언젠가 새거나 잊힌 채로 남아요. OIDC는 배포할 때마다 GitHub가 증명서를 내고 AWS가 1시간짜리 임시 열쇠를 줘요. 저장해 둔 비밀값이 아예 없어요.',
-    cost: '증명서의 `sub` 글자 하나만 달라도 거절돼서, 처음엔 왜 안 되는지 찾는 데 시간이 걸렸어요.',
+    cost: '정책 설정이 생각보다 까다로웠어요. 신뢰 정책에 적은 조건이 GitHub이 실제로 보내는 값(숫자 ID가 붙은 형식, `repo:<오너>@<숫자ID>/<저장소>@<숫자ID>:ref:refs/heads/main`)과 달라서 거절됐고, 그걸 고치니 이번엔 권한 정책이 빠져 있어서 또 막혔어요. 두 정책이 하는 일이 다르다는 걸 그때 확실히 알게 됐어요.',
   },
   {
     id: 'ghcr',
@@ -93,13 +93,13 @@ export const TROUBLES: Trouble[] = [
   {
     symptom: '`Not authorized to perform sts:AssumeRoleWithWebIdentity`',
     cause:
-      '이 저장소는 GitHub OIDC의 immutable subject 형식이라 `sub`에 소유자·저장소 ID가 붙어요(`repo:POcodingWER@89626659/backend-visualized@1425018571:ref:refs/heads/main`). 신뢰 정책에는 이름만 있는 예전 형식이 적혀 있어서 글자가 달랐어요.',
+      '정책 설정이 생각보다 까다로웠어요. 신뢰 정책에 적은 `sub` 조건이 GitHub이 실제로 보내는 값과 달랐어요. 이 저장소는 immutable subject 형식이라 계정·저장소 숫자 ID가 붙어서 와요(`repo:<오너>@<숫자ID>/<저장소>@<숫자ID>:ref:refs/heads/main`).',
     fix: '`gh api …/oidc/customization/sub`로 실제 형식을 확인하고, GitHub 설정을 되돌리는 대신(그게 덜 안전해요) AWS 신뢰 정책의 `sub`를 새 형식으로 고쳤어요.',
   },
   {
     symptom: 'OIDC 로그인은 통과했는데 `AccessDenied: ssm:SendCommand`',
     cause:
-      'IAM 역할에는 정책이 두 종류예요. "누가 이 역할을 빌릴 수 있나"(신뢰 정책)와 "빌린 뒤 무엇을 할 수 있나"(권한 정책). 신뢰 정책은 맞았지만 권한 정책이 하나도 없어서, 역할은 받고도 아무것도 못 했어요.',
+      '신뢰 정책을 고치니 이번엔 권한 정책이 빠져 있었어요. 두 정책은 하는 일이 달라요. 신뢰 정책은 "누가 이 역할을 받을 수 있나", 권한 정책은 "받고 나서 무엇을 할 수 있나"예요. 역할은 받았는데 할 수 있는 게 없었던 거예요.',
     fix: '배포 역할에 권한(인라인) 정책 `ssm-deploy-only`를 붙였어요. `SendCommand`는 이 인스턴스 하나와 `AWS-RunShellScript` 문서로만 좁히고, 결과 조회(`GetCommandInvocation`)만 전체로 열었어요.',
   },
   {
