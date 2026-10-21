@@ -123,11 +123,12 @@ vi deploy/production.env
 chmod 600 deploy/production.env
 ```
 
-빌드·실행 (t4g.small + 스왑 2GB에서 서버 빌드 약 2분, OOM 없음):
+실행 (API 이미지는 GitHub Actions가 GHCR에 올린 것을 받기만 함, 7-1장):
 
 ```bash
-./deploy/compose.sh up -d --build        # COMPOSE_PROFILES=local-db 라 mysql도 같이 뜸
-./deploy/compose.sh ps                   # api/mysql/redis (healthy), 공개 포트는 caddy 80/443 뿐
+./deploy/compose.sh up -d                # mysql/redis/caddy (COMPOSE_PROFILES=local-db 라 mysql도 같이 뜸)
+./deploy/deploy.sh "$(git rev-parse HEAD)"   # API: GHCR 이미지 받아서 api_blue로 시작 + Caddy 연결
+./deploy/compose.sh ps                   # api_blue/mysql/redis (healthy), 공개 포트는 caddy 80/443 뿐
 ./deploy/compose.sh logs caddy | grep 'certificate obtained'
 curl https://3-35-59-193.sslip.io/health # {"status":"ok","db":{"status":"up",...}}
 ```
@@ -152,18 +153,19 @@ vi deploy/production.env   # 아래 5장 표를 보고 채우기
 
 ```bash
 # RDS 사용
-./deploy/compose.sh up -d --build
+./deploy/compose.sh up -d
 # 또는 같은 EC2의 MySQL 컨테이너 사용 (DATABASE_URL 호스트를 mysql 로)
-./deploy/compose.sh --profile local-db up -d --build
+./deploy/compose.sh --profile local-db up -d
 
-./deploy/compose.sh ps            # api가 (healthy) 인지 확인
-./deploy/compose.sh logs -f api   # [config] 요약 줄과 경고 확인
+./deploy/deploy.sh "$(git rev-parse HEAD)"   # API (blue-green, 7-1장)
+./deploy/compose.sh ps                 # api_blue 또는 api_green이 (healthy) 인지 확인
+./deploy/compose.sh logs -f api_blue   # [config] 요약 줄과 경고 확인
 curl https://api.example.com/health
 ```
 
-업데이트: main에 push하면 CI 성공 후 **자동 배포**됩니다 (7-1장). 수동으로 하려면 `git pull && ./deploy/compose.sh up -d --build` (마이그레이션은 컨테이너 시작 시 자동 적용).
+업데이트: main에 push하면 CI 성공 후 **자동 무중단 배포**됩니다 (7-1장). 수동으로 하려면 `git pull && ./deploy/deploy.sh "$(git rev-parse HEAD)"` (마이그레이션은 새 컨테이너 시작 시 자동 적용).
 
-CORS 출처 추가 (예: Vercel 배포 후): `deploy/production.env`의 `VERCEL_ORIGIN=https://<앱>.vercel.app` → `./deploy/compose.sh up -d`.
+CORS 출처 추가 (예: Vercel 배포 후): `deploy/production.env`의 `VERCEL_ORIGIN=https://<앱>.vercel.app` → `./deploy/deploy.sh current` (같은 이미지를 다른 색으로 다시 띄워 무중단 반영). 현재 `https://backend-visualized.vercel.app`.
 compose가 `WEB_ORIGIN` + `,VERCEL_ORIGIN`(비어 있으면 생략)으로 합쳐 API에 넘깁니다.
 
 관리자 API (임의 기간 재집계):
@@ -263,7 +265,7 @@ AWS 공식 가격표(aws.amazon.com 가격 페이지가 쓰는 공개 가격 데
    - build: `cd ../.. && pnpm turbo run build --filter=@bv/web` (`@bv/sdk`를 먼저 빌드)
 4. **Environment Variables**: `NEXT_PUBLIC_API_URL=https://api.example.com` (Production, Preview 모두).
    - 빠지면 빌드가 실패하도록 해 두었습니다 (`next.config.ts`). `NEXT_PUBLIC_*`은 **빌드 시점에 박히므로** 바꾸면 재배포해야 합니다.
-5. Deploy → 나온 주소(예: `https://backend-visualized.vercel.app`)를 EC2의 `WEB_ORIGIN`에 넣고 `./deploy/compose.sh up -d` 로 API 재시작.
+5. Deploy → 나온 주소(예: `https://backend-visualized.vercel.app`)를 EC2의 `VERCEL_ORIGIN`에 넣고 `./deploy/deploy.sh current` 로 API 무중단 재시작.
 
 > Preview 배포 주소(`…-git-branch-….vercel.app`)는 매번 달라서 CORS에 막힙니다. 필요하면 그 주소를 `WEB_ORIGIN`에 쉼표로 추가하세요.
 
@@ -348,87 +350,112 @@ AWS 공식 가격표(aws.amazon.com 가격 페이지가 쓰는 공개 가격 데
 
 ---
 
-## 7-1. 자동 배포 (CD): GitHub Actions → OIDC → SSM → EC2
+## 7-1. 자동 배포 (CD): GHCR 이미지 + OIDC + SSM + blue-green 무중단
 
-`.github/workflows/deploy.yml` — main에 push하고 CI가 **성공**하면 자동으로 EC2에 배포합니다.
+`.github/workflows/deploy.yml` — main에 push하고 CI가 **성공**하면 자동으로 EC2에 **무중단** 배포합니다.
+서버는 이미지를 **받기만** 하고 빌드하지 않습니다 (빌드는 GitHub의 ARM 러너가 함).
 
 ```
 git push origin main
    │
    ▼
-CI (ci.yml: typecheck · lint · test · build · Docker 이미지 빌드)
-   │  성공 (workflow_run 이벤트, conclusion=success, event=push)
+CI (ci.yml: typecheck · lint · test · build · Docker 이미지 빌드 확인)
+   │  성공 (workflow_run, conclusion=success, event=push)
    ▼
 Deploy (deploy.yml)
-   ├─ 1) GitHub OIDC 토큰 ──▶ AWS STS AssumeRoleWithWebIdentity
-   │        role: backend-visualized-github-deploy (1시간짜리 임시 자격 증명)
-   ├─ 2) aws ssm send-command (AWS-RunShellScript, 인스턴스 i-0c7a663e814fc808d)
-   │        │
-   │        ▼   EC2의 SSM Agent가 AWS로 "바깥으로" 연결해 명령을 받아 실행 (root → sudo -u ubuntu)
-   │      cd /opt/backend-visualized
-   │      git fetch origin main && git reset --hard <CI가 검사한 SHA>
-   │      ./deploy/compose.sh up -d --build && docker image prune -f
-   ├─ 3) get-command-invocation 폴링 (Success가 아니면 job 실패, 서버 stdout/stderr 출력)
-   └─ 4) curl https://3-35-59-193.sslip.io/health 가 200일 때까지 재시도 (아니면 실패)
+   ├─ target : 배포할 커밋 SHA 결정 (main에 있는 커밋인지 확인)
+   ├─ image  : ubuntu-24.04-arm 러너에서 linux/arm64 빌드 → GHCR push (GITHUB_TOKEN, packages: write)
+   │             ghcr.io/pocodingwer/backend-visualized-api:<40자 SHA>  (+ :main)
+   └─ deploy : GitHub OIDC ──▶ AWS 역할 backend-visualized-github-deploy (1시간 임시 자격 증명)
+                 └─ aws ssm send-command (AWS-RunShellScript) ──▶ EC2의 SSM Agent (root → sudo -u ubuntu)
+                       git fetch && git reset --hard origin/main      # compose/Caddy 설정은 main 기준
+                       ./deploy/deploy.sh <SHA>                       # 아래 blue-green
+               └─ get-command-invocation 폴링 → 서버 출력의 DEPLOYED_SHA 확인 → https://…/health 200 확인
 ```
 
-**왜 SSH가 아니라 SSM?**
+### blue-green 무중단 교체 (`deploy/deploy.sh`)
+
+```
+            평소                         배포 중 (수십 초)                       배포 후
+ 인터넷 ─▶ Caddy ─▶ api_blue      Caddy ─▶ api_blue (계속 서비스)        Caddy ─▶ api_green
+                    (api_green     api_green 새 이미지로 시작                api_blue 정지 (다음 배포 때 재사용)
+                     꺼져 있음)      → prisma migrate deploy (1번만)
+                                   → /health 200 확인 (caddy 안에서 wget)
+                                   → upstream.caddy를 green으로 + caddy reload
+                                   → 10초 대기 (진행 중 요청 마무리) → blue 정지
+```
+
+- `docker-compose.prod.yml`에 같은 API를 `api_blue`, `api_green` 두 서비스로 정의합니다 (공통 설정은 `x-api` 앵커 하나라 env·CORS(`WEB_ORIGIN`+`VERCEL_ORIGIN`)가 두 색에 똑같이 들어감).
+  `profiles`가 있어서 `./deploy/compose.sh up -d`로는 API가 안 뜨고, API는 `deploy.sh`로만 교체합니다.
+- 어느 색이 서비스 중인지는 `deploy/caddy/upstream.caddy` 한 파일이 정합니다 (git 미추적, deploy.sh가 생성).
+  `deploy/caddy` 폴더 전체를 Caddy의 `/etc/caddy`로 마운트하므로, 파일을 바꾸고 `caddy reload`만 하면 연결을 끊지 않고 전환됩니다.
+- 두 API가 동시에 떠 있는 건 전환하는 몇십 초뿐이라 2GB 메모리에서도 여유가 있습니다 (API 하나 약 140MB).
+- 새 색이 건강해지지 않으면(마이그레이션 실패, env 오류 등) 스크립트가 멈추고 Caddy는 계속 예전 색을 봅니다.
+- MySQL/Redis는 건드리지 않습니다 (`--no-deps`). 공개 포트는 여전히 Caddy의 80/443뿐입니다.
+- SSE(`/events/stream`) 같은 오래 열린 연결은 전환 때 한 번 끊기고, 브라우저 EventSource가 자동으로 다시 연결합니다.
+
+**마이그레이션 주의 (expand → contract)**: 새 색이 시작하면서 `prisma migrate deploy`를 실행하는 순간부터 전환이 끝날 때까지
+**예전 색이 새 스키마 위에서** 잠깐 같이 돕니다. 그래서 한 번의 배포에서 컬럼 삭제·이름 변경처럼 예전 코드가 깨지는 변경을 하면 안 됩니다.
+
+1. expand: 새 컬럼/테이블 추가 (nullable 또는 기본값) → 배포 (예전 코드도 문제없음)
+2. 코드가 새 컬럼을 쓰도록 바꿔 배포
+3. contract: 더 이상 안 쓰는 컬럼 삭제 → 배포
+
+롤백해도 마이그레이션은 되돌려지지 않으므로(Prisma는 앞으로만), 이 순서를 지키면 예전 이미지로 롤백해도 안전합니다.
+
+### GHCR 패키지 공개 (1회)
+
+서버는 로그인 없이(익명으로) 이미지를 받습니다 → 서버에 GitHub 토큰을 둘 필요가 없습니다. 대신 패키지가 **Public**이어야 합니다.
+워크플로가 처음 push한 패키지는 기본이 private이라, 저장소 관리자(POcodingWER)가 한 번 바꿔야 합니다:
+
+1. https://github.com/users/POcodingWER/packages/container/backend-visualized-api/settings
+2. 맨 아래 **Danger Zone → Change visibility → Public** → 패키지 이름 입력 후 확인
+
+아직 private이면 image job에 경고가 뜨고, 서버는 비상용으로 **직접 빌드**합니다 (`FALLBACK_LOCAL_BUILD`, 느림).
+
+### 왜 SSH가 아니라 SSM?
 
 - SSH로 배포하려면 GitHub Actions 러너(IP가 매번 바뀜)에게 22번 포트를 열어야 하고, 개인키를 GitHub Secret에 넣어야 합니다.
 - SSM은 EC2의 에이전트가 AWS로 **나가는(outbound)** 연결만 쓰므로 인바운드 포트를 하나도 더 열 필요가 없고,
   누가 어떤 명령을 보냈는지 CloudTrail/SSM 기록에 남습니다.
-- OIDC 덕분에 AWS Access Key 같은 장기 비밀값을 GitHub에 저장하지 않습니다. 토큰은 "이 저장소의 main 브랜치에서 돈 워크플로"만 받을 수 있습니다.
+- OIDC 덕분에 AWS Access Key 같은 장기 비밀값을 GitHub에 저장하지 않습니다. GHCR push도 job마다 새로 발급되는 `GITHUB_TOKEN`을 씁니다.
 
-**AWS 쪽 구성 (콘솔에서 1회, 최소 권한)**
+### AWS 쪽 구성 (콘솔에서 1회, 최소 권한)
 
 | 구성 요소                                      | 내용                                                                                                                                        |
 | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | EC2 인스턴스 역할 `backend-visualized-ec2-ssm` | 관리형 정책 `AmazonSSMManagedInstanceCore`만. SSM Agent가 AWS에 등록되는 데 필요                                                            |
 | IAM OIDC 공급자                                | `token.actions.githubusercontent.com`, audience `sts.amazonaws.com`                                                                         |
 | 배포 역할 `backend-visualized-github-deploy`   | 신뢰 정책: `aud` = `sts.amazonaws.com`, `sub` = `repo:POcodingWER@89626659/backend-visualized@1425018571:ref:refs/heads/main` (아래 주의)   |
-| 배포 역할 인라인 정책                          | `ssm:SendCommand` → 이 인스턴스 ARN + `AWS-RunShellScript` 문서만 / `ssm:GetCommandInvocation`, `ssm:ListCommandInvocations` → `*` (조회만) |
+| 배포 역할 인라인 정책 `ssm-deploy-only`        | `ssm:SendCommand` → 이 인스턴스 ARN + `AWS-RunShellScript` 문서만 / `ssm:GetCommandInvocation`, `ssm:ListCommandInvocations` → `*` (조회만) |
+
+GHCR로 바꾸면서 IAM은 하나도 늘리지 않았습니다 (이미지 저장소가 AWS 밖이라 ECR 권한이 필요 없음).
 
 - **`sub` 형식 주의 (immutable subject)**: 이 저장소는 GitHub OIDC의 _immutable subject_ 형식을 씁니다
   (`gh api repos/POcodingWER/backend-visualized/actions/oidc/customization/sub` → `use_immutable_subject: true`).
-  그래서 토큰의 `sub`는 `repo:POcodingWER/backend-visualized:…`가 아니라 **소유자·저장소 ID가 붙은**
-  `repo:POcodingWER@89626659/backend-visualized@1425018571:ref:refs/heads/main` 입니다. 신뢰 정책 예:
+  그래서 토큰의 `sub`는 소유자·저장소 ID가 붙은 `repo:POcodingWER@89626659/backend-visualized@1425018571:ref:refs/heads/main` 입니다.
+  `workflow_run`과 `workflow_dispatch`(main에서 실행) 모두 이 `sub`로 들어옵니다.
+- 워크플로에 `environment:`를 붙이면 `sub`가 `…:environment:<이름>`으로 바뀌어 신뢰 정책과 맞지 않습니다.
 
-  ```json
-  "Condition": {
-    "StringEquals": {
-      "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
-      "token.actions.githubusercontent.com:sub": "repo:POcodingWER@89626659/backend-visualized@1425018571:ref:refs/heads/main"
-    }
-  }
-  ```
+**서버 쪽 준비**: `sudo snap services amazon-ssm-agent` (Ubuntu 24.04 AMI 기본 설치), 인스턴스 역할을 붙인 뒤
+`sudo snap restart amazon-ssm-agent` → 로그(`/var/log/amazon/ssm/amazon-ssm-agent.log`)에 `Credentials ready`.
 
-  `workflow_run`과 `workflow_dispatch`(main에서 실행) 모두 이 `sub`로 들어옵니다. 저장소 이름이 재사용돼도 다른 사람이 같은 `sub`를 만들 수 없어서 더 안전합니다.
+**`git reset --hard`**: 서버 checkout은 main의 거울입니다. `deploy/production.env`, `deploy/caddy/upstream.caddy`는 git 미추적이라
+영향이 없지만, **서버에서 직접 고친 추적 파일은 다음 배포 때 사라집니다.** 고칠 것은 저장소에 커밋하세요.
 
-- 배포 역할은 EC2를 만들거나 지우거나, 다른 인스턴스에 명령을 보내거나, 비밀값을 읽을 수 없습니다.
-- 워크플로에 `environment:`를 붙이면 OIDC `sub`가 `repo:…:environment:<이름>`으로 바뀌어 신뢰 정책과 맞지 않습니다. 붙이려면 신뢰 정책도 같이 바꾸세요.
+### 수동 배포 / 롤백 / env 변경
 
-**서버 쪽 준비**
+| 하고 싶은 것                      | 방법                                                                                                          |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| main 최신 다시 배포               | Actions → **Deploy** → Run workflow (branch main, ref 비움)                                                   |
+| 롤백                              | Run workflow → ref에 예전 main 커밋 SHA → 빌드 없이 그 SHA 이미지로 blue-green 교체 (설정 파일은 main 그대로) |
+| 오래 유지할 롤백                  | `git revert <문제 커밋>` → main push (다음 push가 다시 최신을 배포하므로 이게 정석)                           |
+| 서버에서 직접 (비상)              | `ssh … 'cd /opt/backend-visualized && ./deploy/deploy.sh <40자 SHA>'`                                         |
+| `deploy/production.env` 변경 반영 | `./deploy/deploy.sh current` → 같은 이미지를 다른 색으로 다시 띄워 무중단 반영                                |
+| 지금 어느 색/이미지?              | `cat deploy/caddy/upstream.caddy`, `./deploy/compose.sh ps`                                                   |
 
-```bash
-sudo snap services amazon-ssm-agent          # Ubuntu 24.04 AMI에 기본 설치 (enabled/active)
-# 인스턴스 역할을 붙인 뒤 에이전트 재시작 → 로그에 등록 성공이 보여야 함
-sudo snap restart amazon-ssm-agent
-sudo tail -n 30 /var/log/amazon/ssm/amazon-ssm-agent.log   # "Successfully registered" / "credentials" 오류가 없어야 함
-```
-
-**`git reset --hard`를 쓰는 이유와 주의점**
-
-서버 checkout은 "main을 그대로 비추는 거울"이어야 합니다. `deploy/production.env`(비밀값)는 `.gitignore` 대상이라
-reset의 영향을 받지 않지만, **서버에서 직접 고친 추적 파일은 다음 배포 때 사라집니다.** 고칠 것은 반드시 저장소에 커밋하세요.
-(배포 전에 `git status --short`가 비어 있는지 확인해 두었습니다.)
-
-**수동 배포 / 롤백**
-
-- Actions → **Deploy** → Run workflow → `ref` 비우면 main 최신 재배포.
-- 롤백: `ref`에 예전 main 커밋 SHA를 넣고 실행 (main에 없는 커밋은 거부). **다음 main push 때 다시 최신으로 배포**되므로,
-  오래 유지할 롤백이면 `git revert <문제 커밋>` → main에 push 하는 게 정석입니다.
-- DB 마이그레이션은 되돌려지지 않습니다 (Prisma `migrate deploy`는 앞으로만). 스키마를 바꾼 커밋을 롤백할 땐 주의.
-- `up -d --build`는 api 컨테이너를 다시 만드는 몇 초 동안 Caddy가 502를 돌려줄 수 있습니다 (단일 인스턴스의 한계).
+GHCR 이미지는 서버에 최근 3개만 남깁니다. 그보다 오래된 SHA로 롤백하면 GHCR에서 다시 받습니다 (public이면 문제없음).
+이 방식(GHCR 이미지) 이전 커밋에는 이미지가 없으므로 그 커밋으로는 롤백할 수 없습니다.
 
 ---
 
@@ -436,7 +463,7 @@ reset의 영향을 받지 않지만, **서버에서 직접 고친 추적 파일�
 
 | 증상                                                                                        | 확인                                                                                                                                          |
 | ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| API 컨테이너가 바로 종료                                                                    | `./deploy/compose.sh logs api` 의 `[config] 환경 변수 설정 오류` 목록                                                                         |
+| API 컨테이너가 바로 종료                                                                    | `./deploy/compose.sh logs api_blue`(또는 `api_green`) 의 `[config] 환경 변수 설정 오류` 목록                                                  |
 | 인증서 발급 실패                                                                            | DNS A 레코드가 Elastic IP인지, 보안 그룹 80/443 열림 확인. `logs caddy`                                                                       |
 | 브라우저 CORS 오류                                                                          | `WEB_ORIGIN`이 Vercel 주소와 **정확히** 같은지 (https, 끝 슬래시 없음)                                                                        |
 | 새로고침하면 로그아웃                                                                       | 4장: `none`+Secure인지, Safari면 커스텀 도메인 + `lax`                                                                                        |
@@ -445,3 +472,6 @@ reset의 영향을 받지 않지만, **서버에서 직접 고친 추적 파일�
 | Deploy: `Could not assume role` / `Not authorized to perform sts:AssumeRoleWithWebIdentity` | 신뢰 정책의 `sub`가 immutable 형식(`repo:POcodingWER@89626659/backend-visualized@1425018571:ref:refs/heads/main`)인지, `aud`, OIDC 공급자 ARN |
 | Deploy: `InvalidInstanceId`                                                                 | 인스턴스에 `backend-visualized-ec2-ssm` 역할이 붙었는지, SSM Agent 재시작 후 Fleet Manager에 Online인지                                       |
 | Deploy: `AccessDeniedException ... ssm:SendCommand`                                         | 배포 역할 인라인 정책의 인스턴스 ARN·문서 ARN(`arn:aws:ssm:ap-northeast-2::document/AWS-RunShellScript`)                                      |
+| Deploy: `FALLBACK_LOCAL_BUILD` 경고, 배포가 느림                                            | GHCR 패키지가 private → 7-1장 「GHCR 패키지 공개」                                                                                            |
+| Deploy: `api_<색> 가 건강해지지 않았습니다`                                                 | 출력에 붙은 새 컨테이너 로그 (마이그레이션 오류, `[config]` env 오류). 서비스는 예전 색이 계속 함                                             |
+| 502가 계속 남                                                                               | `cat deploy/caddy/upstream.caddy`의 색이 실제로 떠 있는지 `./deploy/compose.sh ps`. 아니면 `./deploy/deploy.sh current`                       |

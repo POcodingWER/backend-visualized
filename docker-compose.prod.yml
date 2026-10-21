@@ -1,45 +1,54 @@
 # EC2 운영용. 사용법은 docs/deploy.md 참고.
-#   RDS 사용:            ./deploy/compose.sh up -d --build
-#   같은 EC2의 MySQL:     ./deploy/compose.sh --profile local-db up -d --build
-#                         (또는 deploy/production.env에 COMPOSE_PROFILES=local-db 를 넣으면 --profile 생략 가능)
+#   DB·Redis·Caddy:      ./deploy/compose.sh up -d     (RDS를 안 쓰면 COMPOSE_PROFILES=local-db 로 mysql도 같이)
+#   API 배포/롤백:        ./deploy/deploy.sh <커밋 SHA>  (GHCR 이미지를 받아 blue/green 무중단 교체)
 # 비밀값은 deploy/production.env (git에 올리지 않음, deploy/production.env.example 복사해서 작성)
 
 name: backend-visualized
 
+# api_blue / api_green 공통 설정. 무중단 배포(blue-green)를 위해 같은 API를 두 "색"으로 정의하고,
+# 평소엔 한 색만 떠 있다. 어느 색이 서비스 중인지는 deploy/caddy/upstream.caddy가 정한다 (deploy/deploy.sh가 관리)
+x-api: &api
+  restart: unless-stopped
+  # 이미지는 서버에서 빌드하지 않는다: GitHub Actions가 GHCR에 올린 이미지를 deploy.sh가 받아서
+  # backend-visualized-api:blue / :green 으로 이름만 붙인다. 그래서 compose가 직접 pull 하지 않게 never
+  pull_policy: never
+  env_file: deploy/production.env
+  depends_on:
+    redis:
+      condition: service_healthy
+    # local-db 프로필(같은 EC2의 MySQL)일 때만 기다린다. RDS면 mysql 서비스가 없으므로 required: false
+    mysql:
+      condition: service_healthy
+      required: false
+  environment:
+    NODE_ENV: production
+    PORT: '4000'
+    # CORS 허용 출처 = WEB_ORIGIN + (있으면) VERCEL_ORIGIN. 둘 다 deploy/production.env에서 바꾼다
+    WEB_ORIGIN: ${WEB_ORIGIN:?WEB_ORIGIN을 deploy/production.env에 설정하세요}${VERCEL_ORIGIN:+,${VERCEL_ORIGIN}}
+    # Caddy 한 단계 뒤에 있으므로 X-Forwarded-For의 마지막 1홉만 믿는다 (ALB를 앞에 두면 2)
+    TRUST_PROXY: ${TRUST_PROXY:-1}
+  # 포트를 밖으로 열지 않는다: 인터넷 → Caddy(443) → api_<색>:4000 만 가능 (X-Forwarded-For 위조 방지)
+  expose:
+    - '4000'
+  logging:
+    driver: json-file
+    options: { max-size: '10m', max-file: '5' }
+
 services:
-  api:
-    build:
-      context: .
-      dockerfile: apps/api/Dockerfile
-    image: backend-visualized-api:latest
-    restart: unless-stopped
-    env_file: deploy/production.env
-    depends_on:
-      redis:
-        condition: service_healthy
-      # local-db 프로필(같은 EC2의 MySQL)일 때만 기다린다. RDS면 mysql 서비스가 없으므로 required: false
-      mysql:
-        condition: service_healthy
-        required: false
-    environment:
-      NODE_ENV: production
-      PORT: '4000'
-      # CORS 허용 출처 = WEB_ORIGIN + (있으면) VERCEL_ORIGIN. 둘 다 deploy/production.env에서 바꾼다
-      WEB_ORIGIN: ${WEB_ORIGIN:?WEB_ORIGIN을 deploy/production.env에 설정하세요}${VERCEL_ORIGIN:+,${VERCEL_ORIGIN}}
-      # Caddy 한 단계 뒤에 있으므로 X-Forwarded-For의 마지막 1홉만 믿는다 (ALB를 앞에 두면 2)
-      TRUST_PROXY: ${TRUST_PROXY:-1}
-    # 포트를 밖으로 열지 않는다: 인터넷 → Caddy(443) → api:4000 만 가능 (X-Forwarded-For 위조 방지)
-    expose:
-      - '4000'
-    logging:
-      driver: json-file
-      options: { max-size: '10m', max-file: '5' }
+  # profiles: 그냥 `./deploy/compose.sh up -d` 를 하면 API는 건드리지 않는다. API는 deploy/deploy.sh로만 교체
+  api_blue:
+    <<: *api
+    image: backend-visualized-api:blue
+    profiles: ['blue']
+
+  api_green:
+    <<: *api
+    image: backend-visualized-api:green
+    profiles: ['green']
 
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
-    depends_on:
-      - api
     ports:
       - '80:80'
       - '443:443'
@@ -48,7 +57,9 @@ services:
       API_DOMAIN: ${API_DOMAIN:?API_DOMAIN을 deploy/production.env에 설정하세요}
       ACME_EMAIL: ${ACME_EMAIL:?ACME_EMAIL(인증서 알림 메일)을 deploy/production.env에 설정하세요}
     volumes:
-      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      # Caddyfile + upstream.caddy(지금 서비스 중인 색). 파일이 아니라 폴더를 마운트해야
+      # git pull이나 deploy.sh가 파일을 새로 써도 컨테이너에 바로 보인다 (파일 마운트는 예전 내용에 묶임)
+      - ./deploy/caddy:/etc/caddy:ro
       - caddy-data:/data
       - caddy-config:/config
     logging:

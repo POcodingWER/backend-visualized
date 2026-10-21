@@ -1,18 +1,20 @@
-# 운영 자동 배포 (CD): main에 push → CI 성공 → 이 워크플로가 EC2에 배포
+# 운영 자동 배포 (CD): main에 push → CI 성공 → 이 워크플로가 EC2에 무중단 배포
 #
 #   git push main ─▶ CI(ci.yml) 성공 ─▶ Deploy(이 파일)
-#                                        1) GitHub OIDC 토큰 → AWS IAM 역할 (장기 Access Key 없음)
-#                                        2) SSM Run Command → EC2에서 git reset + docker compose up --build
-#                                        3) https://<API_DOMAIN>/health 가 200인지 확인
+#     1) target  : 배포할 커밋 SHA 정하기
+#     2) image   : ARM(arm64) 러너에서 API 이미지를 빌드해 GHCR에 push  (ghcr.io/pocodingwer/backend-visualized-api:<SHA>)
+#     3) deploy  : GitHub OIDC → AWS 역할 → SSM Run Command로 EC2에서 ./deploy/deploy.sh <SHA>
+#                  (서버는 이미지를 받기만 하고 blue/green 교체, 빌드하지 않음) → /health 200 확인
 #
 # - SSH 포트(22)를 GitHub에 열지 않는다: EC2의 SSM Agent가 AWS로 "바깥으로" 연결해서 명령을 받아온다.
-# - 수동 배포/롤백: Actions → Deploy → Run workflow (ref에 main 커밋 SHA를 넣으면 그 커밋으로 배포).
+# - 수동 배포: Actions → Deploy → Run workflow (ref 비움 = main 최신을 빌드해서 배포)
+# - 롤백:     Actions → Deploy → Run workflow, ref에 예전 main 커밋 SHA → 빌드 없이 그 이미지로 교체
 # 자세한 설명: docs/deploy.md 「자동 배포 (CD)」
 
 name: Deploy
 
 on:
-  # CI 워크플로가 끝나면 실행된다 (성공/실패 모두 이벤트가 오므로 아래 job의 if로 "main push + 성공"만 거른다)
+  # CI 워크플로가 끝나면 실행된다 (성공/실패 모두 이벤트가 오므로 target job의 if로 "main push + 성공"만 거른다)
   workflow_run:
     workflows: [CI]
     types: [completed]
@@ -21,7 +23,7 @@ on:
   workflow_dispatch:
     inputs:
       ref:
-        description: '배포할 main의 커밋 SHA (비우면 main 최신). 롤백할 때 예전 SHA를 넣는다'
+        description: '롤백할 main 커밋 SHA (비우면 main 최신을 빌드해서 배포)'
         required: false
         default: ''
 
@@ -30,12 +32,12 @@ concurrency:
   group: deploy-production
   cancel-in-progress: false
 
-# id-token: write → GitHub가 이 job에 OIDC 토큰을 발급해 줌 (AWS가 "이 저장소의 main에서 온 요청"임을 확인)
+# 기본은 읽기만. 필요한 권한은 job마다 따로 준다
 permissions:
-  id-token: write
   contents: read
 
 env:
+  IMAGE: ghcr.io/pocodingwer/backend-visualized-api
   AWS_REGION: ap-northeast-2
   # 계정 ID/ARN/인스턴스 ID는 비밀값이 아니다 (권한은 IAM 정책이 막는다)
   AWS_ROLE_ARN: arn:aws:iam::071732232414:role/backend-visualized-github-deploy
@@ -44,36 +46,126 @@ env:
   HEALTH_URL: https://3-35-59-193.sslip.io/health
 
 jobs:
-  deploy:
-    name: Deploy API to EC2 (SSM)
+  # ── 1) 배포할 커밋 정하기 ───────────────────────────────────────────────
+  target:
+    name: Resolve target commit
     # 수동 실행이거나, "main에 push"로 돈 CI가 성공했을 때만
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    outputs:
+      sha: ${{ steps.resolve.outputs.sha }}
+      build: ${{ steps.resolve.outputs.build }}
     steps:
-      # 1) 어떤 커밋을 배포할지 정한다. 입력값은 셸에 넣기 전에 형식을 검사한다 (명령 주입 방지)
-      - name: Resolve target commit
-        id: target
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # 짧은 SHA를 40자로 풀고, main에 있는 커밋인지 확인하려면 전체 기록이 필요
+      - name: Resolve
+        id: resolve
         env:
+          EVENT: ${{ github.event_name }}
           INPUT_REF: ${{ inputs.ref }}
           RUN_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
-          if [ "${{ github.event_name }}" = "workflow_run" ]; then
-            sha="$RUN_SHA"                 # CI가 검사한 바로 그 커밋
-          elif [ -n "$INPUT_REF" ]; then
-            sha="$INPUT_REF"               # 수동: 지정한 커밋 (롤백)
-          else
-            sha="main"                     # 수동: main 최신
+          if [ "$EVENT" = "workflow_dispatch" ] && [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "::error::수동 배포는 main 브랜치에서만 실행할 수 있습니다 (지금: $GITHUB_REF)"; exit 1
           fi
-          if ! printf '%s' "$sha" | grep -Eq '^([0-9a-f]{7,40}|main)$'; then
-            echo "::error::ref는 main 또는 커밋 SHA(16진수 7~40자)여야 합니다: $sha"; exit 1
-          fi
-          echo "sha=$sha" >> "$GITHUB_OUTPUT"
-          echo "배포 대상: $sha"
 
-      # 2) OIDC로 AWS 임시 자격 증명 받기 (1시간짜리, 저장소에 Access Key를 둘 필요 없음)
+          if [ "$EVENT" = "workflow_run" ]; then
+            ref="$RUN_SHA";  build=true    # CI가 검사한 바로 그 커밋을 빌드해서 배포
+          elif [ -n "$INPUT_REF" ]; then
+            ref="$INPUT_REF"; build=false  # 롤백: 이미 GHCR에 있는 이미지로 교체만
+          else
+            ref="$GITHUB_SHA"; build=true  # 수동: main 최신
+          fi
+
+          # 입력값은 셸 명령에 넣기 전에 형식을 검사한다 (명령 주입 방지)
+          if ! printf '%s' "$ref" | grep -Eq '^[0-9a-f]{7,40}$'; then
+            echo "::error::ref는 커밋 SHA(16진수 7~40자)여야 합니다: $ref"; exit 1
+          fi
+          sha=$(git rev-parse --verify "$ref^{commit}")
+          if ! git merge-base --is-ancestor "$sha" origin/main; then
+            echo "::error::$sha 는 main에 없는 커밋입니다"; exit 1
+          fi
+
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "build=$build" >> "$GITHUB_OUTPUT"
+          echo "배포 대상: $sha (이미지 빌드: $build)"
+
+  # ── 2) 이미지 빌드 + GHCR push ─────────────────────────────────────────
+  image:
+    name: Build & push API image (arm64)
+    needs: target
+    if: needs.target.outputs.build == 'true'
+    # 서버(t4g)가 ARM이라 ARM 러너에서 바로 빌드한다 (QEMU 에뮬레이션보다 몇 배 빠름, 공개 저장소는 무료)
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write # GITHUB_TOKEN으로 GHCR에 push (따로 저장하는 비밀값 없음)
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.target.outputs.sha }}
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          platforms: linux/arm64
+          push: true
+          # 커밋 SHA 태그 = 배포/롤백에 쓰는 이름, main = "지금 main" 표시용
+          tags: |
+            ${{ env.IMAGE }}:${{ needs.target.outputs.sha }}
+            ${{ env.IMAGE }}:main
+          # source 라벨이 있어야 GHCR 패키지가 이 저장소에 연결된다
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ needs.target.outputs.sha }}
+          # 의존성 설치 레이어 등은 GitHub Actions 캐시에서 재사용 (소스만 바뀌면 빌드가 짧다)
+          cache-from: type=gha,scope=api-arm64
+          cache-to: type=gha,scope=api-arm64,mode=max
+
+      # 서버는 로그인 없이(익명으로) 이미지를 받는다 → 패키지가 public 이어야 한다
+      - name: Check that the server can pull anonymously
+        env:
+          SHA: ${{ needs.target.outputs.sha }}
+        run: |
+          repo="${IMAGE#ghcr.io/}"
+          token=$(curl -fsS "https://ghcr.io/token?scope=repository:$repo:pull" | jq -r .token)
+          code=$(curl -s -o /dev/null -w '%{http_code}' \
+            -H "Authorization: Bearer $token" \
+            -H "Accept: application/vnd.oci.image.index.v1+json, application/vnd.docker.distribution.manifest.v2+json" \
+            "https://ghcr.io/v2/$repo/manifests/$SHA")
+          if [ "$code" = "200" ]; then
+            echo "익명 pull 가능 (public)"
+          else
+            echo "::warning::GHCR 패키지가 public이 아닙니다 (HTTP $code). 서버가 이미지를 못 받아 서버에서 직접 빌드하게 됩니다(느림). https://github.com/users/POcodingWER/packages/container/backend-visualized-api/settings 에서 Public으로 바꿔 주세요"
+          fi
+
+  # ── 3) EC2에 배포 (SSM) ────────────────────────────────────────────────
+  deploy:
+    name: Deploy API to EC2 (SSM, blue-green)
+    needs: [target, image]
+    # image job은 롤백일 때 건너뛴다(skipped). 그때도 배포는 해야 하므로 always() + 결과 확인
+    if: >-
+      always() && needs.target.result == 'success' &&
+      (needs.image.result == 'success' || needs.image.result == 'skipped')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write # GitHub가 이 job에 OIDC 토큰을 발급 → AWS가 "이 저장소의 main"임을 확인
+    env:
+      SHA: ${{ needs.target.outputs.sha }}
+    steps:
+      # OIDC로 AWS 임시 자격 증명 받기 (1시간짜리, 저장소에 Access Key를 둘 필요 없음)
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v6
         with:
@@ -81,38 +173,17 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
           role-session-name: gh-deploy-${{ github.run_id }}
 
-      # 3) SSM Run Command로 서버에서 배포 명령 실행
-      #    - git reset --hard: 서버 checkout은 "main을 그대로 비추는 거울"이어야 한다.
-      #      deploy/production.env(비밀값)는 .gitignore 대상이라 reset/clean의 영향을 받지 않는다.
-      #      서버에서 직접 고친 파일이 있으면 사라지므로, 고칠 건 반드시 저장소에 커밋한다.
-      #    - merge-base --is-ancestor: main에 없는 커밋(다른 브랜치)은 배포하지 않는다
-      - name: Run deploy on EC2 via SSM
+      # SSM Run Command로 서버에서 배포 스크립트 실행
+      #  - AWS-RunShellScript는 root로 실행된다 → sudo -u ubuntu 로 평소 운영 계정으로 실행 (bash -l: docker 그룹 반영)
+      #  - 서버 checkout은 항상 main 최신으로 맞춘다 (compose/Caddy 설정과 deploy.sh는 main 기준).
+      #    롤백이어도 바뀌는 건 API 이미지뿐이다. deploy/production.env는 .gitignore 대상이라 reset의 영향을 받지 않는다.
+      #  - SHA는 target job에서 검사한 40자 16진수라 명령에 넣어도 안전하다
+      - name: Run deploy script on EC2 via SSM
         id: ssm
-        env:
-          TARGET: ${{ steps.target.outputs.sha }}
         run: |
-          # TARGET은 위에서 형식 검사를 통과한 값(main 또는 16진수 SHA)이라 명령에 넣어도 안전하다
-          if [ "$TARGET" = main ]; then ref=origin/main; else ref="$TARGET"; fi
-
-          # 서버(ubuntu 사용자)에서 순서대로 실행할 명령들. 하나라도 실패하면 멈춘다 (set -euo pipefail)
-          steps=(
-            "set -euo pipefail"
-            "cd $APP_DIR"
-            "git fetch --prune origin main"
-            "target=\$(git rev-parse --verify $ref^{commit})"
-            "git merge-base --is-ancestor \$target origin/main || { echo \"\$target is not on origin/main\"; exit 1; }"
-            "echo before=\$(git rev-parse --short HEAD) target=\$(git rev-parse --short \$target)"
-            "git reset --hard \$target"
-            "./deploy/compose.sh up -d --build"
-            "docker image prune -f"
-            "./deploy/compose.sh ps"
-            "echo DEPLOYED_SHA=\$(git rev-parse HEAD)"
-          )
-          joined=$(printf '%s; ' "${steps[@]}")
-          # AWS-RunShellScript는 root로 실행된다 → sudo -u ubuntu 로 평소 운영 계정으로 실행 (bash -l: docker 그룹 반영)
-          remote="sudo -u ubuntu bash -lc '$joined'"
+          remote="sudo -u ubuntu bash -lc 'set -euo pipefail; cd $APP_DIR; git fetch --prune origin main; git reset --hard origin/main; ./deploy/deploy.sh $SHA'"
           echo "서버에서 실행할 명령: $remote"
-          params=$(jq -nc --arg c "$remote" '{commands: [$c], executionTimeout: ["1800"]}')
+          params=$(jq -nc --arg c "$remote" '{commands: [$c], executionTimeout: ["1200"]}')
 
           command_id=$(aws ssm send-command \
             --instance-ids "$INSTANCE_ID" \
@@ -123,47 +194,50 @@ jobs:
           echo "command_id=$command_id" >> "$GITHUB_OUTPUT"
           echo "SSM CommandId: $command_id"
 
-      # 4) 명령이 끝날 때까지 기다린다 (aws ssm wait는 최대 100초라 빌드 시간엔 부족 → 직접 폴링)
+      # 명령이 끝날 때까지 기다린다 (aws ssm wait는 최대 100초라 직접 폴링)
       - name: Wait for SSM command
         env:
           COMMAND_ID: ${{ steps.ssm.outputs.command_id }}
-          TARGET: ${{ steps.target.outputs.sha }}
         run: |
+          invocation() {
+            aws ssm get-command-invocation --command-id "$COMMAND_ID" --instance-id "$INSTANCE_ID" "$@"
+          }
+
           status=Pending
-          for i in $(seq 1 120); do   # 최대 20분 (10초 x 120)
-            sleep 10
+          for i in $(seq 1 200); do # 최대 약 16분 (5초 x 200)
+            sleep 5
             # 보낸 직후엔 InvocationDoesNotExist가 날 수 있어서 실패해도 계속 기다린다
-            status=$(aws ssm get-command-invocation --command-id "$COMMAND_ID" --instance-id "$INSTANCE_ID" \
-                       --query Status --output text 2>/dev/null || echo Pending)
-            echo "[$((i*10))s] $status"
+            status=$(invocation --query Status --output text 2>/dev/null || echo Pending)
+            echo "[$((i * 5))s] $status"
             case "$status" in
               Pending|InProgress|Delayed) continue ;;
               *) break ;;
             esac
           done
 
+          stdout=$(invocation --query StandardOutputContent --output text || true)
           echo "::group::서버 출력 (stdout 마지막 80줄)"
-          aws ssm get-command-invocation --command-id "$COMMAND_ID" --instance-id "$INSTANCE_ID" \
-            --query StandardOutputContent --output text | tail -n 80 || true
+          printf '%s\n' "$stdout" | tail -n 80
           echo "::endgroup::"
           echo "::group::서버 오류 출력 (stderr 마지막 40줄)"
-          aws ssm get-command-invocation --command-id "$COMMAND_ID" --instance-id "$INSTANCE_ID" \
-            --query StandardErrorContent --output text | tail -n 40 || true
+          invocation --query StandardErrorContent --output text | tail -n 40 || true
           echo "::endgroup::"
 
           if [ "$status" != "Success" ]; then
             echo "::error::SSM 배포 명령 상태: $status"; exit 1
           fi
-
-          # 서버가 실제로 원하는 커밋에 있는지 확인 (SHA를 지정했을 때)
-          deployed=$(aws ssm get-command-invocation --command-id "$COMMAND_ID" --instance-id "$INSTANCE_ID" \
-                       --query StandardOutputContent --output text | sed -n 's/^DEPLOYED_SHA=//p' | tail -n 1)
-          echo "서버 HEAD: $deployed"
-          if [ "$TARGET" != main ] && [ "${deployed#"$TARGET"}" = "$deployed" ]; then
-            echo "::error::서버 HEAD($deployed)가 배포 대상($TARGET)과 다릅니다"; exit 1
+          if printf '%s\n' "$stdout" | grep -q '^FALLBACK_LOCAL_BUILD'; then
+            echo "::warning::서버가 GHCR에서 이미지를 못 받아 직접 빌드했습니다. GHCR 패키지를 Public으로 바꿔 주세요"
           fi
 
-      # 5) 밖(인터넷)에서 실제로 응답하는지 확인. 재시작 직후일 수 있어 몇 번 재시도
+          # 서버가 실제로 원하는 이미지로 바뀌었는지 확인
+          deployed=$(printf '%s\n' "$stdout" | sed -n 's/^DEPLOYED_SHA=\([0-9a-f]*\).*/\1/p' | tail -n 1)
+          echo "서버가 배포한 이미지: $deployed"
+          if [ "$deployed" != "$SHA" ]; then
+            echo "::error::서버 배포 결과($deployed)가 대상($SHA)과 다릅니다"; exit 1
+          fi
+
+      # 밖(인터넷)에서 실제로 응답하는지 확인. 혹시 모를 지연에 대비해 몇 번 재시도
       - name: Health check
         run: |
           for i in $(seq 1 30); do
