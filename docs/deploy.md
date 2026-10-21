@@ -3,9 +3,11 @@
 ```
 브라우저 ──HTTPS──▶ Vercel (apps/web, Next.js)
    │
-   └──HTTPS (fetch, credentials: include)──▶ EC2 :443 Caddy ──▶ api:4000 (NestJS, Docker)
+   └──HTTPS (fetch, credentials: include)──▶ EC2 :443 Caddy ──▶ api_blue / api_green :4000 (NestJS, Docker)
                                                                   │
-                                              RDS MySQL  또는  같은 EC2의 mysql 컨테이너
+                                              같은 EC2의 mysql · redis 컨테이너 (또는 RDS)
+
+GitHub Actions ──이미지──▶ GHCR        GitHub Actions ──OIDC → SSM──▶ EC2 deploy/deploy.sh (blue-green)
 ```
 
 - **Caddy**가 `API_DOMAIN`의 HTTPS 인증서(Let's Encrypt)를 자동 발급·갱신합니다.
@@ -34,8 +36,8 @@
 
 1. **인스턴스 유형**: `t4g.small` (ARM, 2 vCPU / 2 GiB) 권장. x86이 필요하면 `t3.small`.
    - MySQL 컨테이너까지 같이 돌리면 `t4g.small`(2 GiB)에서 동작하도록 MySQL 메모리를 줄여 두었습니다(`innodb-buffer-pool-size=256M`). 여유가 필요하면 `t4g.medium`.
-   - `t4g.micro`(1 GiB)는 Docker 이미지 빌드(pnpm install + tsc) 중 메모리가 부족할 수 있습니다 — 쓰려면 스왑 2 GB 추가 필수.
-2. **AMI**: Amazon Linux 2023 (ARM64 / t4g면 arm64 선택).
+   - API 이미지는 GitHub Actions가 구워 GHCR에 올리고 서버는 받기만 합니다(7-1장). 그래도 비상용 서버 빌드(`FALLBACK_LOCAL_BUILD`)를 생각하면 `t4g.micro`(1 GiB)는 스왑 2 GB가 필수입니다.
+2. **AMI**: Ubuntu Server 24.04 LTS (Arm) — 실제 배포에 쓴 것. Amazon Linux 2023도 되지만 설치 명령이 다릅니다 (아래 두 절).
 3. **스토리지**: gp3 20 GiB.
 4. **키 페어**: 새로 만들고 `.pem` 파일 보관 (SSH 접속용).
 5. **보안 그룹 (인바운드)**:
@@ -51,7 +53,7 @@
 6. **Elastic IP** 할당 → 인스턴스에 연결. 재시작해도 IP가 바뀌지 않습니다.
 7. **DNS**: `api.example.com`의 **A 레코드**를 Elastic IP로 설정.
 
-### EC2에 Docker 설치 (Amazon Linux 2023)
+### EC2에 Docker 설치 (Amazon Linux 2023, 다른 선택지)
 
 ```bash
 ssh -i my-key.pem ec2-user@<Elastic IP>
@@ -114,7 +116,7 @@ cd /opt/backend-visualized && umask 077
 cp deploy/production.env.example deploy/production.env
 # 아래 값들을 채우기: hex 비밀번호는 DATABASE_URL에 그대로 넣어도 URL 인코딩이 필요 없음
 #   COMPOSE_PROFILES=local-db
-#   API_DOMAIN=3-35-59-193.sslip.io        (IP의 점을 -로: 도메인이 생기면 이 줄만 교체)
+#   API_DOMAIN=<IP-대시>.sslip.io        (IP의 점을 -로: 도메인이 생기면 이 줄만 교체)
 #   WEB_ORIGIN=http://localhost:3000   VERCEL_ORIGIN=   (Vercel 주소가 생기면 채우기)
 #   MYSQL_ROOT_PASSWORD=$(openssl rand -hex 24)   MYSQL_PASSWORD=$(openssl rand -hex 24)
 #   DATABASE_URL=mysql://app:<MYSQL_PASSWORD>@mysql:3306/backend_visualized
@@ -130,11 +132,11 @@ chmod 600 deploy/production.env
 ./deploy/deploy.sh "$(git rev-parse HEAD)"   # API: GHCR 이미지 받아서 api_blue로 시작 + Caddy 연결
 ./deploy/compose.sh ps                   # api_blue/mysql/redis (healthy), 공개 포트는 caddy 80/443 뿐
 ./deploy/compose.sh logs caddy | grep 'certificate obtained'
-curl https://3-35-59-193.sslip.io/health # {"status":"ok","db":{"status":"up",...}}
+curl https://<IP-대시>.sslip.io/health # {"status":"ok","db":{"status":"up",...}}
 ```
 
-> **도메인 없이 HTTPS**: [sslip.io](https://sslip.io)는 `3-35-59-193.sslip.io` → `3.35.59.193`으로 응답하는 공개 DNS라
-> Caddy가 Let's Encrypt 인증서를 바로 받습니다. 현재 서버에는 Elastic IP `3.35.59.193`이 연결돼 있습니다 (2026-10-20). Elastic IP가 없으면 인스턴스를 **중지/시작**할 때 공인 IP가 바뀌므로
+> **도메인 없이 HTTPS**: [sslip.io](https://sslip.io)는 `1-2-3-4.sslip.io` → `1.2.3.4`으로 응답하는 공개 DNS라
+> Caddy가 Let's Encrypt 인증서를 바로 받습니다. 현재 서버에는 Elastic IP가 연결돼 있습니다 (2026-10-20, 주소는 이 문서에 적지 않음). Elastic IP가 없으면 인스턴스를 **중지/시작**할 때 공인 IP가 바뀌므로
 > `API_DOMAIN`도 바꿔야 합니다 (재부팅은 IP 유지).
 
 ---
@@ -214,14 +216,14 @@ EC2와 같은 VPC에 만들고 보안 그룹 6379 ← EC2만 허용, `REDIS_URL=
 
 ```bash
 # 터미널로 터널을 열 때 (Mac의 13306 → EC2의 127.0.0.1:3306). 다 쓰면 Ctrl+C
-ssh -i ~/.ssh/backend-visualized.pem -N -L 13306:127.0.0.1:3306 ubuntu@3.35.59.193
+ssh -i ~/.ssh/backend-visualized.pem -N -L 13306:127.0.0.1:3306 ubuntu@<IP>
 ```
 
 또는 Workbench 내장 터널: Connection Method **Standard TCP/IP over SSH**
 
 | 항목              | 값                                                                                           |
 | ----------------- | -------------------------------------------------------------------------------------------- |
-| SSH Hostname      | `3.35.59.193:22`                                                                             |
+| SSH Hostname      | `<IP>:22`                                                                                    |
 | SSH Username      | `ubuntu`                                                                                     |
 | SSH Key File      | `~/.ssh/backend-visualized.pem`                                                              |
 | MySQL Hostname    | `127.0.0.1`                                                                                  |
@@ -444,14 +446,14 @@ https://github.com/users/POcodingWER/packages/container/backend-visualized-api/s
 | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | EC2 인스턴스 역할 `backend-visualized-ec2-ssm` | 관리형 정책 `AmazonSSMManagedInstanceCore`만. SSM Agent가 AWS에 등록되는 데 필요                                                            |
 | IAM OIDC 공급자                                | `token.actions.githubusercontent.com`, audience `sts.amazonaws.com`                                                                         |
-| 배포 역할 `backend-visualized-github-deploy`   | 신뢰 정책: `aud` = `sts.amazonaws.com`, `sub` = `repo:POcodingWER@89626659/backend-visualized@1425018571:ref:refs/heads/main` (아래 주의)   |
+| 배포 역할 `backend-visualized-github-deploy`   | 신뢰 정책: `aud` = `sts.amazonaws.com`, `sub` = `repo:POcodingWER@<오너ID>/backend-visualized@<저장소ID>:ref:refs/heads/main` (아래 주의)   |
 | 배포 역할 인라인 정책 `ssm-deploy-only`        | `ssm:SendCommand` → 이 인스턴스 ARN + `AWS-RunShellScript` 문서만 / `ssm:GetCommandInvocation`, `ssm:ListCommandInvocations` → `*` (조회만) |
 
 GHCR로 바꾸면서 IAM은 하나도 늘리지 않았습니다 (이미지 저장소가 AWS 밖이라 ECR 권한이 필요 없음).
 
 - **`sub` 형식 주의 (immutable subject)**: 이 저장소는 GitHub OIDC의 _immutable subject_ 형식을 씁니다
   (`gh api repos/POcodingWER/backend-visualized/actions/oidc/customization/sub` → `use_immutable_subject: true`).
-  그래서 토큰의 `sub`는 소유자·저장소 ID가 붙은 `repo:POcodingWER@89626659/backend-visualized@1425018571:ref:refs/heads/main` 입니다.
+  그래서 토큰의 `sub`는 소유자·저장소 ID가 붙은 `repo:POcodingWER@<오너ID>/backend-visualized@<저장소ID>:ref:refs/heads/main` 입니다.
   `workflow_run`과 `workflow_dispatch`(main에서 실행) 모두 이 `sub`로 들어옵니다.
 - 워크플로에 `environment:`를 붙이면 `sub`가 `…:environment:<이름>`으로 바뀌어 신뢰 정책과 맞지 않습니다.
 
@@ -582,7 +584,7 @@ S3에서 받을 때: `aws s3 cp s3://<버킷>/mysql/<파일> backups/` (이 경�
 | 새로고침하면 로그아웃                                                                       | 4장: `none`+Secure+Partitioned인지. 엄격한 쿠키 설정·오래된 브라우저면 커스텀 도메인 + `lax`                                                  |
 | 모든 사용자가 429                                                                           | `TRUST_PROXY` 값 (Caddy 뒤면 1)                                                                                                               |
 | `prisma migrate deploy` 반복 실패                                                           | RDS 보안 그룹이 EC2 보안 그룹을 허용하는지, 비밀번호 URL 인코딩                                                                               |
-| Deploy: `Could not assume role` / `Not authorized to perform sts:AssumeRoleWithWebIdentity` | 신뢰 정책의 `sub`가 immutable 형식(`repo:POcodingWER@89626659/backend-visualized@1425018571:ref:refs/heads/main`)인지, `aud`, OIDC 공급자 ARN |
+| Deploy: `Could not assume role` / `Not authorized to perform sts:AssumeRoleWithWebIdentity` | 신뢰 정책의 `sub`가 immutable 형식(`repo:POcodingWER@<오너ID>/backend-visualized@<저장소ID>:ref:refs/heads/main`)인지, `aud`, OIDC 공급자 ARN |
 | Deploy: `InvalidInstanceId`                                                                 | 인스턴스에 `backend-visualized-ec2-ssm` 역할이 붙었는지, SSM Agent 재시작 후 Fleet Manager에 Online인지                                       |
 | Deploy: `AccessDeniedException ... ssm:SendCommand`                                         | 배포 역할 인라인 정책의 인스턴스 ARN·문서 ARN(`arn:aws:ssm:ap-northeast-2::document/AWS-RunShellScript`)                                      |
 | Deploy: `FALLBACK_LOCAL_BUILD` 경고, 배포가 느림                                            | GHCR 패키지가 private → 7-1장 「GHCR 패키지 공개 여부」                                                                                       |

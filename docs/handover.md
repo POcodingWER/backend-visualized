@@ -78,6 +78,8 @@ curl localhost:4000/health            # {"status":"ok"...} 이면 DB 연결 OK
 apps/web/
   app/
     page.tsx                  첫 화면 (장 목록, 여섯 장의 선택, About me)
+    deploy/                   배포 및 회고 (steps.ts 단계 · content.ts 이유/막힌 것/회고 · Diagrams.tsx 그림)
+    about/                    About me (글은 landing-content.ts의 AUTHOR 하나에서)
     landing-content.ts        첫 화면 글: About me(AUTHOR), 장별 선택·포기·배운 것(DECISIONS). 고치면 docs/decisions.md도 같이
     layout.tsx                공통 머리말(SiteHeader)·글꼴·공유 미리보기(OG) 문구
     icon.svg                  파비콘 (손그림 버튼). Next 파일 규칙이라 따로 연결하지 않는다
@@ -210,7 +212,7 @@ docs/                         이 문서, architecture, deploy, auth-tokens, cha
 ## 6. CI와 배포
 
 - CI: `.github/workflows/ci.yml` — PR과 main push마다 MySQL 8.4 + Redis 7.4 서비스 → `prisma migrate deploy` → `format:check` → `typecheck` → `lint` → `test` → `build` → 운영 모드 API 스모크(`/health`, 관리자 키 401/201) + API Docker 이미지 빌드. `gh run list -b main -L 2`로 확인.
-- 배포: 웹은 Vercel(`NEXT_PUBLIC_API_URL` 필수), API는 EC2 Docker(`deploy/compose.sh`, Caddy HTTPS, 시작 시 마이그레이션 자동), DB는 RDS 또는 같은 EC2의 MySQL 컨테이너, Redis는 같은 compose의 컨테이너. 전체 절차: [deploy.md](deploy.md).
+- 배포: 웹은 Vercel(`NEXT_PUBLIC_API_URL` 필수). API는 main push → CI 통과 → `.github/workflows/deploy.yml`이 ARM 이미지를 GHCR에 올리고, OIDC로 받은 임시 키로 SSM에 `deploy/deploy.sh <SHA>`를 보내 blue-green으로 교체(시작 시 마이그레이션 자동). DB·Redis는 같은 EC2의 compose 컨테이너, 백업은 매일 04:00(서버 + S3). 전체 절차: [deploy.md](deploy.md), 정리된 이야기: 사이트의 `/deploy`.
 - 작업 규칙: 브랜치 → `--no-ff` 머지 → 강제 푸시 금지 → CI 초록 확인.
 
 ## 7. 알려진 한계
