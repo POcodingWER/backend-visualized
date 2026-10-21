@@ -269,6 +269,17 @@ export const TROUBLES: Trouble[] = [
       "빌드에서 바로 잡으려면 `dynamic = 'error'`여야 해서 바꿨어요. 임시로 `headers()`를 넣어 보니 빌드가 `/about` 에러로 멈추는 걸 확인하고 지웠어요.",
     ],
   },
+  {
+    symptom: 'PG가 빨리 답하면 결제 정리 잡은 필요 없지 않나?',
+    summary:
+      '처음엔 PG가 빨리 답하면 정리할 게 없고, 정리 잡은 따로 도는 스케줄 서버인 줄 알았어요. 실제로는 API 컨테이너 안에서 `@nestjs/schedule`의 `@Cron`으로 1분마다 도는 기능이에요. 그래서 PG 속도는 기준 시간만 바꾸고, 정리 잡 자체는 있어야 해요.',
+    more: [
+      '결제를 받은 컨테이너가 PG 답을 기다리다 죽으면, "PG가 승인했다"(`paid`)를 DB에 적을 주체가 사라져요. 그 행은 `processing`으로 계속 남아요.',
+      '컨테이너는 `restart: unless-stopped`로 다시 떠요 (green이 죽으면 green이 다시 뜨고, 꺼 둔 blue가 대신 뜨지는 않아요). 다시 뜬 컨테이너 안의 정리 잡이 5분 넘은 `processing`을 `failed`로 닫아요. 5분은 PG 타임아웃에 여유를 더한 값이라, PG가 느리면 이 숫자만 늘리면 돼요.',
+      "배포 중 blue · green이 잠깐 같이 떠서 정리 잡이 두 번 돌아도 괜찮아요. `UPDATE … WHERE status = 'processing' AND createdAt < 기준` 한 문장이라 먼저 바꾼 쪽만 1행, 다른 쪽은 0행이에요.",
+      '데모의 가짜 PG는 승인 기록이 없으니 바로 `failed`로 닫아요. 진짜 PG라면 닫기 전에 결제사 조회 API로 승인됐는지 물어보고 `paid` / `failed`를 정해야 해요.',
+    ],
+  },
 ];
 
 /** 회고. 임철순의 목소리로 (프론트엔드 개발자, 서버는 처음) */
