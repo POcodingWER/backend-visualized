@@ -29,6 +29,8 @@ export const AUTHOR = {
   photoAlt: '임철순 증명사진',
   /** 비워 두면 이력서 버튼을 숨긴다 */
   resumeUrl: 'https://pocodingwer.github.io/about/',
+  /** apps/web/public/resume.pdf. 비워 두면 PDF 이력서 링크를 숨긴다 */
+  resumePdf: '/resume.pdf',
   highlights: [
     {
       value: '88%',
