@@ -251,7 +251,7 @@ sudo ss -tlnp | grep -E ':(3306|6379|4000)\\b' || echo "밖에서 안 보임 OK"
   },
   {
     title: 'HTTPS: Caddy + sslip.io',
-    reasons: ['caddy'],
+    reasons: ['sslip', 'caddy'],
     plain:
       '인증서는 도메인에만 발급돼요. sslip.io는 `1-2-3-4.sslip.io`를 `1.2.3.4`로 알려주는 무료 주소라, 도메인 없이도 진짜 인증서를 받았어요. Caddy가 발급과 갱신을 알아서 해요.',
     commands: [

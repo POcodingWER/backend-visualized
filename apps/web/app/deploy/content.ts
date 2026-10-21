@@ -14,6 +14,10 @@ export interface Reason {
   label?: string;
   /** 카드 안의 짧은 코드 (터미널 모양으로) */
   snippet?: string;
+  /** 다른 선택지와 비교 (접어 둔 자세히) */
+  compare?: { name: string; note: string }[];
+  /** 비교 끝의 한 줄 결론 */
+  verdict?: string;
 }
 
 export const REASONS: Reason[] = [
@@ -39,11 +43,34 @@ export const REASONS: Reason[] = [
     cost: '백업과 패치는 제 몫이에요. 서버 한 대가 죽으면 API와 DB가 같이 죽어요(단일 장애점). 그래서 매일 백업(서버 + S3)과 복원 테스트를 만들었고, 진짜 서비스라면 RDS로 옮길 거예요.',
   },
   {
-    id: 'caddy',
-    question: '왜 sslip.io + Caddy인가요?',
+    id: 'sslip',
+    label: 'sslip.io',
+    question: '왜 sslip.io인가요?',
     answer:
-      'Vercel 화면은 https라서 API도 https여야 브라우저가 막지 않고, 로그인 쿠키(`Secure`)도 https에서만 돼요. 그런데 Caddy가 기본으로 받는 Let’s Encrypt 인증서는 도메인 이름이 있어야 해요. sslip.io는 IP를 이름으로 바꿔 주는 무료 주소라 도메인을 사지 않고도 진짜 인증서를 받을 수 있었어요. Caddy는 설정 몇 줄로 인증서 발급과 갱신, http→https 이동까지 해 줘요.',
+      'Vercel 화면은 https라서 API도 https여야 브라우저가 막지 않고, 로그인 쿠키(`Secure`)도 https에서만 돼요. 그런데 Let’s Encrypt 인증서는 도메인 이름이 있어야 받을 수 있어요. sslip.io는 IP를 이름으로 바꿔 주는 무료 주소라, 도메인을 사지 않고도 진짜 인증서를 받을 수 있었어요.',
     cost: 'sslip.io는 남의 무료 서비스라 멈추면 API 주소도 멈춰요. 제 도메인이 생기면 `API_DOMAIN` 한 줄만 바꾸면 돼요.',
+  },
+  {
+    id: 'caddy',
+    label: 'Caddy',
+    question: '왜 Caddy인가요?',
+    answer:
+      '설정이 짧아요. `Caddyfile`은 열 줄 남짓이고, Nginx처럼 server 블록 · SSL · http→https 리다이렉트를 따로 쓸 필요가 없어요. 주소만 적으면 Let’s Encrypt 인증서 발급과 갱신도 알아서 해요. 무중단 배포도 쉬워요. `upstream.caddy` 한 줄을 반대 색으로 바꾸고 `caddy reload`만 하면, 접속을 끊지 않고 바로 새 API로 넘어가요. 같은 서버에 컨테이너 하나라 추가 비용이 없고, 메모리 2GB 서버라 가벼운 게 중요했어요.',
+    cost: '자료와 실무 사례는 Nginx가 훨씬 많아요. 그리고 도메인을 사도 Caddy는 그대로 필요해요. 바뀌는 건 주소뿐이에요.',
+    compare: [
+      {
+        name: 'Nginx + Certbot',
+        note: '가장 흔하고 자료가 많아요. 대신 인증서 갱신을 직접 챙겨야 해요.',
+      },
+      { name: 'Traefik', note: '인증서는 자동인데, 라벨 · 설정이 Caddy보다 복잡해요.' },
+      {
+        name: 'ALB + ACM',
+        note: '인증서는 무료지만 ALB에 월 고정비가 나가고, 도메인도 있어야 해요.',
+      },
+      { name: 'Cloudflare 프록시', note: '무료지만 도메인이 있어야 해요.' },
+    ],
+    verdict:
+      '도메인 없음 · 서버 한 대 · 추가 비용 0이라는 조건에서, 가장 적은 설정으로 HTTPS와 무중단 전환이 되는 게 Caddy였어요.',
   },
   {
     id: 'eip',
