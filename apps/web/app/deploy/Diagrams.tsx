@@ -24,7 +24,7 @@ export function RuntimeDiagram() {
           <p className={styles.arrowDown}>API 부르기 · HTTPS 443 ↓</p>
           <div className={styles.ec2}>
             <p className={styles.ec2Label}>
-              EC2 t4g.small · 3.35.59.193 · 밖으로 열린 문은 80/443뿐
+              EC2 t4g.small · 3.35.59.193 · 모두에게 열린 문은 80/443뿐 (SSH는 내 IP만)
             </p>
             <div className={`${styles.box} ${styles.caddy}`}>
               <Marks steps={[4]} />
@@ -78,8 +78,8 @@ export function RuntimeDiagram() {
         </p>
       </div>
       <figcaption>
-        화면과 API는 따로 살아요. 인터넷에서 서버로 들어오는 길은 Caddy(443) 하나이고, API · MySQL ·
-        Redis는 서버 안쪽 네트워크에서만 서로 이야기해요.
+        화면과 API는 따로 살아요. 손님 요청이 서버로 들어오는 길은 Caddy(443) 하나이고, API · MySQL
+        · Redis는 서버 안쪽 네트워크에서만 서로 이야기해요.
       </figcaption>
     </figure>
   );

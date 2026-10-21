@@ -67,6 +67,10 @@
 .roadBody > p {
   color: var(--ink-soft);
 }
+.roadTitle,
+.roadBody > p {
+  max-width: var(--column);
+}
 
 /* 접어 둔 자세히 (단계별 명령, blue-green 순서). 기본은 닫힘 */
 .fold {
@@ -145,6 +149,9 @@
   font-size: 0.82rem;
   line-height: 1.65;
   tab-size: 2;
+}
+.terminal .comment {
+  color: #b9c2ae; /* 먹색 바탕 위 흐린 설명 줄 (대비 약 9:1) */
 }
 .terminal code {
   font-size: inherit;
