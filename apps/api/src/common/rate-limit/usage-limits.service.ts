@@ -1,13 +1,9 @@
 import { ConflictException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import type { Response } from 'express';
 import { appEnvironment } from '../config/app-environment';
-import {
-  ConcurrencyLimit,
-  Cooldown,
-  type LimitDecision,
-  SimulationGate,
-  SlidingWindowLimit,
-} from './usage-limits';
+import { RedisService } from '../../redis/redis.service';
+import { SharedSimulationGate } from './shared-simulation-gate';
+import { ConcurrencyLimit, Cooldown, type LimitDecision, SlidingWindowLimit } from './usage-limits';
 
 const MINUTE_MS = 60_000;
 
@@ -25,14 +21,21 @@ export class UsageLimitsService {
   );
   readonly streamConnections = new ConcurrencyLimit(this.limits.maxStreamConnections);
   readonly aggregationDemoCooldown = new Cooldown(this.limits.aggregationCooldownMs);
-  // 1장·4장·6장 시뮬레이션: 장마다 따로 "동시에 하나 + 쿨다운"
-  readonly couponSimulation = new SimulationGate(this.limits.simulationCooldownMs);
-  readonly pointSimulation = new SimulationGate(this.limits.simulationCooldownMs);
-  readonly cacheExperiment = new SimulationGate(this.limits.simulationCooldownMs);
+  // 1장·4장·6장 시뮬레이션: 장마다 따로 "동시에 하나 + 쿨다운". API가 여러 개여도 Redis로 전체에서 하나
+  readonly couponSimulation: SharedSimulationGate;
+  readonly pointSimulation: SharedSimulationGate;
+  readonly cacheExperiment: SharedSimulationGate;
+
+  constructor(redis: RedisService) {
+    const cooldownMs = this.limits.simulationCooldownMs;
+    this.couponSimulation = new SharedSimulationGate(redis, 'coupon', cooldownMs);
+    this.pointSimulation = new SharedSimulationGate(redis, 'point', cooldownMs);
+    this.cacheExperiment = new SharedSimulationGate(redis, 'cache', cooldownMs);
+  }
 
   /** gate가 비어 있으면 work를 실행. 실행 중이면 409, 쿨다운 중이면 429 */
-  async runSimulation<T>(gate: SimulationGate, response: Response, work: () => Promise<T>) {
-    const decision = gate.tryStart();
+  async runSimulation<T>(gate: SharedSimulationGate, response: Response, work: () => Promise<T>) {
+    const { decision, finish } = await gate.tryStart();
     if (decision === 'running') throw new ConflictException('다른 시뮬레이션이 실행 중입니다');
     this.enforce(
       decision,
@@ -43,7 +46,7 @@ export class UsageLimitsService {
     try {
       return await work();
     } finally {
-      gate.finish();
+      await finish();
     }
   }
 

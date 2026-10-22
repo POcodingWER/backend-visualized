@@ -8,7 +8,7 @@ import { DAY_MS, resolveDayRange, toDailySeries, toDateKey } from './date-range'
 export class AggregationService {
   private readonly log = new Logger(AggregationService.name);
   private running = false;
-  private readonly LOCK_KEY_PREFIX = 'cron:aggregation:';
+  private readonly LOCK_KEY_PREFIX = 'bv:cron:aggregation:';
   /** 락 TTL: 5분 cron이므로 4분 (다음 실행 전에 만료). DEL하지 않고 TTL로만 관리. */
   private readonly LOCK_TTL_MS = 4 * 60_000;
 
@@ -42,7 +42,7 @@ export class AggregationService {
 
   /**
    * 5분마다 어제~오늘(KST) 재집계. Redis lock으로 여러 인스턴스 중 한 곳에서만 실행.
-   * 5분 타임슬롯별 키 (cron:aggregation:202610220135)로 구분해, 한 슬롯에서 한 인스턴스만 실행.
+   * 5분 타임슬롯별 키 (bv:cron:aggregation:202610220135)로 구분해, 한 슬롯에서 한 인스턴스만 실행.
    * TTL 4분으로 다음 슬롯 전에 만료 (DEL하지 않음 = 끝나도 다른 인스턴스가 같은 슬롯 다시 못 뜸).
    */
   @Cron(CronExpression.EVERY_5_MINUTES)
