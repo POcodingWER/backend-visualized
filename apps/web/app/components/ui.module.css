@@ -45,26 +45,96 @@
   color: var(--apricot-ink);
   font-weight: 750;
 }
+.headerBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+/* 넓은 화면에선 목록이 늘 보이니 버튼은 숨긴다 */
+.navToggle {
+  display: none;
+}
 @media (max-width: 640px) {
   .header {
     flex-direction: column;
     align-items: stretch;
-    gap: 0.2rem;
-    padding: 0.55rem 0.75rem 0.25rem;
+    gap: 0;
+    padding: 0.5rem 0.75rem;
   }
   .wordmark {
-    padding-left: 0.5rem;
+    padding-left: 0.25rem;
   }
-  /* 여섯 편이 한 화면에 다 보이도록 두 줄로 접어요 (가로 스크롤 속에 숨기지 않기) */
+  .navToggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.35rem 0.7rem;
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 650;
+    color: var(--ink);
+    background: transparent;
+    border: 1.5px solid var(--ink);
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  /* 줄 세 개 → 열리면 X */
+  .navToggleIcon,
+  .navToggleIcon::before,
+  .navToggleIcon::after {
+    display: block;
+    width: 0.9rem;
+    height: 1.5px;
+    background: var(--ink);
+    transition: transform 0.15s ease;
+  }
+  .navToggleIcon {
+    position: relative;
+  }
+  .navToggleIcon::before,
+  .navToggleIcon::after {
+    content: '';
+    position: absolute;
+    left: 0;
+  }
+  .navToggleIcon::before {
+    top: -0.3rem;
+  }
+  .navToggleIcon::after {
+    top: 0.3rem;
+  }
+  .navToggleIcon[data-open='true'] {
+    background: transparent;
+  }
+  .navToggleIcon[data-open='true']::before {
+    transform: translateY(0.3rem) rotate(45deg);
+  }
+  .navToggleIcon[data-open='true']::after {
+    transform: translateY(-0.3rem) rotate(-45deg);
+  }
+  /* 목록은 버튼으로 펼칠 때만, 한 줄에 하나씩 */
   .nav {
+    display: none;
     margin-left: 0;
-    flex-wrap: wrap;
+    flex-direction: column;
     overflow-x: visible;
-    gap: 0 0.1rem;
+    gap: 0;
+    padding: 0.35rem 0 0.25rem;
+  }
+  .nav[data-open='true'] {
+    display: flex;
   }
   .nav a {
-    padding: 0.25rem 0.45rem;
-    font-size: 0.88rem;
+    padding: 0.6rem 0.4rem;
+    font-size: 1rem;
+    border-top: 1px dashed var(--line);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .navToggleIcon,
+    .navToggleIcon::before,
+    .navToggleIcon::after {
+      transition: none;
+    }
   }
 }
 .footer {

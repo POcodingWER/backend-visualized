@@ -139,6 +139,10 @@ export default function DeployPage() {
       </header>
 
       <section className={ui.wide}>
+        <ComicStrip label="4컷 만화: 서버를 빌려서 끊기지 않게 배포하기까지" panels={PANELS} />
+      </section>
+
+      <section className={ui.wide}>
         <h2 className={ui.sectionTitle}>1. 숫자로 본 결과</h2>
         <ResultNumbers
           items={[
@@ -219,10 +223,6 @@ export default function DeployPage() {
             <BlueGreenDetails />
           </div>
         </details>
-      </section>
-
-      <section className={ui.wide}>
-        <ComicStrip label="4컷 만화: 서버를 빌려서 끊기지 않게 배포하기까지" panels={PANELS} />
       </section>
 
       {/* 명령 블록이 넓게 보이도록 wide. 글은 .roadmap에서 본문 폭으로 묶는다 */}
