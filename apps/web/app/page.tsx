@@ -47,6 +47,11 @@ const TEASERS = [
     number: '1000번 → 1번',
     numberLabel: '데이터베이스에 간 횟수 (매번 → 메뉴판 먼저, 실측)',
   },
+  {
+    problem: 'API 서버 한 대가 한계에 부딪히면, 어떻게 더 많은 요청을 처리할까요?',
+    number: '~620 req/s',
+    numberLabel: '1 코어가 100% 때 정체 (k6 부하 테스트, 10→800 VU)',
+  },
 ];
 
 export default function Home() {
@@ -59,9 +64,9 @@ export default function Home() {
             버튼 하나 뒤에서 <span className="highlight">벌어지는 일</span>
           </h1>
           <p className={styles.heroLead}>
-            티켓팅, 로그인 유지, 클릭 기록, 포인트, 결제, 캐시. 매일 쓰는 기능 뒤에서 서버가
-            실수하는 순간을 실제 서버와 데이터베이스에서 일부러 일으켜 보고, 고친 뒤 얼마나
-            나아졌는지 숫자로 확인하는 그림책 여섯 편이에요.
+            티켓팅, 로그인 유지, 클릭 기록, 포인트, 결제, 캐시, 스케일아웃. 매일 쓰는 기능 뒤에서
+            서버가 실수하는 순간을 실제 서버와 데이터베이스에서 일부러 일으켜 보고, 고친 뒤 얼마나
+            나아졌는지 숫자로 확인하는 그림책 일곱 편이에요.
           </p>
           <Link href="/ticketing" className={`${buttonClassName.big} ${styles.cta}`}>
             1장 티켓팅부터 보기 →
@@ -102,7 +107,7 @@ export default function Home() {
       </section>
 
       <section className={ui.wide}>
-        <h2 className={ui.sectionTitle}>여섯 편의 이야기</h2>
+        <h2 className={ui.sectionTitle}>일곱 편의 이야기</h2>
         <ol className={styles.teasers}>
           {CHAPTERS.map((chapter, index) => {
             const teaser = TEASERS[index]!;
@@ -177,7 +182,7 @@ export default function Home() {
       </section>
 
       <section className={ui.wide} id="decisions">
-        <h2 className={ui.sectionTitle}>여섯 장의 선택</h2>
+        <h2 className={ui.sectionTitle}>일곱 장의 선택</h2>
         <p className={ui.lead}>
           장마다 무엇을 고르고 무엇을 포기했는지, 재 보고 나서 알게 된 것까지 적었어요. 숫자는 모두
           이 저장소의 측정 기록에 있는 값이에요.

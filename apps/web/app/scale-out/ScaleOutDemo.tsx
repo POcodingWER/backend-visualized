@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Button } from '../components/atoms/Button';
 import { apiHealthCheck } from './api';
-import ui from '../components/atoms/common.module.css';
+import ui from '../components/ui.module.css';
 import styles from './scale-out.module.css';
 
 interface HealthResponse {
