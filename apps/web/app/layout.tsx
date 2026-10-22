@@ -1,9 +1,8 @@
-import { GoogleAnalytics } from '@next/third-parties/google';
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import { GITHUB_URL } from '../lib/site';
 import './globals.css';
-import ClickTracker from './components/organisms/ClickTracker';
+import Analytics from './components/organisms/Analytics';
 import SiteHeader from './components/organisms/SiteHeader';
 import styles from './components/ui.module.css';
 
@@ -30,9 +29,6 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = { themeColor: '#f6f1e7' };
 
-// Vercel Production에만 넣어 둔 값. 로컬·프리뷰에선 비어 있어서 GA 스크립트를 안 싣는다
-const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
-
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="ko">
@@ -54,12 +50,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <p>글꼴 Pretendard (SIL Open Font License) · 그림은 모두 코드로 그린 SVG</p>
         </footer>
       </body>
-      {GA_ID && (
-        <>
-          <GoogleAnalytics gaId={GA_ID} />
-          <ClickTracker />
-        </>
-      )}
+      <Analytics />
     </html>
   );
 }
