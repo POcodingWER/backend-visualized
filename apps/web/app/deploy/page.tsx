@@ -9,6 +9,7 @@ import ui from '../components/ui.module.css';
 import { REASONS, RESTORE_ROWS, RETRO, TROUBLES } from './content';
 import { BlueGreenDetails } from './BlueGreenDetails';
 import { DeployDiagram, RequestDiagram } from './Diagrams';
+import { OverviewDiagram } from './OverviewDiagram';
 import { DEPLOY_STEPS } from './steps';
 import { withCode } from '../../lib/inline-code';
 import styles from './deploy.module.css';
@@ -189,11 +190,35 @@ export default function DeployPage() {
           제가 만든 서버의 모습이에요. 화면은 Vercel, API · DB · 캐시는 AWS 서버 한 대에 있고, 새
           버전을 올리는 동안에도 손님 요청은 끊기지 않아요.
         </p>
-        <h3 className={styles.diagramTitle}>요청이 들어오는 길</h3>
-        <RequestDiagram />
-        <h3 className={styles.diagramTitle}>배포가 들어오는 길</h3>
-        <DeployDiagram />
-        <BlueGreenDetails />
+        <OverviewDiagram />
+        <ol className={styles.overviewLegend}>
+          <li>
+            <b>손님 요청.</b> 브라우저는 화면을 Vercel에서 받고, API는 서버의 Caddy로 와요. 밖에
+            열린 문은 443(HTTPS) 하나고, Caddy가 지금 서비스 중인 색의 API 2개 중 덜 바쁜 쪽으로
+            보내요.
+          </li>
+          <li>
+            <b>배포.</b> main에 push하면 GitHub Actions가 이미지를 GHCR에 올리고, 저장해 둔 키 없이
+            1시간짜리 임시 키로 서버에 <code>deploy.sh</code>를 실행시켜요.
+          </li>
+          <li>
+            <b>끊기지 않는 교체.</b> <code>deploy.sh</code>는 쉬던 green에 새 버전 2개를 띄우고, 둘
+            다 건강하면 Caddy만 green으로 돌린 뒤 blue를 꺼요. 다음 배포 땐 반대로 해요.
+          </li>
+        </ol>
+        <details className={styles.fold}>
+          <summary>① 요청이 들어오는 길 자세히</summary>
+          <div className={styles.foldBody}>
+            <RequestDiagram />
+          </div>
+        </details>
+        <details className={styles.fold}>
+          <summary>②③ 배포가 들어오는 길 자세히</summary>
+          <div className={styles.foldBody}>
+            <DeployDiagram />
+            <BlueGreenDetails />
+          </div>
+        </details>
       </section>
 
       <section className={ui.wide}>

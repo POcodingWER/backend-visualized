@@ -742,3 +742,23 @@
   font-size: var(--text-sm);
   font-weight: 650;
 }
+
+/* 2. 그림으로 보는 구조: 맨 위 한 장짜리 전체 그림 */
+.overview {
+  margin: var(--space-6) auto 0;
+  max-width: 30rem;
+  width: 100%;
+}
+.overview svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.overviewLegend {
+  max-width: 40rem;
+  margin: var(--space-4) auto var(--space-6);
+  padding-left: 1.4em;
+  display: grid;
+  gap: var(--space-2);
+  line-height: 1.7;
+}
