@@ -338,7 +338,7 @@ AWS 공식 가격표(aws.amazon.com 가격 페이지가 쓰는 공개 가격 데
 | `POST /auth/login`                                      | 분당 10회  | —                                               |
 | `POST /events/admin/aggregate`                          | —          | `X-Admin-Api-Key` 필요                          |
 
-- 전역 한도·IP별 한도는 **API 인스턴스 메모리**에 있습니다. 인스턴스를 여러 대로 늘리면 이미 있는 Redis로 옮겨야 합니다 (6장 캐시만 Redis를 씀).
+- 전역 한도·IP별 한도(throttler)는 아직 **API 인스턴스 메모리**에 있어서, API 2개인 지금은 한도가 사실상 2배입니다. 시뮬레이션 "한 번에 하나"·쿨다운, 5분 집계 cron 잠금, 3장 SSE 알림은 7장에서 Redis로 옮겼습니다.
 - IP별 한도는 `req.ip` 기준이라 `TRUST_PROXY`가 맞아야 합니다. 틀리면 모든 사용자가 Caddy IP 하나로 묶여 서로의 한도를 나눠 씁니다.
 
 ---
@@ -622,7 +622,7 @@ k6 run -e API_URL=https://<API_HOST> --summary-export=/tmp/k6-summary.json --out
 
 **원인**: 처리량이 100 VU부터 약 620 req/s에서 멈추고 기다리는 시간만 늘었다. 그동안 API 컨테이너 CPU는 100~120% (2코어라 최대 200%). Node는 요청을 이벤트 루프 하나에서 처리해서, 코어 하나가 꽉 차면 그 뒤 요청은 줄을 선다. 메모리·DB·Redis는 여유가 있었다.
 
-**다음 단계 (아직 안 함)**: API 복제본 2개 + Caddy 분산(또는 Node `cluster`)으로 코어 2개 사용, `/events/stats`처럼 무거운 읽기는 Redis에 몇 초 캐시. 단, 프로세스 메모리에 있는 "한 번에 하나"·쿨다운·SSE 상태(handover 7. 알려진 한계)는 Redis로 옮겨야 한다.
+**그다음 (7장에서 함)**: API 복제본 2개 + Caddy `least_conn` 분산으로 코어 2개를 씁니다. 프로세스 메모리에 있던 "한 번에 하나"·쿨다운, cron 잠금, SSE 알림은 Redis로 옮겼습니다. 아직 안 한 것: 전역·IP별 한도(throttler)는 인스턴스별로 남아 있고, `/events/stats` 같은 무거운 읽기의 짧은 캐시도 아직입니다. 늘린 뒤 수치는 7장 재측정에 적습니다.
 
 서버 쪽 기록: `deploy/diagnose.sh` (`snapshot` · `watch` · `report` · `recover`). 배포 끝에 `deploy.sh`가 지난 30분 기록을 요약하고 새 `watch 1800`을 시작한다. Actions의 **Diagnose** workflow(손으로 실행)로도 돌릴 수 있다. 이번 테스트 때는 `watch`가 `local` 한 줄 계산 버그로 바로 끝나서 5초 간격 기록이 없었고(고침), CPU는 서버에서 직접 본 `docker stats` 값이다.
 

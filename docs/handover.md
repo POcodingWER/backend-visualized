@@ -217,7 +217,8 @@ docs/                         이 문서, architecture, deploy, auth-tokens, cha
 
 ## 7. 알려진 한계
 
-- **서버 한 대 전제**: 시뮬레이션 "한 번에 하나"·쿨다운·전역 한도(`common/rate-limit`)와 3장 SSE 알림(`EventBus`)은 프로세스 메모리에 있습니다. API를 여러 대로 늘리면 Redis 등으로 옮겨야 합니다.
+- **API 2대에서 아직 인스턴스별인 것**: 7장에서 시뮬레이션 "한 번에 하나"·쿨다운(`SharedSimulationGate`), 5분 집계 cron 잠금, 3장 SSE 알림(`EventBus`, Redis PUBLISH/SUBSCRIBE `bv:events:ingested`)은 Redis로 옮겼습니다. Redis가 죽으면 셋 다 프로세스 안 방식으로 돌아갑니다.
+  - 아직 인스턴스 메모리에 남은 것: 전역 한도(`SlidingWindowLimit`), IP별 한도(`@nestjs/throttler`), SSE 동시 연결 수 한도. 그래서 실제 한도는 API 수만큼(지금 2배) 넉넉합니다. 엄격히 하려면 Redis `INCR`+`EXPIRE`나 throttler Redis 저장소로 옮기면 됩니다.
 - **결제 정리 잡은 가짜 PG 기준**: `PaymentsService.closeStalePayments`는 "PG에 승인 기록 없음"을 전제로 오래된 `processing`을 `failed`로 닫습니다. 진짜 PG를 붙이면 닫기 전에 결제사 조회 API로 승인 여부를 확인해야 합니다. 기준 시간은 `STALE_PROCESSING_MS`(5분).
 - **IP별 한도**는 `@nestjs/throttler` 메모리 저장소. 프록시 뒤에선 `TRUST_PROXY`가 맞아야 합니다.
 - **시뮬레이션은 공용 데이터**: 1·4장 버튼은 `sim-*` 쿠폰·지갑을 매번 리셋합니다. 여러 사람이 동시에 보면 서로의 결과를 덮어씁니다(그래서 한 번에 하나 + 쿨다운).

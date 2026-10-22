@@ -105,9 +105,6 @@ function WhoAnsweredSection() {
         <Button size="big" onClick={() => void run()} disabled={isRunning}>
           {isRunning ? '물어보는 중…' : `${REQUEST_COUNT}번 물어보기`}
         </Button>
-        <p className={`${ui.hint} ${styles.note}`}>
-          로컬에서 열면 API가 하나라 이름표가 <code>local</code>로 나와요.
-        </p>
       </div>
 
       <ol className={styles.answers} aria-label="요청 순서대로 받은 계산대">
@@ -181,6 +178,13 @@ const SIDE_EFFECTS = [
     after:
       '그래서 1번 계산대만 변경하고 2번은 건너뛰어요(`RUN_MIGRATIONS=false`). 컬럼 추가만 먼저 하는 규칙(expand → contract) 덕분에 2번이 먼저 떠도 괜찮아요.',
   },
+  {
+    title: '"방금 들어옴" 알림이 가끔 빠져요',
+    before:
+      '처음엔 세 군데만 고치면 되는 줄 알았어요. 실제로는 3장의 실시간 알림도 계산대 안에서만 돌았어요. 화면은 1번 계산대에 연결돼 있는데 이벤트 묶음이 2번으로 가면, 2번만 알고 화면에는 알림이 안 왔어요.',
+    after:
+      '그래서 알림을 Redis 채널(`bv:events:ingested`)로 보내고, 계산대 둘 다 그 채널을 듣다가 자기에게 붙은 화면으로 흘려줘요. 듣는 연결은 다른 명령을 못 써서 Redis 연결을 하나 더 열었어요.',
+  },
 ];
 
 function SideEffectsSection() {
@@ -189,11 +193,11 @@ function SideEffectsSection() {
       <div className={ui.column}>
         <h2 className={ui.sectionTitle}>둘로 늘리면 꼬이는 것</h2>
         <p className={ui.lead}>
-          같은 프로그램을 두 개 켜면, &quot;나 혼자 돈다&quot;고 믿고 짠 코드가 문제가 돼요. 이
-          서버에선 세 군데였어요.
+          같은 프로그램을 두 개 켜면, &quot;나 혼자 돈다&quot;고 믿고 짠 코드가 문제가 돼요. 처음엔
+          세 군데인 줄 알았는데, 다시 보니 네 군데였어요.
         </p>
       </div>
-      <div className={ui.fixes}>
+      <div className={`${ui.fixes} ${ui.fixesTwo}`}>
         {SIDE_EFFECTS.map((item) => (
           <article key={item.title} className={ui.fix}>
             <h3>{item.title}</h3>
