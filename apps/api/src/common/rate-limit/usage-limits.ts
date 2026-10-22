@@ -1,9 +1,9 @@
 /**
  * 공개 데모 남용 방지용 전역 한도 (IP와 무관하게 서버 전체 기준).
- * 단일 API 인스턴스 메모리에 저장한다.
- * 7장: 인스턴스가 2개라 한도도 2배 (각 인스턴스마다 별도 한도). 데모 사이트라 한도를
- * 넉넉히 잡았으므로 문제없지만, 엄격한 전역 한도가 필요하면 Redis 기반으로 교체 가능
- * (ponytail: SET NX + INCR + EXPIRE, 네트워크 왕복 추가, Redis 장애 시 fallback 필요).
+ * 각 API 프로세스 메모리에 저장한다.
+ * 7장: API가 2개라 아래 한도들은 API마다 따로 센다(사실상 2배). 넉넉하게 잡은 한도라 그대로 둔다.
+ * ponytail: 엄격한 전역 한도가 필요하면 Redis INCR + EXPIRE로. 요청마다 Redis 왕복이 하나 는다.
+ * "동시에 하나"인 시뮬레이션만은 데모 데이터가 겹치면 안 돼서 Redis로 옮겼다 (shared-simulation-gate.ts).
  */
 
 export interface LimitDecision {
@@ -83,7 +83,8 @@ export class Cooldown {
 }
 
 /**
- * 무거운 시뮬레이션(DB 커넥션을 많이 씀): 서버 전체에서 동시에 하나만 + 끝난 시점부터 쿨다운.
+ * 무거운 시뮬레이션(DB 커넥션을 많이 씀): 이 프로세스 안에서 동시에 하나만 + 끝난 시점부터 쿨다운.
+ * 평소엔 SharedSimulationGate가 Redis로 막고, Redis가 응답하지 않을 때만 이걸 쓴다.
  * 실제 거절(409/429)은 UsageLimitsService.runSimulation이 한다.
  */
 export class SimulationGate {

@@ -509,17 +509,18 @@ sudo -u ubuntu bash -lc 'set -euo pipefail; cd /opt/backend-visualized;
 # deploy/deploy.sh가 하는 일 (blue가 서비스 중일 때)
 # 1) 이번 커밋의 이미지 받기
 docker pull -q ghcr.io/pocodingwer/backend-visualized-api:<SHA>
-# 2) 쉬던 색(green)에 새 이미지로 띄우기 (MySQL · Redis는 그대로)
-./deploy/compose.sh up -d --no-deps --force-recreate api_green
-# 3) /health가 200이 될 때까지 서버 안쪽에서 확인
+# 2) 쉬던 색(green) 두 개를 새 이미지로 띄우기 (MySQL · Redis는 그대로)
+#    마이그레이션은 _1만 (_2는 RUN_MIGRATIONS=false)
+./deploy/compose.sh up -d --no-deps --force-recreate api_green_1 api_green_2
+# 3) 두 개 모두 /health가 200이 될 때까지 서버 안쪽에서 확인 (_2도 같은 방법)
 ./deploy/compose.sh exec -T caddy \\
-  wget -q -O /dev/null http://api_green:4000/health
-# 4) Caddy가 보낼 곳을 green으로 바꾸고 설정만 다시 읽기
-#    deploy/caddy/upstream.caddy → reverse_proxy api_green:4000
+  wget -q -O /dev/null http://api_green_1:4000/health
+# 4) Caddy가 보낼 곳을 green 두 개로 바꾸고 설정만 다시 읽기
+#    deploy/caddy/upstream.caddy → reverse_proxy api_green_1:4000 api_green_2:4000
 ./deploy/compose.sh exec -T caddy \\
   caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
 # 5) 진행 중이던 요청이 끝나게 10초 기다렸다가 예전 색 끄기
-sleep 10 && ./deploy/compose.sh stop api_blue`,
+sleep 10 && ./deploy/compose.sh stop api_blue_1 api_blue_2`,
       },
       {
         where: '내 맥',
@@ -619,7 +620,7 @@ on:
 echo 'SENTRY_DSN=https://<키>@<호스트>/<번호>' >> deploy/production.env
 
 # 시작 로그에서 켜졌는지 확인: [config] … sentry=on
-./deploy/compose.sh logs api_blue | grep sentry=`,
+./deploy/compose.sh logs api_blue_1 | grep sentry=`,
       },
     ],
   },

@@ -103,7 +103,7 @@ test('aggregation cron lock: no DEL on finish, TTL expires naturally', async () 
   const now = new Date();
   const minutes = Math.floor(now.getMinutes() / 5) * 5;
   const slotKey = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}${String(now.getHours()).padStart(2, '0')}${String(minutes).padStart(2, '0')}`;
-  const lockKey = `cron:aggregation:${slotKey}`;
+  const lockKey = `bv:cron:aggregation:${slotKey}`;
 
   const lockValue = await redis.get(lockKey);
   assert.notEqual(lockValue, null, 'Lock key should still exist (not DELeted)');

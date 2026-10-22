@@ -1,58 +1,69 @@
-.results {
-  margin-top: 1.5rem;
-}
-
-.results h4 {
-  margin-bottom: 0.5rem;
-}
-
-.results ul {
+/* 7장: 요청 순서대로 어느 계산대가 받았는지 */
+.answers {
   list-style: none;
+  margin: var(--space-6) 0 0;
   padding: 0;
-  margin: 0.5rem 0;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+.answers li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 2px solid var(--ink);
+  border-radius: var(--hand-radius);
+  font-size: var(--text-sm);
+  min-width: 0;
+}
+.answers li span {
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+.answers li code {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.answerFirst {
+  background: var(--paper-raised);
+}
+.answerSecond {
+  background: var(--paper-deep);
+}
+.answerEmpty {
+  border-style: dashed !important;
+  color: var(--ink-soft);
+}
+.answerFailed {
+  background: var(--fail-soft);
 }
 
-.results ul li {
-  padding: 0.25rem 0;
+.tally {
+  margin: var(--space-4) 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+}
+.tally div {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+.tally dd {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
 }
 
-.error {
-  color: var(--c-error, #b91c1c);
+.note {
+  margin-top: var(--space-4);
 }
 
-.details {
-  margin-top: 1rem;
-}
-
-.details summary {
-  cursor: pointer;
-  user-select: none;
-}
-
-.table {
-  width: 100%;
-  margin-top: 0.5rem;
-  font-size: 0.9em;
-  border-collapse: collapse;
-}
-
-.table th,
-.table td {
-  text-align: left;
-  padding: 0.5rem;
-  border-bottom: 1px solid var(--c-border, #e5e7eb);
-}
-
-.table th {
-  font-weight: 600;
-  background-color: var(--c-bg-subtle, #f9fafb);
-}
-
-.failedRow {
-  background-color: #fee;
-}
-
-.time {
-  font-size: 0.85em;
-  color: var(--c-text-secondary, #6b7280);
+@media (max-width: 640px) {
+  .answers {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }

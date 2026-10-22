@@ -32,19 +32,28 @@ export function RequestDiagram() {
           <div className={`${styles.box} ${styles.caddy}`}>
             <b>Caddy (문지기)</b>
             <small>
-              http는 https로 돌려보냄 · HTTPS 풀기 · <code>upstream.caddy</code>에 적힌 색으로 전달
+              http는 https로 돌려보냄 · HTTPS 풀기 · <code>upstream.caddy</code>에 적힌 API 두 개에
+              나눠 전달
             </small>
           </div>
-          <p className={styles.arrowDown}>지금 서비스 중인 색으로 ↓</p>
+          <p className={styles.arrowDown}>지금 서비스 중인 색의 API 두 개로 나눠서 ↓</p>
           <div className={styles.pair}>
             <div className={`${styles.box} ${styles.blue}`}>
-              <b>api_blue</b>
-              <small>지금 서비스 중</small>
+              <b>blue · 지금 서비스 중</b>
+              <span className={styles.instances}>
+                <code>api_blue_1</code>
+                <code>api_blue_2</code>
+              </span>
+              <small>덜 바쁜 쪽이 받아요</small>
               <Port port="4000" />
             </div>
             <div className={`${styles.box} ${styles.green}`}>
-              <b>api_green</b>
-              <small>쉬는 중 · 다음 배포 때 켜짐</small>
+              <b>green · 쉬는 중</b>
+              <span className={styles.instances}>
+                <code>api_green_1</code>
+                <code>api_green_2</code>
+              </span>
+              <small>다음 배포 때 둘 다 켜짐</small>
               <Port port="4000" />
             </div>
           </div>
@@ -114,7 +123,11 @@ const PORT_GROUPS = [
   {
     title: '서버 안에서만 (밖에서 안 보임)',
     ports: [
-      { port: '4000', name: 'API', note: 'Docker 내부망. `api_blue` · `api_green`' },
+      {
+        port: '4000',
+        name: 'API',
+        note: 'Docker 내부망. 색마다 2개씩, `api_blue_1` · `api_blue_2` · `api_green_1` · `api_green_2`',
+      },
       { port: '6379', name: 'Redis', note: 'Docker 내부망' },
       { port: '3306', name: 'MySQL', note: '`127.0.0.1`에만 (SSH 터널로만 접속)' },
     ],
@@ -157,7 +170,7 @@ const ACCESS = [
   { what: '결과 돌려받기', detail: '실행 결과와 로그를 Actions가 받아 와서 성공/실패를 표시해요' },
 ] as const;
 
-/** deploy/deploy.sh가 하는 일. 시간은 2026-10-21 Deploy 기록 (새 이미지 #8 / 이미지 그대로 #9~#11) */
+/** deploy/deploy.sh가 하는 일 (7장부터 색마다 API 2개). 이미지 받는 시간은 2026-10-21 Deploy 기록 (새 이미지 #8 / 이미지 그대로 #9~#11) */
 const SWAP = [
   {
     what: '새 이미지 받기',
@@ -166,18 +179,22 @@ const SWAP = [
   {
     what: '쉬던 쪽에 켜기',
     detail:
-      '손님이 없는 `api_green`에 새 버전을 켜요. 켜지면서 DB 구조 변경(마이그레이션)을 한 번 해요',
+      '손님이 없는 `api_green_1` · `api_green_2`에 새 버전을 함께 켜요. DB 구조 변경(마이그레이션)은 `_1`만 한 번 해요',
   },
   {
     what: '건강한지 확인',
-    detail: '서버 안쪽에서 `/health`가 200이 될 때까지 2초마다 물어봐요. 4~8초',
+    detail: '서버 안쪽에서 두 개 모두 `/health`가 200이 될 때까지 2초마다 물어봐요. 최대 2분',
   },
   {
     what: '문 바꾸기',
-    detail: 'Caddy가 보낼 곳을 `api_green`으로 바꾸고 설정만 다시 읽어요. 연결은 안 끊겨요',
+    detail:
+      'Caddy가 보낼 곳을 `api_green_1` · `api_green_2`로 바꾸고 설정만 다시 읽어요. 연결은 안 끊겨요',
   },
-  { what: '하던 일 마무리', detail: '`api_blue`가 처리 중이던 요청이 끝나게 10초 기다려요' },
-  { what: '예전 쪽 끄기', detail: '`api_blue`를 꺼요. 다음 배포 때는 이쪽이 "쉬던 쪽"이 돼요' },
+  { what: '하던 일 마무리', detail: 'blue 두 개가 처리 중이던 요청이 끝나게 10초 기다려요' },
+  {
+    what: '예전 쪽 끄기',
+    detail: '`api_blue_1` · `api_blue_2`를 꺼요. 다음 배포 때는 이쪽이 "쉬던 쪽"이 돼요',
+  },
 ] as const;
 
 /** 번호 동그라미 */
@@ -237,8 +254,8 @@ export function DeployDiagram() {
           <StepList title="출입증(OIDC) → 서버에 일 시키기(SSM)" steps={ACCESS} />
           <StepList title="서버 안의 blue-green 교체 (blue가 서비스 중일 때의 예)" steps={SWAP} />
           <p className={styles.swapSafe}>
-            3에서 200이 안 나오면 4로 넘어가지 않아요. 손님은 계속 <code>api_blue</code>를 쓰고, 새
-            쪽만 꺼져요. 배포 3번 동안 0.2초마다 찔러서 실패한 요청은 0번이었어요.
+            3에서 둘 중 하나라도 200이 안 나오면 4로 넘어가지 않아요. 손님은 계속 blue 두 개를 쓰고,
+            새 쪽만 꺼져요. 배포 3번 동안 0.2초마다 찔러서 실패한 요청은 0번이었어요.
           </p>
         </div>
       </details>

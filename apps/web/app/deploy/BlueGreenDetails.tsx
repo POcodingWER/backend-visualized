@@ -23,7 +23,8 @@ export function BlueGreenDetails() {
           </li>
           <li>
             <b>지금 색 알아내기.</b> <code>deploy/caddy/upstream.caddy</code>의{' '}
-            <code>reverse_proxy api_blue:4000</code> 줄을 읽고, 반대 색을 새로 띄울 쪽으로 정한다.
+            <code>reverse_proxy api_blue_1:4000 api_blue_2:4000</code> 줄을 읽고, 반대 색을 새로
+            띄울 쪽으로 정한다. (7장 전의 <code>api_blue:4000</code> 한 줄짜리도 읽는다)
           </li>
           <li>
             <b>이미지 받기.</b>{' '}
@@ -33,16 +34,17 @@ export function BlueGreenDetails() {
           </li>
           <li>
             <b>쉬던 색 띄우기.</b>{' '}
-            <code>docker compose up -d --no-deps --force-recreate api_green</code> (MySQL · Redis는
-            그대로). 컨테이너 시작 스크립트 <code>apps/api/docker/start.sh</code>가{' '}
+            <code>docker compose up -d --no-deps --force-recreate api_green_1 api_green_2</code>{' '}
+            (MySQL · Redis는 그대로). 컨테이너 시작 스크립트 <code>apps/api/docker/start.sh</code>가{' '}
             <code>prisma migrate deploy</code>를 하고(DB가 늦게 뜨면 다시 시도) 서버를 켠다.
-            마이그레이션은 앞으로만 가니까 &quot;추가 먼저, 삭제는 다음 배포&quot;(expand →
-            contract).
+            마이그레이션은 <code>_1</code>만, <code>_2</code>는 <code>RUN_MIGRATIONS=false</code>로
+            건너뛴다. 마이그레이션은 앞으로만 가니까 &quot;추가 먼저, 삭제는 다음 배포&quot;(expand
+            → contract).
           </li>
           <li>
-            <b>건강 확인.</b> Caddy 컨테이너 안에서 <code>wget http://api_green:4000/health</code>를
-            2초마다, 최대 60번(2분). 컨테이너가 죽으면(마이그레이션 실패, 환경 변수 오류) 바로
-            멈춘다.
+            <b>건강 확인.</b> Caddy 컨테이너 안에서 <code>wget http://api_green_1:4000/health</code>
+            와 <code>_2</code>를 2초마다, 최대 60번(2분). 둘 다 200이어야 다음으로. 컨테이너가
+            죽으면(마이그레이션 실패, 환경 변수 오류) 바로 멈춘다.
           </li>
           <li>
             <b>문 바꾸기.</b> <code>upstream.caddy</code>를 임시 파일에 쓰고 <code>mv</code>(한 번에
@@ -52,7 +54,7 @@ export function BlueGreenDetails() {
           </li>
           <li>
             <b>마무리 → 끄기 → 정리.</b> <code>sleep 10</code> →{' '}
-            <code>docker compose stop api_blue</code> → GHCR 이미지는 최근 3개만 남기고{' '}
+            <code>docker compose stop api_blue_1 api_blue_2</code> → GHCR 이미지는 최근 3개만 남기고{' '}
             <code>docker image prune -f</code> → <code>DEPLOYED_SHA=… COLOR=green</code> 출력.
             GitHub가 그 SHA가 맞는지, 바깥 <code>https://…/health</code>가 200인지 확인하면 끝.
           </li>
