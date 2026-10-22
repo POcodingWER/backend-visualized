@@ -20,7 +20,8 @@ x-api: &api
     mysql:
       condition: service_healthy
       required: false
-  environment:
+  # 7장: INSTANCE_NAME은 서비스별로 개별 설정 (x-instance-id 헤더용)
+  environment: &api-env
     NODE_ENV: production
     PORT: '4000'
     # CORS 허용 출처 = WEB_ORIGIN + (있으면) VERCEL_ORIGIN. 둘 다 deploy/production.env에서 바꾼다
@@ -36,15 +37,41 @@ x-api: &api
 
 services:
   # profiles: 그냥 `./deploy/compose.sh up -d` 를 하면 API는 건드리지 않는다. API는 deploy/deploy.sh로만 교체
-  api_blue:
+  # 7장 스케일아웃: 각 색마다 2개 인스턴스 (Caddy 로드 밸런싱). container_name 없음 = compose 기본 이름.
+  # 첫 인스턴스만 마이그레이션 실행 (RUN_MIGRATIONS 기본 true), 두 번째는 false.
+  api_blue_1:
     <<: *api
     image: backend-visualized-api:blue
     profiles: ['blue']
+    environment:
+      <<: *api-env
+      INSTANCE_NAME: api-blue-1
 
-  api_green:
+  api_blue_2:
+    <<: *api
+    image: backend-visualized-api:blue
+    profiles: ['blue']
+    environment:
+      <<: *api-env
+      INSTANCE_NAME: api-blue-2
+      RUN_MIGRATIONS: 'false'
+
+  api_green_1:
     <<: *api
     image: backend-visualized-api:green
     profiles: ['green']
+    environment:
+      <<: *api-env
+      INSTANCE_NAME: api-green-1
+
+  api_green_2:
+    <<: *api
+    image: backend-visualized-api:green
+    profiles: ['green']
+    environment:
+      <<: *api-env
+      INSTANCE_NAME: api-green-2
+      RUN_MIGRATIONS: 'false'
 
   caddy:
     image: caddy:2-alpine

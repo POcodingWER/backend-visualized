@@ -46,13 +46,24 @@ export class PaymentsService {
 
   constructor(private readonly prisma: PrismaService) {}
 
+  /**
+   * 10분마다 30분 지난 데모 결제 삭제. 7장: 인스턴스 2개라 10분마다 2번 돌지만,
+   * DELETE ... WHERE createdAt < 기준이라 동시 실행해도 각자 지울 행만 지우고 중복 삭제는 없음.
+   * 데모 정리 작업이라 중복 실행이 문제가 아님 (이벤트 집계와 달리 DB 비용 미미).
+   */
   @Cron(CronExpression.EVERY_10_MINUTES)
   async deleteOldDemoPayments() {
     const { count } = await this.deleteOlderThan(new Date(Date.now() - KEEP_PAYMENTS_MS));
     if (count > 0) this.log.log(`old demo payments deleted (${count})`);
   }
 
-  /** 매분: 오래 processing으로 남은 결제를 PG에 물어보고 정리한다 */
+  /**
+   * 매분: 오래 processing으로 남은 결제를 PG에 물어보고 정리한다.
+   * 7장: 인스턴스가 2개라 매분 2번 돌지만, 조건부 UPDATE (WHERE status='processing' AND ...)라
+   * 동시 실행해도 한 행은 한 번만 바뀌므로 안전 → 별도 락 불필요. 이벤트 집계와 달리 멱등 작업이라
+   * 중복 실행이 큰 비용이 아니고, 5분 + 재시도 안에 끝나는 마이그레이션도 Prisma advisory lock으로
+   * 하나만 실제 실행되므로 이 cron도 추가 동기화 없이 유지.
+   */
   @Cron(CronExpression.EVERY_MINUTE)
   async closeStalePayments() {
     const count = await this.failStaleProcessing(new Date(Date.now() - STALE_PROCESSING_MS));
@@ -63,7 +74,7 @@ export class PaymentsService {
    * 가짜 PG에는 "승인 기록"이 없다 = 승인 전에 죽은 것 → 돈이 안 나갔으니 failed로 닫는다.
    * 진짜 PG라면 여기서 결제사 조회 API로 승인 여부를 묻고, 승인됐으면 paid로 바꿔야 한다.
    *
-   * UPDATE … WHERE status='processing' AND createdAt < 기준 한 문장이라, blue/green 두 컨테이너가
+   * UPDATE … WHERE status='processing' AND createdAt < 기준 한 문장이라, 여러 인스턴스가
    * 같은 순간에 돌아도 한 행은 한 번만 바뀐다 (두 번째 UPDATE는 조건에 안 맞아 0행).
    * 그 사이 첫 요청이 늦게 살아나 paid로 바꾸려 해도, pay()의 UPDATE도 status='processing' 조건이라 덮어쓰지 않는다.
    */

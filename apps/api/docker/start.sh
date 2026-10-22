@@ -1,6 +1,10 @@
 #!/bin/sh
-# 컨테이너 시작: 마이그레이션 적용(prisma migrate deploy) → API 실행
-# DB가 아직 준비 안 됐을 수 있으므로(같은 compose의 MySQL, 막 만든 RDS) 몇 번 재시도한다.
+# 컨테이너 시작: 마이그레이션 적용(prisma migrate deploy, 선택) → API 실행
+# 7장: 여러 인스턴스 중 첫 번째만 마이그레이션 실행 (RUN_MIGRATIONS=false인 인스턴스는 건너뜀).
+# Prisma migrate deploy는 DB advisory lock을 쓰므로 동시 실행 시 한 인스턴스만 실제 마이그레이션하고
+# 나머지는 대기 후 통과하지만, 불필요한 경쟁을 피하려고 명시적으로 분리.
+# expand-only 스키마(새 컬럼/테이블 추가만, 삭제·이름 변경 없음)라면 인스턴스 2가 먼저 시작해도
+# 기존 컬럼/테이블로 동작하므로 안전 (expand → 배포 → contract 규칙).
 set -eu
 
 if [ "${RUN_MIGRATIONS:-true}" = "true" ]; then

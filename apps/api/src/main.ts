@@ -22,6 +22,18 @@ async function bootstrap() {
   // 프록시(Caddy/ALB) 뒤에서 req.ip가 실제 클라이언트 IP가 되도록. IP별 레이트 리밋이 이 값을 쓴다
   app.set('trust proxy', appEnvironment.trustProxy);
   app.disable('x-powered-by');
+  // 7장 스케일아웃: 어느 인스턴스가 응답했는지 볼 수 있게 (INSTANCE_NAME 환경변수, 컨테이너 ID 노출하지 않음)
+  const instanceId = process.env.INSTANCE_NAME ?? 'local';
+  app.use(
+    (
+      _req: unknown,
+      res: { setHeader: (name: string, value: string) => void },
+      next: () => void,
+    ) => {
+      res.setHeader('x-instance-id', instanceId);
+      next();
+    },
+  );
   app.useBodyParser('json', { limit: appEnvironment.maxBodySize });
   // navigator.sendBeacon은 CORS preflight를 피하려고 text/plain으로 보냄 → JSON으로 파싱
   app.useBodyParser('text', { type: 'text/plain', limit: appEnvironment.maxBodySize });
@@ -37,12 +49,12 @@ async function bootstrap() {
   });
   // credentials: 리프레시 토큰 httpOnly 쿠키를 주고받기 위해 필요 (그래서 정확한 출처 목록만 허용)
   // maxAge: JSON POST마다 붙던 사전 확인(OPTIONS)을 브라우저가 10분 기억 → Network 탭에 요청이 두 번씩 보이지 않게
-  // exposedHeaders: 화면(개발자 도구)에서도 x-request-id를 읽어 문의할 때 쓸 수 있게
+  // exposedHeaders: 화면(개발자 도구)에서도 x-request-id와 x-instance-id를 읽을 수 있게
   app.enableCors({
     origin: appEnvironment.webOrigins,
     credentials: true,
     maxAge: 600,
-    exposedHeaders: [REQUEST_ID_HEADER],
+    exposedHeaders: [REQUEST_ID_HEADER, 'x-instance-id'],
   });
   app.useGlobalPipes(
     new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),

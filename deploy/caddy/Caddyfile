@@ -6,8 +6,9 @@
 }
 
 {$API_DOMAIN} {
-	# 지금 서비스 중인 API 색(api_blue 또는 api_green)으로 보내는 reverse_proxy 설정.
+	# 지금 서비스 중인 API 색(api_blue_1/2 또는 api_green_1/2)으로 보내는 reverse_proxy 설정.
 	# deploy/deploy.sh가 이 파일을 새 색으로 다시 쓰고 `caddy reload` 한다 (git 미추적, 서버에서 생성).
+	# 7장: 2개 인스턴스에 로드 밸런싱 (least_conn + health check)
 	import /etc/caddy/upstream.caddy
 
 	header {

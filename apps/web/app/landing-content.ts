@@ -327,4 +327,24 @@ export const DECISIONS: Decision[] = [
       'CloudFront에선 캐시 적중률을 올리는 게 목표였다면, 여기선 "메뉴판이 비는 순간"과 "메뉴가 바뀐 순간"을 다루는 게 핵심이었어요.',
     ],
   },
+  {
+    chapter: 7,
+    href: '/scale-out',
+    title: '스케일아웃: 계산대 하나 더 열기',
+    summary:
+      '한 Node 프로세스가 CPU 1코어를 꽉 채워 ~620 req/s에서 정체했어요. API 인스턴스를 2개로 늘리고 Caddy에서 로드 밸런싱했어요.',
+    chose: [
+      'Docker Compose에서 한 색당 2개 인스턴스 정의 (api_blue_1, api_blue_2). Caddy가 least_conn 정책으로 로드 밸런싱 + 30초마다 /health 체크.',
+      '무중단 배포는 그대로: 쉬던 색의 2개를 띄우고, 둘 다 건강하면 전환.',
+      '응답 헤더 x-instance-id (hostname 기반)로 어느 인스턴스가 응답했는지 확인.',
+    ],
+    gaveUp: [
+      '프로세스 메모리 레이트 리밋: 각 인스턴스마다 별도 한도가 되므로 한도가 2배. 데모 사이트라 큰 문제가 아니어서 일단 유지 (ponytail: 필요하면 Redis 기반으로 교체 가능).',
+    ],
+    learned: [
+      'Cron job이 모든 인스턴스에서 실행돼요. 결제 정리(closeStalePayments)는 조건부 UPDATE라 안전하지만, 이벤트 집계(aggregateRange)는 Redis lock (SET NX PX)으로 한 인스턴스만 실행하게 했어요.',
+      'Prisma migrate deploy는 advisory lock으로 동시 실행 방지하지만, 불필요한 경쟁을 피하려고 첫 인스턴스만 실행 (RUN_MIGRATIONS=false).',
+      '2 vCPU라 인스턴스 2개가 최대. 더 늘리려면 서버를 늘려야 하고 (ALB + 여러 EC2 또는 ECS), 다음 병목은 DB가 될 거예요.',
+    ],
+  },
 ];

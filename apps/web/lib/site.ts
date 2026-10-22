@@ -12,6 +12,7 @@ export const CHAPTERS = [
     subtitle: '두 번 눌러도 한 번만 결제',
   },
   { number: 6, href: '/cache', title: '맛집 메뉴판', subtitle: '빠르게 보여주고, 제때 바꾸기' },
+  { number: 7, href: '/scale-out', title: '스케일아웃', subtitle: '계산대 하나 더 열기' },
 ] as const;
 
 /** 장 번호 없는 따로 페이지. 장 번호는 앞으로 나올 백엔드 기술 이야기 몫이라 CHAPTERS에 넣지 않는다 */
