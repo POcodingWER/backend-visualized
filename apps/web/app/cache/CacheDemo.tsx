@@ -172,7 +172,7 @@ function VisitorsStage() {
           <p className={flow.bigNumberLabel}>손님 1000명에 데이터베이스를 읽은 횟수</p>
           <Button
             size="big"
-            data-demo="손님 1000명"
+            data-ga-demo="손님 1000명"
             onClick={() => void run()}
             disabled={isRunning}
           >

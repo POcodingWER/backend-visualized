@@ -231,7 +231,7 @@ export default function PaymentDemo() {
             </p>
             <Button
               size="big"
-              data-demo="결제 세 번 연타"
+              data-ga-demo="결제 세 번 연타"
               onClick={() => void run()}
               disabled={isRunning}
             >

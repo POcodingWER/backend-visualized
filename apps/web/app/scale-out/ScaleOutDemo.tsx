@@ -116,7 +116,7 @@ function WhoAnsweredSection() {
         </p>
         <Button
           size="big"
-          data-demo="10번 물어보기"
+          data-ga-demo="10번 물어보기"
           onClick={() => void run()}
           disabled={isRunning}
         >

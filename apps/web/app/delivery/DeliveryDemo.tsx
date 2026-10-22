@@ -152,7 +152,7 @@ function TruckStage() {
           </p>
           <Button
             size="big"
-            data-demo="클릭 묶음배송"
+            data-ga-demo="클릭 묶음배송"
             onClick={() => void run()}
             disabled={isRunning}
           >
