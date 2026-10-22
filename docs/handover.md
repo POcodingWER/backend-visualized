@@ -1,6 +1,6 @@
 # 인수인계 문서 — 처음 이 저장소를 맡는 사람에게
 
-"버튼 하나 뒤에서"는 백엔드 문제 여섯 가지를 브라우저 버튼 하나로 **실제 서버·DB에서 일으키고, 고친 결과를 숫자로 보여주는** 그림책 사이트입니다.
+"버튼 하나 뒤에서"는 백엔드 문제 7가지를 브라우저 버튼 하나로 **실제 서버·DB에서 일으키고, 고친 결과를 숫자로 보여주는** 그림책 사이트입니다.
 
 - 웹: `apps/web` (Next.js 15 App Router)
 - API: `apps/api` (NestJS + Prisma + MySQL, 6장만 Redis)
@@ -77,7 +77,7 @@ curl localhost:4000/health            # {"status":"ok"...} 이면 DB 연결 OK
 ```
 apps/web/
   app/
-    page.tsx                  첫 화면 (장 목록, 여섯 장의 선택, About me)
+    page.tsx                  첫 화면 (장 목록, 7가지 선택, About me)
     deploy/                   배포 및 회고 (steps.ts 단계 · content.ts 이유/막힌 것/회고 · Diagrams.tsx 그림)
     about/                    About me (글은 landing-content.ts의 AUTHOR 하나에서)
     landing-content.ts        첫 화면 글: About me(AUTHOR), 장별 선택·포기·배운 것(DECISIONS). 고치면 docs/decisions.md도 같이

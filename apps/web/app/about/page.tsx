@@ -117,9 +117,8 @@ export default function AboutPage() {
           ))}
         </ul>
         <p className={ui.source}>
-          장마다 고른 것·포기한 것·배운 것은{' '}
-          <Link href="/#decisions">첫 화면의 여섯 장의 선택</Link>과 저장소{' '}
-          <a href={GITHUB_URL}>POcodingWER/backend-visualized</a>에 있어요.
+          장마다 고른 것·포기한 것·배운 것은 <Link href="/#decisions">첫 화면의 7가지 선택</Link>과
+          저장소 <a href={GITHUB_URL}>POcodingWER/backend-visualized</a>에 있어요.
         </p>
       </section>
 
@@ -206,7 +205,7 @@ export default function AboutPage() {
 
       <nav className={ui.nextChapter} aria-label="다른 이야기">
         <p>
-          <span>여섯 편의 이야기로</span>
+          <span>7편의 이야기로</span>
           <Link href="/ticketing">1장 티켓팅 — 선착순에 몰린 500명 →</Link>
         </p>
         <p>

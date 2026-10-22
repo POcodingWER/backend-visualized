@@ -1,5 +1,5 @@
 /**
- * 첫 화면의 About me와 "여섯 장의 선택" 글. 숫자는 모두 docs/benchmarks, docs/chapters-4-6.md,
+ * 첫 화면의 About me와 "7가지 선택" 글. 숫자는 모두 docs/benchmarks, docs/chapters-4-6.md,
  * public/data의 실측 기록과 git 기록에 있는 값만 쓴다. 같은 내용을 docs/decisions.md에도 둔다.
  */
 
