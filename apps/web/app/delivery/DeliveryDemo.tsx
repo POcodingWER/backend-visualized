@@ -150,7 +150,12 @@ function TruckStage() {
             클릭 기록 10,000개를 묶어 보냈을 때 빨라진 정도 (18.7초 → 0.29초,{' '}
             <a href={BENCHMARK_URL}>측정 기록</a>)
           </p>
-          <Button size="big" onClick={() => void run()} disabled={isRunning}>
+          <Button
+            size="big"
+            data-demo="클릭 묶음배송"
+            onClick={() => void run()}
+            disabled={isRunning}
+          >
             {isRunning ? '트럭이 달리는 중…' : `클릭 ${PARCELS}개 두 가지로 보내기`}
           </Button>
           {error ? (

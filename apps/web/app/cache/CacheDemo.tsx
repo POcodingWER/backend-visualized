@@ -170,7 +170,12 @@ function VisitorsStage() {
             <span style={{ fontSize: '0.5em' }}>번</span>
           </p>
           <p className={flow.bigNumberLabel}>손님 1000명에 데이터베이스를 읽은 횟수</p>
-          <Button size="big" onClick={() => void run()} disabled={isRunning}>
+          <Button
+            size="big"
+            data-demo="손님 1000명"
+            onClick={() => void run()}
+            disabled={isRunning}
+          >
             {isRunning ? '손님 받는 중…' : '손님 1000명 받기'}
           </Button>
           <p className={ui.hint}>

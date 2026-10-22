@@ -205,7 +205,12 @@ function OversellStage({ result, sourceLabel, isRunning, isBlocked, error, onRun
               </div>
             )}
           </dl>
-          <Button size="big" onClick={() => onRun(play)} disabled={isBlocked}>
+          <Button
+            size="big"
+            data-demo="500명 동시 예매"
+            onClick={() => onRun(play)}
+            disabled={isBlocked}
+          >
             {isRunning ? '500명이 예매하는 중…' : '500명이 동시에 예매해 보기'}
           </Button>
           {error ? (

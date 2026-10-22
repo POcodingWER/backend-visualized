@@ -219,7 +219,7 @@ function LoginEntrance({ session, ensureSession, restoreState, callMe, logout }:
             </Button>
           </>
         ) : (
-          <Button size="big" onClick={() => void login()} disabled={isBusy}>
+          <Button size="big" data-demo="로그인" onClick={() => void login()} disabled={isBusy}>
             {isBusy ? '로그인하는 중…' : '로그인해 보기'}
           </Button>
         )}
@@ -360,7 +360,12 @@ function CopiedReceiptStage({
               </li>
             ))}
           </ol>
-          <Button size="big" onClick={() => void run()} disabled={isRunning}>
+          <Button
+            size="big"
+            data-demo="영수증 복사"
+            onClick={() => void run()}
+            disabled={isRunning}
+          >
             {isRunning ? '영수증을 복사하는 중…' : '영수증을 복사해서 몰래 써 보기'}
           </Button>
           {error ? (
