@@ -22,27 +22,39 @@ export default function ScaleOutDemo() {
       <SideEffectsSection />
       <section className={ui.wide}>
         <h2 className={ui.sectionTitle}>숫자로 본 결과</h2>
+        <p className={ui.lead}>
+          늘린 뒤 같은 조건으로 다시 재 봤어요. 처리량은 거의 그대로였고, 대신 줄 서서 기다리는
+          시간이 줄고 시간 초과가 사라졌어요. 이번엔 API 하나가 아니라 서버 CPU 전체가 꽉 찼어요.
+          API 둘이 각각 반 코어 남짓을 쓰고, 나머지는 문지기(Caddy)와 데이터베이스가 나눠 썼거든요.
+        </p>
         <ResultNumbers
           items={[
             {
-              value: '초당 약 620건',
-              tone: 'fail',
-              label: '서버 한 대(API 1개)가 더 못 버틴 지점',
-              detail: '손님 100명 근처부터 처리량이 늘지 않고 기다리는 시간만 늘었어요.',
+              value: '1.9초',
+              tone: 'good',
+              label: '손님 800명일 때 느린 쪽 5%가 기다린 시간 (p95)',
+              detail: 'API 1개일 땐 7~10초였어요. 12분 전체 p95도 2.64초 → 1.4초.',
             },
             {
-              value: '0.09초 → 2.64초',
-              tone: 'fail',
-              label: '느린 쪽 5%가 기다린 시간 (p95)',
-              detail: '손님 10명일 때 → 전체 12분 평균. 손님 800명 구간에선 7~10초까지 갔어요.',
+              value: '0%',
+              tone: 'good',
+              label: '시간 초과로 실패한 요청',
+              detail: '1개일 땐 0.89%였어요. 이번엔 395,841건이 전부 200.',
             },
             {
-              value: '100~120%',
-              label: 'API 컨테이너 CPU (docker stats)',
-              detail: '코어 2개짜리 서버에서 한 개가 꽉 찬 모습. MySQL·Redis는 여유가 있었어요.',
+              value: '초당 약 640건',
+              label: '처리량 (손님 100명부터 더 안 늘어난 지점)',
+              detail: '1개일 때 약 620건과 거의 같아요. 나눠 쓸 CPU가 이미 바닥이었어요.',
+            },
+            {
+              value: '약 180%',
+              tone: 'fail',
+              label: '서버 CPU 전체 (컨테이너 합, 코어 2개 = 200%)',
+              detail:
+                'API 둘이 각각 50~65%, Caddy 35~50%, MySQL 25~40%. API 1개일 때는 API 혼자 100~120%였어요.',
             },
           ]}
-          source="2026-10-21 운영 서버 실측 — k6로 손님(가상 사용자)을 10명에서 800명까지 12분 동안 늘리며 GET /health, /events/stats 호출. 389,658건 중 0.89%가 10초 타임아웃, 500 오류는 없었어요. API를 2개로 늘린 뒤의 숫자는 같은 조건으로 다시 재서 채울게요."
+          source="운영 서버 실측 — API 1개는 2026-10-21, 2개는 2026-10-22. 같은 k6 스크립트로 손님(가상 사용자)을 10명에서 800명까지 12분 동안 늘리며 GET /health, /events/stats 호출. CPU는 그동안 서버에서 약 36초마다 찍은 docker stats의 정점 구간이에요. 500 오류는 두 번 다 0번이었어요."
         />
       </section>
       <section className={ui.wide}>
@@ -208,8 +220,8 @@ function SideEffectsSection() {
       </div>
       <div className={ui.column}>
         <p className={`${ui.hint} ${styles.note}`}>
-          이 서버는 코어가 2개라 API 2개가 끝이에요. 더 늘리려면 서버 자체를 여러 대로 늘려야 하고
-          (로드 밸런서 + EC2 여러 대), 그때는 데이터베이스가 다음 병목이 될 거예요.
+          이 서버는 코어가 2개라 API를 더 켜도 나눌 CPU가 없어요. 다음은 Caddy와 데이터베이스를 다른
+          서버로 빼거나, 서버 자체를 여러 대로 늘리는 쪽이에요 (로드 밸런서 + EC2 여러 대).
         </p>
       </div>
     </section>
