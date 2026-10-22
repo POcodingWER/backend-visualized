@@ -653,7 +653,7 @@ k6 run -e API_URL=https://<API_HOST> --summary-export=/tmp/k6-summary.json --out
 
 **다음 병목**: 컨테이너 CPU 합이 측정마다 약 175~190%로 2코어(200%)가 거의 다 찼다. API 하나는 반 코어 남짓만 쓰고, 나머지 약 40%를 Caddy(TLS + 프록시)와 MySQL(`/events/stats`의 COUNT + GROUP BY)이 가져갔다. 그래서 같은 서버에서 API를 더 켜도 늘 것이 없다. 다음 손잡이는 `/events/stats` 짧은 캐시(MySQL 몫 줄이기), Caddy · DB를 다른 서버로 빼기, 또는 인스턴스 키우기.
 
-서버 쪽 기록: `deploy/diagnose.sh` (`snapshot` · `watch` · `report` · `recover`). 배포 끝에 `deploy.sh`가 지난 30분 기록을 요약하고 새 `watch 1800`을 시작한다. Actions의 **Diagnose** workflow(손으로 실행)로도 돌릴 수 있다. 이번 테스트 때는 `watch`가 `local` 한 줄 계산 버그로 바로 끝나서 5초 간격 기록이 없었고(고침), CPU는 서버에서 직접 본 `docker stats` 값이다.
+서버 쪽 기록: `deploy/diagnose.sh` (`snapshot` · `watch` · `report` · `recover`). 배포 끝에 `deploy.sh`가 지난 30분 기록을 요약하고 새 `watch 1800`을 시작한다. 이번 테스트 때는 `watch`가 `local` 한 줄 계산 버그로 바로 끝나서 5초 간격 기록이 없었고(고침), CPU는 서버에서 직접 본 `docker stats` 값이다.
 
 ---
 

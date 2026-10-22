@@ -60,13 +60,13 @@ export class EnvironmentError extends Error {
 }
 
 /** 저장소에 적혀 있는(=공개된) 개발용 비밀값. 운영에서 쓰면 누구나 토큰을 위조할 수 있다 */
-export const PUBLIC_DEVELOPMENT_SECRETS = [
+const PUBLIC_DEVELOPMENT_SECRETS = [
   'dev-only-access-secret-change-me',
   'change-me-in-production',
   'change-me',
   'secret',
 ];
-export const DEVELOPMENT_JWT_SECRET = PUBLIC_DEVELOPMENT_SECRETS[0];
+const DEVELOPMENT_JWT_SECRET = PUBLIC_DEVELOPMENT_SECRETS[0];
 const MIN_JWT_SECRET_LENGTH = 32;
 const MIN_ADMIN_API_KEY_LENGTH = 24;
 const LOCAL_HOSTNAMES = new Set(['localhost', '127.0.0.1', '[::1]']);

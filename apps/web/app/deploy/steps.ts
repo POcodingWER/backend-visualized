@@ -24,7 +24,7 @@ export interface DeployStep {
 }
 
 /** 화면에 보이는 API 주소. 실제 IP는 페이지에 싣지 않는다 (no-secrets.test.ts) */
-export const API_HOST = 'https://<IP-대시>.sslip.io';
+const API_HOST = 'https://<IP-대시>.sslip.io';
 
 export const DEPLOY_STEPS: DeployStep[] = [
   {

@@ -20,8 +20,7 @@ export type RotationResult =
     }
   | { rotated: false; reason: RotationFailureReason; familyId?: string };
 
-export const hashRefreshToken = (rawToken: string) =>
-  createHash('sha256').update(rawToken).digest('hex');
+const hashRefreshToken = (rawToken: string) => createHash('sha256').update(rawToken).digest('hex');
 
 /**
  * 리프레시 토큰 저장소: 원문은 클라이언트(쿠키)에만, DB에는 SHA-256 해시만.

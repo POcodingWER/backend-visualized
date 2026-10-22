@@ -10,7 +10,7 @@ export function parseDate(rawValue: string | undefined, field: string): Date | u
 }
 
 // ponytail: 한국 서비스라 날짜 경계를 KST(UTC+9, 서머타임 없음) 고정. 다른 시간대가 필요해지면 오프셋을 설정값으로.
-export const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
+const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
 
 /** 순간(UTC) → 그 순간의 KST 달력 날짜 'YYYY-MM-DD' */
 export function toKstDateKey(date: Date): string {
@@ -18,7 +18,7 @@ export function toKstDateKey(date: Date): string {
 }
 
 /** 'YYYY-MM-DD'(KST 날짜) → 그 날 KST 자정의 순간 */
-export function kstMidnight(dateKey: string): Date {
+function kstMidnight(dateKey: string): Date {
   return new Date(Date.parse(`${dateKey}T00:00:00Z`) - KST_OFFSET_MS);
 }
 

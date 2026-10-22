@@ -10,7 +10,7 @@ import type { Request } from 'express';
 import { appEnvironment } from '../config/app-environment';
 import type { AppEnvironment } from '../config/environment';
 
-export const ADMIN_API_KEY_HEADER = 'x-admin-api-key';
+const ADMIN_API_KEY_HEADER = 'x-admin-api-key';
 
 /** 길이와 무관하게 일정 시간에 비교 (해시 후 timingSafeEqual) */
 export function isSameSecret(provided: string, expected: string): boolean {

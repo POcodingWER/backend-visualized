@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 /** 화면 갱신 간격. 재생은 rAF로 부드럽게, React 렌더는 이 간격마다만 */
-export const TICK_MS = 100;
+const TICK_MS = 100;
 
 /**
  * 실측 타임라인 재생. 실제 걸린 시간을 2.5~6초로 맞춰 rAF로 돌리되 setState는 TICK_MS마다만.

@@ -7,9 +7,9 @@ import { PrismaService } from '../prisma/prisma.service';
 import { RedisService } from '../redis/redis.service';
 
 /** 캐시 유효 시간 (Redis SET ... EX) */
-export const CACHE_TTL_SECONDS = 5;
+const CACHE_TTL_SECONDS = 5;
 /** 캐시를 다시 채우는 한 명만 잡는 잠금. 그 사람이 죽어도 2초 뒤 저절로 풀린다 (SET ... NX PX) */
-export const LOCK_TTL_MS = 2_000;
+const LOCK_TTL_MS = 2_000;
 const LOCK_WAIT_POLL_MS = 20;
 const LOCK_WAIT_LIMIT_MS = 1_000;
 
@@ -52,7 +52,7 @@ export interface VisitorTrace {
   path: VisitorPath;
 }
 
-export const emptyStats = (): CacheStats => ({
+const emptyStats = (): CacheStats => ({
   dbReads: 0,
   commands: { GET: 0, 'SET EX': 0, 'SET NX': 0, DEL: 0 },
 });

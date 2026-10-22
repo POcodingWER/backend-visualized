@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # 서버 상태 보기 (부하 테스트·장애 때 증거 남기기). 읽기만 하고, recover만 컨테이너를 다시 띄운다.
-# GitHub Actions의 Diagnose workflow가 SSM으로 root 권한으로 실행한다 (서버에서 직접 sudo로 실행해도 됨).
+# 서버에서 sudo로 직접 실행한다. 배포 끝에 deploy.sh도 report와 watch를 부른다.
 #
 #   sudo ./deploy/diagnose.sh snapshot        # 지금 상태 한 번: 메모리, 재시작/OOM, 에러 로그, MySQL·Redis
 #   sudo ./deploy/diagnose.sh watch 900       # 뒤에서 약 5초마다 기록 시작 (900초 동안) → 바로 끝남
