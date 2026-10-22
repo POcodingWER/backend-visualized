@@ -227,7 +227,7 @@ function LedgerStage({
               통장 방식은 같은 200건에서 <b className={ui.goodText}>0P</b> 사라졌어요.
             </p>
           )}
-          <Button size="big" onClick={onRun} disabled={isRunning}>
+          <Button size="big" data-demo="적립·사용 200건" onClick={onRun} disabled={isRunning}>
             {isRunning ? '보내는 중…' : '적립·사용 200건 동시에 보내기'}
           </Button>
           <p className={ui.hint}>

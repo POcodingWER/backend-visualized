@@ -114,7 +114,12 @@ function WhoAnsweredSection() {
           번 동시에 물어요. 응답마다 붙어 오는 이름표(<code>x-instance-id</code>)로 어느 계산대가
           받았는지 세요.
         </p>
-        <Button size="big" onClick={() => void run()} disabled={isRunning}>
+        <Button
+          size="big"
+          data-demo="10번 물어보기"
+          onClick={() => void run()}
+          disabled={isRunning}
+        >
           {isRunning ? '물어보는 중…' : `${REQUEST_COUNT}번 물어보기`}
         </Button>
       </div>

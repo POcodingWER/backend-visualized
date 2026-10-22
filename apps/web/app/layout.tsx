@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import { GITHUB_URL } from '../lib/site';
 import './globals.css';
+import ClickTracker from './components/organisms/ClickTracker';
 import SiteHeader from './components/organisms/SiteHeader';
 import styles from './components/ui.module.css';
 
@@ -54,6 +55,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         </footer>
       </body>
       {GA_ID && <GoogleAnalytics gaId={GA_ID} />}
+      {GA_ID && <ClickTracker />}
     </html>
   );
 }

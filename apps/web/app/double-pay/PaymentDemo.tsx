@@ -229,7 +229,12 @@ export default function PaymentDemo() {
             <p className={flow.bigNumberLabel}>
               실제로 결제된 횟수 (같은 결제 요청 {requestCount}개)
             </p>
-            <Button size="big" onClick={() => void run()} disabled={isRunning}>
+            <Button
+              size="big"
+              data-demo="결제 세 번 연타"
+              onClick={() => void run()}
+              disabled={isRunning}
+            >
               {isRunning ? '결제하는 중…' : '결제 버튼 세 번 연달아 눌러 보기'}
             </Button>
             <p className={ui.hint}>
