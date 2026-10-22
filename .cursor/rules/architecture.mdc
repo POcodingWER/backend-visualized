@@ -25,7 +25,7 @@ Full explanation (Korean, for frontend devs): docs/architecture.md. Per-chapter 
 # Web structure rules (apps/web)
 
 - Shared UI only in `app/components/{atoms,molecules,organisms}` (atoms: `Button`, `Conclusion`, `ink`; molecules: `DevDetails`, `DevFlow`, `ResultNumbers`; organisms: `ChapterLayout`, `ComicStrip`, `SiteHeader`, `Analytics`). Components used by one chapter stay in that chapter folder.
-- GA events: only `contact_click` (detected by href in `lib/analytics.ts`) and `demo_run` (add `data-demo="이름"` to a chapter's big button). `Analytics` loads GA and calls `lib/useClickTracking.ts`, which listens once for the whole document; don't add per-component GA calls.
+- GA events: only `contact_click` (detected by href in `lib/analytics.ts`) and `demo_run` (add `data-ga-demo="이름"` to a chapter's big button). `Analytics` loads GA and calls `lib/useClickTracking.ts`, which listens once for the whole document; don't add per-component GA calls.
 - Hooks and plain functions go in `lib/` (`useReplay.ts`, `single-flight.ts`, `api.ts`), not `components/`.
 - Every API call goes through `app/<chapter>/api.ts` (built on `callApi` from `lib/api.ts`). Components never call `fetch` for the API directly. Status-code → Korean message mapping lives in the chapter's `api.ts`.
 - Use `<Button size="big|small">` and `<Conclusion isGood>` instead of raw `ui.bigButton`/`ui.conclusion` classes. Comic SVGs use `inkStroke`/`INK` from `atoms/ink.ts`.

@@ -219,7 +219,7 @@ function LoginEntrance({ session, ensureSession, restoreState, callMe, logout }:
             </Button>
           </>
         ) : (
-          <Button size="big" data-demo="로그인" onClick={() => void login()} disabled={isBusy}>
+          <Button size="big" data-ga-demo="로그인" onClick={() => void login()} disabled={isBusy}>
             {isBusy ? '로그인하는 중…' : '로그인해 보기'}
           </Button>
         )}
@@ -362,7 +362,7 @@ function CopiedReceiptStage({
           </ol>
           <Button
             size="big"
-            data-demo="영수증 복사"
+            data-ga-demo="영수증 복사"
             onClick={() => void run()}
             disabled={isRunning}
           >

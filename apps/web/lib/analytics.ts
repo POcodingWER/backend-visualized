@@ -3,7 +3,7 @@ import { CHAPTERS } from './site';
 /**
  * GA 이벤트는 딱 두 종류만 센다. 늘리면 GA 화면이 지저분해져서 정작 볼 숫자가 묻힌다.
  * - contact_click: 이력서·GitHub·블로그 같은 "나를 더 알아보는" 링크 클릭 (어느 페이지에서 눌렀는지 포함)
- * - demo_run: 각 장의 큰 "직접 해 보기" 버튼 (data-demo 속성이 붙은 버튼)
+ * - demo_run: 각 장의 큰 "직접 해 보기" 버튼 (data-ga-demo 속성이 붙은 버튼)
  */
 export type ContactTarget = 'resume_pdf' | 'resume_web' | 'blog' | 'github' | 'email' | 'instagram';
 
