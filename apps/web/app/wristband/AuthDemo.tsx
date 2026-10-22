@@ -16,7 +16,7 @@ import type { AddLogEntry, RequestLogEntry, RideResult } from './types';
 import WristbandStory from './WristbandStory';
 
 /** 화면에 그대로 안내하는 데모 계정 */
-export const DEMO_ACCOUNT = { username: 'demo', password: 'demo1234' };
+const DEMO_ACCOUNT = { username: 'demo', password: 'demo1234' };
 
 const MAX_LOG_ENTRIES = 14;
 const AUTO_CALL_INTERVAL_MS = 4000;

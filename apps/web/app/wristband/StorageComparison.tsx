@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import styles from './auth.module.css';
 
-export const LOCAL_STORAGE_KEY = 'bv_demo_access_token';
+const LOCAL_STORAGE_KEY = 'bv_demo_access_token';
 const FAKE_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.demo-access-token.signature';
 
 export type StorageKind = 'localStorage' | 'memory' | 'httpOnlyCookie';

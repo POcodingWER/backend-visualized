@@ -7,13 +7,13 @@ export const POINT_MODES = ['overwrite', 'ledger'] as const;
 export type PointMode = (typeof POINT_MODES)[number];
 
 /** 방식마다 지갑 하나 (데모용 고정 이름) */
-export const WALLET_BY_MODE: Record<PointMode, string> = {
+const WALLET_BY_MODE: Record<PointMode, string> = {
   overwrite: 'sim-overwrite',
   ledger: 'sim-ledger',
 };
 
 export const OPENING_BALANCE = 5_000;
-export const POINTS_PER_REQUEST = 100;
+const POINTS_PER_REQUEST = 100;
 
 /** 요청 하나가 언제 잔액을 읽고 언제 썼는지 (시뮬레이션 시작 기준 ms) */
 export interface PointRequestTrace {

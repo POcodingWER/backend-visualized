@@ -3,7 +3,7 @@ import type { Params } from 'nestjs-pino';
 import { pickRequestId, REQUEST_ID_HEADER } from './request-id';
 
 /** 로그에 절대 남기지 않을 값: 로그인 토큰, 쿠키, 관리자 키, 비밀번호 */
-export const REDACTED_PATHS = [
+const REDACTED_PATHS = [
   'req.headers.authorization',
   'req.headers.cookie',
   'req.headers["x-admin-api-key"]',

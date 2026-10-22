@@ -5,7 +5,7 @@ import { sleep } from '../common/utils/time';
 import { PrismaService } from '../prisma/prisma.service';
 
 /** 가짜 결제사(PG) 승인에 걸리는 시간. 이 사이에 두 번째 클릭·재시도가 들어온다 */
-export const PAYMENT_GATEWAY_DELAY_MS = 900;
+const PAYMENT_GATEWAY_DELAY_MS = 900;
 const REPLAY_POLL_MS = 50;
 const REPLAY_WAIT_LIMIT_MS = 5_000;
 /** 데모 결제 행은 30분 뒤 지운다 */

@@ -4,8 +4,8 @@ import { IsIn, IsInt, IsOptional, IsString, Length, Max, Min } from 'class-valid
 import { STRATEGIES, type Strategy } from '../lib/coupon-strategies';
 
 /** 남용 방지 상한 */
-export const MAX_USERS = 1000;
-export const MAX_QUANTITY = 500;
+const MAX_USERS = 1000;
+const MAX_QUANTITY = 500;
 
 export class ResetDto {
   @IsOptional()
