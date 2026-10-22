@@ -120,7 +120,7 @@ x-request-id: 2f0c…
 {"statusCode":404,"message":"Cannot GET /nope","requestId":"2f0c…"}
 
 # 그 번호로 서버 로그 찾기 (로그는 한 줄 JSON)
-./deploy/compose.sh logs api_blue | grep 2f0c`,
+./deploy/compose.sh logs api_blue_1 api_blue_2 | grep 2f0c`,
   },
 ];
 
@@ -181,7 +181,7 @@ export const TROUBLES: Trouble[] = [
     summary:
       '예전엔 이미지만 빌드해서 매니지드 플랫폼(카카오클라우드 PlayMCP)에 올리면 끝이었어요. 이번엔 서버를 직접 운영하니까 이미지(틀)와 컨테이너(틀로 찍어낸 것)를 나눠서 생각해야 했어요.',
     more: [
-      '처음엔 "이미지를 올리면 돌아간다"로만 알았어요. 실제로는 같은 이미지 하나로 컨테이너를 여러 개 띄울 수 있고, 이 서버도 같은 이미지로 `api_blue`와 `api_green` 두 개를 띄워요.',
+      '처음엔 "이미지를 올리면 돌아간다"로만 알았어요. 실제로는 같은 이미지 하나로 컨테이너를 여러 개 띄울 수 있고, 이 서버도 같은 이미지 하나로 색마다 두 개씩, `api_blue_1` · `api_blue_2` · `api_green_1` · `api_green_2`를 띄워요.',
       'Compose는 여러 컨테이너를 한 파일(`docker-compose.prod.yml`)로 다뤄요. `up`은 만들기 · 바꾸기(이미지나 설정이 바뀌면 다시 만듦), `stop` · `start`는 전원만 끄고 켜기, `down`은 지우기예요. 그래서 배포는 새 색을 `up -d --no-deps --force-recreate`로 만들고, 예전 색은 `stop`만 해요.',
     ],
   },
@@ -189,15 +189,15 @@ export const TROUBLES: Trouble[] = [
     symptom: 'API는 4000번에서 도는데 밖에서 `:4000`으로는 안 열림',
     cause:
       'API 컨테이너는 Docker 안쪽 네트워크에만 4000을 열고, 보안 그룹도 4000을 막아요. 밖에서 API로 들어오는 길은 Caddy의 443 하나예요.',
-    fix: '일부러 그렇게 뒀어요. Caddy가 HTTPS를 받아서 안쪽 `api_blue:4000`으로 넘겨 줘요(리버스 프록시). API는 인증서를 몰라도 되고, 밖에서 `X-Forwarded-For`를 꾸며 바로 들어올 길도 없어요.',
+    fix: '일부러 그렇게 뒀어요. Caddy가 HTTPS를 받아서 안쪽 `api_blue_1:4000` · `api_blue_2:4000`으로 나눠 넘겨 줘요(리버스 프록시). API는 인증서를 몰라도 되고, 밖에서 `X-Forwarded-For`를 꾸며 바로 들어올 길도 없어요.',
   },
   {
-    symptom: 'Caddy는 `api_green:4000`을 어떻게 찾을까?',
+    symptom: 'Caddy는 `api_green_1:4000`을 어떻게 찾을까?',
     summary:
       '처음엔 컨테이너 IP를 어딘가 적어 줘야 하는 줄 알았어요. 실제로는 Compose 서비스 이름이 Docker 내부망의 DNS 이름이 돼요.',
     more: [
-      'Docker에 내장된 DNS가 `api_green`을 그 컨테이너의 내부 IP로 바꿔 줘요. `docker ps`에 보이는 `backend-visualized-api_green-1`은 Compose가 붙인 표시용 이름이에요.',
-      '`4000`은 DNS가 알려 주는 값이 아니라 `upstream.caddy`에 제가 직접 적은 포트예요. 꺼져 있는 색은 DNS에 안 잡혀서, `getent hosts api_green`으로 지금 떠 있는지 확인할 수 있었어요.',
+      'Docker에 내장된 DNS가 `api_green_1`을 그 컨테이너의 내부 IP로 바꿔 줘요. `docker ps`에 보이는 `backend-visualized-api_green_1-1`은 Compose가 붙인 표시용 이름이에요.',
+      '`4000`은 DNS가 알려 주는 값이 아니라 `upstream.caddy`에 제가 직접 적은 포트예요. 꺼져 있는 색은 DNS에 안 잡혀서, `getent hosts api_green_1`로 지금 떠 있는지 확인할 수 있었어요.',
     ],
   },
   {
@@ -287,7 +287,7 @@ export const TROUBLES: Trouble[] = [
     more: [
       '`docker stats`에서 API 컨테이너 CPU가 100~120%에 머물렀어요. `t4g.small`은 2코어라 최대 200%인데, Node는 요청을 이벤트 루프 하나(코어 하나)로 처리해서 한 코어가 꽉 차면 거기서 멈춰요. 메모리는 여유가 있었고 재시작 0번, `OOMKilled` 없음, MySQL 최대 연결 14개, 느린 쿼리 0개였어요.',
       '언제부터 느려졌나: 50 VU까지 p95 약 0.12초였고, 100 VU에서 처리량이 약 620 req/s로 멈추면서 p95가 0.46초로 올랐어요. 200 VU 1.3초, 400 VU 3.1초, 800 VU에서는 10초 시간 초과가 4~6% 나왔어요. 실패는 전부 시간 초과였고 500은 0번이었어요.',
-      '다음에 해 볼 것: API를 2개 띄워 Caddy가 나눠 보내기(blue-green 구조에 복제본만 추가) 또는 Node `cluster`로 코어 2개 다 쓰기, 자주 읽는 `/events/stats`는 Redis에 몇 초 캐시. 다만 1장 쿠폰 "한 번에 하나" 같은 프로세스 메모리 상태는 Redis로 옮겨야 해요.',
+      '그래서 7장에서 색마다 API를 2개 띄워 Caddy가 나눠 보내게 했어요(blue-green 구조에 복제본만 추가). 쿠폰 · 포인트 실험의 "한 번에 하나" 잠금은 프로세스 메모리에서 Redis로 옮겼어요. 2개로 늘린 뒤 같은 조건의 재측정과, 자주 읽는 `/events/stats`의 Redis 캐시는 아직이에요.',
       '조건: 읽기 요청만(`/health` + `/events/stats`), 내 맥 한 대에서, VU는 쉬지 않고(0.05초 간격) 보내서 VU 1명 ≠ 사람 1명이에요. 이 서버 한 대의 작은 측정이지, "동시 사용자 몇 명까지 된다"는 뜻은 아니에요. 스크립트는 `load/breakpoint.js`.',
     ],
   },

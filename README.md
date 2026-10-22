@@ -17,7 +17,7 @@
 | 4   | [포인트 통장](https://backend-visualized.vercel.app/ledger)         | 포인트 원장(내역)과 대사                             | `points`     |
 | 5   | [결제 버튼 두 번](https://backend-visualized.vercel.app/double-pay) | 멱등키(Idempotency-Key)로 중복 결제 막기             | `payments`   |
 | 6   | [맛집 메뉴판](https://backend-visualized.vercel.app/cache)          | Redis 캐시, 무효화, 캐시 스탬피드                    | `cache-demo` |
-| 7   | [스케일아웃](https://backend-visualized.vercel.app/scale-out)       | API 인스턴스 2개, Caddy 로드 밸런싱, cron 분산 락    | (인프라)     |
+| 7   | [계산대 하나 더](https://backend-visualized.vercel.app/scale-out)   | API 2개, Caddy 로드 밸런싱, cron·실험 Redis 잠금     | (인프라)     |
 
 장마다 고른 방법 · 포기한 방법 · 배운 것은 [docs/decisions.md](docs/decisions.md)에 실측 숫자와 같이 있어요.
 
@@ -37,26 +37,37 @@
 ```mermaid
 flowchart LR
   B[브라우저] -->|화면| V[Vercel · Next.js]
-  B -->|API · HTTPS 443| C
   subgraph EC2[EC2 t4g.small · Docker Compose]
-    C[Caddy LB] --> AB1[api_blue_1 :4000]
-    C --> AB2[api_blue_2 :4000]
-    C -.-> AG1[api_green_1 :4000]
-    C -.-> AG2[api_green_2 :4000]
-    AB1 --> M[(MySQL)]
-    AB1 --> R[(Redis)]
+    C[Caddy · 덜 바쁜 쪽으로 나눠 보냄]
+    subgraph BLUE[blue · 서비스 중]
+      AB1[api_blue_1 :4000]
+      AB2[api_blue_2 :4000]
+    end
+    subgraph GREEN[green · 쉬는 중]
+      AG1[api_green_1 :4000]
+      AG2[api_green_2 :4000]
+    end
+    M[(MySQL)]
+    R[(Redis)]
+    C --> AB1
+    C --> AB2
+    C -.->|다음 배포| AG1
+    C -.-> AG2
+    AB1 --> M
+    AB1 --> R
     AB2 --> M
     AB2 --> R
   end
+  B -->|API · HTTPS 443| C
   GH[GitHub Actions] -->|ARM 이미지 push| GHCR[(GHCR)]
   GH -->|OIDC 임시 키 → SSM| D[deploy/deploy.sh]
-  D -->|이미지 pull · 쉬던 색 2개 띄우기 · 둘 다 /health 200 → Caddy 전환| C
+  D -->|쉬던 색 2개 띄우기 · 둘 다 /health 200 → Caddy 전환| C
   M -->|매일 04:00 백업| S3[(S3)]
 ```
 
 - 밖에서 열린 포트는 80/443(Caddy)과 SSH(내 IP·내 키 전용)뿐이에요. API(4000) · MySQL · Redis는 서버 안쪽 네트워크에만 있어요.
 - 배포는 서버가 GitHub을 보는 게 아니라, Actions가 SSM으로 `deploy.sh <SHA>`를 보내는 방식이에요. 배포용으로 열어 둔 포트도, GitHub에 저장한 AWS 키도 없어요.
-- 새 버전은 쉬고 있던 색(blue/green)에 먼저 띄우고, `/health`가 200일 때만 Caddy가 넘어가요.
+- 색마다 API가 2개예요(7장). 새 버전은 쉬고 있던 색의 2개에 먼저 띄우고, 둘 다 `/health`가 200일 때만 Caddy가 넘어가요.
 
 ## 숫자로 본 결과 (2026-10-21 측정, /deploy와 같은 값)
 

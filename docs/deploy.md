@@ -3,7 +3,7 @@
 ```
 브라우저 ──HTTPS──▶ Vercel (apps/web, Next.js)
    │
-   └──HTTPS (fetch, credentials: include)──▶ EC2 :443 Caddy ──▶ api_blue / api_green :4000 (NestJS, Docker)
+   └──HTTPS (fetch, credentials: include)──▶ EC2 :443 Caddy ──▶ api_blue_1·_2 / api_green_1·_2 :4000 (NestJS, Docker)
                                                                   │
                                               같은 EC2의 mysql · redis 컨테이너 (또는 RDS)
 
@@ -129,8 +129,8 @@ chmod 600 deploy/production.env
 
 ```bash
 ./deploy/compose.sh up -d                # mysql/redis/caddy (COMPOSE_PROFILES=local-db 라 mysql도 같이 뜸)
-./deploy/deploy.sh "$(git rev-parse HEAD)"   # API: GHCR 이미지 받아서 api_blue로 시작 + Caddy 연결
-./deploy/compose.sh ps                   # api_blue/mysql/redis (healthy), 공개 포트는 caddy 80/443 뿐
+./deploy/deploy.sh "$(git rev-parse HEAD)"   # API: GHCR 이미지 받아서 api_blue_1·_2로 시작 + Caddy 연결
+./deploy/compose.sh ps                   # api_blue_1·_2/mysql/redis (healthy), 공개 포트는 caddy 80/443 뿐
 ./deploy/compose.sh logs caddy | grep 'certificate obtained'
 curl https://<IP-대시>.sslip.io/health # {"status":"ok","db":{"status":"up",...}}
 ```
@@ -160,8 +160,8 @@ vi deploy/production.env   # 아래 5장 표를 보고 채우기
 ./deploy/compose.sh --profile local-db up -d
 
 ./deploy/deploy.sh "$(git rev-parse HEAD)"   # API (blue-green, 7-1장)
-./deploy/compose.sh ps                 # api_blue 또는 api_green이 (healthy) 인지 확인
-./deploy/compose.sh logs -f api_blue   # [config] 요약 줄과 경고 확인
+./deploy/compose.sh ps                 # api_blue_1·_2 또는 api_green_1·_2가 (healthy) 인지 확인
+./deploy/compose.sh logs -f api_blue_1   # [config] 요약 줄과 경고 확인
 curl https://api.example.com/health
 ```
 
@@ -380,21 +380,22 @@ Deploy (deploy.yml)
 ### blue-green 무중단 교체 (`deploy/deploy.sh`)
 
 ```
-            평소                         배포 중 (수십 초)                       배포 후
- 인터넷 ─▶ Caddy ─▶ api_blue      Caddy ─▶ api_blue (계속 서비스)        Caddy ─▶ api_green
-                    (api_green     api_green 새 이미지로 시작                api_blue 정지 (다음 배포 때 재사용)
-                     꺼져 있음)      → prisma migrate deploy (1번만)
-                                   → /health 200 확인 (caddy 안에서 wget)
-                                   → upstream.caddy를 green으로 + caddy reload
-                                   → 10초 대기 (진행 중 요청 마무리) → blue 정지
+            평소                           배포 중 (수십 초)                         배포 후
+ 인터넷 ─▶ Caddy ─▶ api_blue_1·_2   Caddy ─▶ api_blue_1·_2 (계속 서비스)     Caddy ─▶ api_green_1·_2
+                    (green 2개       api_green_1·_2 새 이미지로 시작           blue 2개 정지 (다음 배포 때 재사용)
+                     꺼져 있음)        → prisma migrate deploy (_1만)
+                                     → 둘 다 /health 200 확인 (caddy 안에서 wget)
+                                     → upstream.caddy를 green 2개로 + caddy reload
+                                     → 10초 대기 (진행 중 요청 마무리) → blue 정지
 ```
 
-- `docker-compose.prod.yml`에 같은 API를 `api_blue`, `api_green` 두 서비스로 정의합니다 (공통 설정은 `x-api` 앵커 하나라 env·CORS(`WEB_ORIGIN`+`VERCEL_ORIGIN`)가 두 색에 똑같이 들어감).
+- `docker-compose.prod.yml`에 같은 API를 색마다 2개씩, `api_blue_1`·`api_blue_2`·`api_green_1`·`api_green_2` 네 서비스로 정의합니다 (7장. 공통 설정은 `x-api` 앵커 하나라 env·CORS(`WEB_ORIGIN`+`VERCEL_ORIGIN`)가 두 색에 똑같이 들어감).
   `profiles`가 있어서 `./deploy/compose.sh up -d`로는 API가 안 뜨고, API는 `deploy.sh`로만 교체합니다.
 - 어느 색이 서비스 중인지는 `deploy/caddy/upstream.caddy` 한 파일이 정합니다 (git 미추적, deploy.sh가 생성).
   `deploy/caddy` 폴더 전체를 Caddy의 `/etc/caddy`로 마운트하므로, 파일을 바꾸고 `caddy reload`만 하면 연결을 끊지 않고 전환됩니다.
-- 두 API가 동시에 떠 있는 건 전환하는 몇십 초뿐이라 2GB 메모리에서도 여유가 있습니다 (API 하나 약 140MB).
-- 새 색이 건강해지지 않으면(마이그레이션 실패, env 오류 등) 스크립트가 멈추고 Caddy는 계속 예전 색을 봅니다.
+- 평소엔 API 2개, 전환하는 몇십 초 동안만 4개가 떠 있어서 2GB 메모리에서도 여유가 있습니다 (API 하나 약 140MB).
+- Caddy는 `lb_policy least_conn`으로 진행 중인 요청이 적은 쪽에 보내고, 30초마다 각 API의 `/health`를 확인해 실패한 쪽은 뺍니다. 응답 헤더 `x-instance-id`로 어느 API가 받았는지 볼 수 있습니다.
+- 새 색 2개 중 하나라도 건강해지지 않으면(마이그레이션 실패, env 오류 등) 스크립트가 멈추고 Caddy는 계속 예전 색을 봅니다.
 - MySQL/Redis는 건드리지 않습니다 (`--no-deps`). 공개 포트는 여전히 Caddy의 80/443뿐입니다.
 - SSE(`/events/stream`) 같은 오래 열린 연결은 전환 때 한 번 끊기고, 브라우저 EventSource가 자동으로 다시 연결합니다.
 
@@ -529,7 +530,7 @@ ls -lh backups/
 ```bash
 cd /opt/backend-visualized
 ./deploy/backup-mysql.sh                                   # 1) 지금 상태도 한 부
-./deploy/compose.sh stop api_blue api_green                # 2) 쓰기 멈춤 (잠깐 502)
+./deploy/compose.sh stop api_blue_1 api_blue_2 api_green_1 api_green_2   # 2) 쓰기 멈춤 (잠깐 502)
 zcat backups/backend_visualized-<시각>-KST.sql.gz \
   | ./deploy/compose.sh exec -T mysql sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" exec mysql -uroot backend_visualized'
 ./deploy/deploy.sh current                                 # 3) API 다시 띄우기 (blue-green)
@@ -587,10 +588,10 @@ S3에서 받을 때: `aws s3 cp s3://<버킷>/mysql/<파일> backups/` (이 경�
 
 ```bash
 # 화면에서 오류가 났을 때: 응답 헤더의 x-request-id로 서버 로그 찾기
-./deploy/compose.sh logs api_blue api_green | grep '<request-id>'
+./deploy/compose.sh logs api_blue_1 api_blue_2 api_green_1 api_green_2 | grep '<request-id>'
 
 # Sentry 켜기: production.env에 SENTRY_DSN=... 한 줄 → 다시 배포 (Actions → Deploy → Run workflow)
-./deploy/compose.sh logs api_blue | grep 'sentry='   # [config] … sentry=on
+./deploy/compose.sh logs api_blue_1 | grep 'sentry='   # [config] … sentry=on
 ```
 
 한계: 15분 간격이라 짧은 장애는 놓칠 수 있고, GitHub 예약 실행은 몇 분 늦거나 저장소가 60일 조용하면 꺼진다. 알림은 메일뿐 (메신저·1분 단위 외부 감시는 아직 없음).
@@ -631,7 +632,7 @@ k6 run -e API_URL=https://<API_HOST> --summary-export=/tmp/k6-summary.json --out
 
 | 증상                                                                                        | 확인                                                                                                                                          |
 | ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| API 컨테이너가 바로 종료                                                                    | `./deploy/compose.sh logs api_blue`(또는 `api_green`) 의 `[config] 환경 변수 설정 오류` 목록                                                  |
+| API 컨테이너가 바로 종료                                                                    | `./deploy/compose.sh logs api_blue_1`(또는 `api_green_1`) 의 `[config] 환경 변수 설정 오류` 목록                                              |
 | 인증서 발급 실패                                                                            | DNS A 레코드가 Elastic IP인지, 보안 그룹 80/443 열림 확인. `logs caddy`                                                                       |
 | 브라우저 CORS 오류                                                                          | `WEB_ORIGIN`이 Vercel 주소와 **정확히** 같은지 (https, 끝 슬래시 없음)                                                                        |
 | 새로고침하면 로그아웃                                                                       | 4장: `none`+Secure+Partitioned인지. 엄격한 쿠키 설정·오래된 브라우저면 커스텀 도메인 + `lax`                                                  |

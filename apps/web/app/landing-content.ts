@@ -330,21 +330,22 @@ export const DECISIONS: Decision[] = [
   {
     chapter: 7,
     href: '/scale-out',
-    title: '스케일아웃: 계산대 하나 더 열기',
+    title: '계산대 하나 더: 같은 API를 두 개 켜서 나눠 받기',
     summary:
-      '한 Node 프로세스가 CPU 1코어를 꽉 채워 ~620 req/s에서 정체했어요. API 인스턴스를 2개로 늘리고 Caddy에서 로드 밸런싱했어요.',
+      '부하 테스트에서 Node 프로세스 하나가 CPU 코어 하나를 꽉 채워 초당 약 620건에서 멈췄어요. 코어가 2개라 API를 2개로 늘리고 Caddy가 나눠 보내게 했어요.',
     chose: [
-      'Docker Compose에서 한 색당 2개 인스턴스 정의 (api_blue_1, api_blue_2). Caddy가 least_conn 정책으로 로드 밸런싱 + 30초마다 /health 체크.',
-      '무중단 배포는 그대로: 쉬던 색의 2개를 띄우고, 둘 다 건강하면 전환.',
-      '응답 헤더 x-instance-id (hostname 기반)로 어느 인스턴스가 응답했는지 확인.',
+      '색(blue/green)마다 API를 2개씩 정의하고, Caddy reverse_proxy에 둘 다 적어 least_conn(진행 중 요청이 적은 쪽)으로 보내요. 30초마다 /health를 확인해 죽은 쪽은 빼요.',
+      '무중단 배포는 그대로예요. 쉬던 색 2개를 함께 켜고, 둘 다 200일 때만 Caddy를 바꿔요.',
+      '응답 헤더 x-instance-id(환경 변수 INSTANCE_NAME)로 어느 API가 받았는지 화면에서 바로 보여요.',
     ],
     gaveUp: [
-      '프로세스 메모리 레이트 리밋: 각 인스턴스마다 별도 한도가 되므로 한도가 2배. 데모 사이트라 큰 문제가 아니어서 일단 유지 (ponytail: 필요하면 Redis 기반으로 교체 가능).',
+      'Node cluster로 컨테이너 하나에서 코어 2개 쓰기: 컨테이너를 나누면 한쪽이 죽어도 Caddy가 빼고 다른 쪽이 받아서 이쪽을 골랐어요.',
+      '초당 요청 수 같은 넉넉한 한도는 API마다 따로 세는 채로 뒀어요(사실상 2배). 요청마다 Redis를 한 번 더 다녀오는 비용보다 작다고 봤어요.',
     ],
     learned: [
-      'Cron job이 모든 인스턴스에서 실행돼요. 결제 정리(closeStalePayments)는 조건부 UPDATE라 안전하지만, 이벤트 집계(aggregateRange)는 Redis lock (SET NX PX)으로 한 인스턴스만 실행하게 했어요.',
-      'Prisma migrate deploy는 advisory lock으로 동시 실행 방지하지만, 불필요한 경쟁을 피하려고 첫 인스턴스만 실행 (RUN_MIGRATIONS=false).',
-      '2 vCPU라 인스턴스 2개가 최대. 더 늘리려면 서버를 늘려야 하고 (ALB + 여러 EC2 또는 ECS), 다음 병목은 DB가 될 거예요.',
+      '"나 혼자 돈다"고 믿은 코드가 세 군데 있었어요. 5분 집계 cron은 5분 칸마다 Redis SET NX PX를 잡은 쪽만, 쿠폰·포인트 실험의 "한 번에 하나"는 메모리에서 Redis 잠금으로 옮겼어요. 결제 정리 cron은 조건부 UPDATE라 두 번 돌아도 한 번만 바뀌어서 그대로 뒀어요.',
+      '마이그레이션은 _1만 하고 _2는 RUN_MIGRATIONS=false로 건너뛰어요. expand → contract 규칙이라 _2가 먼저 떠도 괜찮아요.',
+      '코어 2개짜리 서버라 API 2개가 끝이에요. 더 늘리려면 서버를 여러 대로 늘려야 하고, 그때는 DB가 다음 병목일 거예요. 2개로 늘린 뒤의 재측정은 아직이에요.',
     ],
   },
 ];
