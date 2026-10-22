@@ -54,8 +54,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <p>글꼴 Pretendard (SIL Open Font License) · 그림은 모두 코드로 그린 SVG</p>
         </footer>
       </body>
-      {GA_ID && <GoogleAnalytics gaId={GA_ID} />}
-      {GA_ID && <ClickTracker />}
+      {GA_ID && (
+        <>
+          <GoogleAnalytics gaId={GA_ID} />
+          <ClickTracker />
+        </>
+      )}
     </html>
   );
 }
