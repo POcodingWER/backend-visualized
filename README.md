@@ -35,34 +35,38 @@
 ## 구조
 
 ```mermaid
-flowchart LR
-  B[브라우저] -->|화면| V[Vercel · Next.js]
+flowchart TB
+  B[브라우저]
+  V[Vercel · Next.js 화면]
+  GH[GitHub Actions]
+  GHCR[(GHCR 이미지 저장소)]
+  S3[(S3 백업)]
+
   subgraph EC2[EC2 t4g.small · Docker Compose]
     C[Caddy · 덜 바쁜 쪽으로 나눠 보냄]
-    subgraph BLUE[blue · 서비스 중]
-      AB1[api_blue_1 :4000]
-      AB2[api_blue_2 :4000]
+    subgraph BLUE[blue · 지금 서비스 중]
+      direction LR
+      AB1[api_blue_1]
+      AB2[api_blue_2]
     end
-    subgraph GREEN[green · 쉬는 중]
-      AG1[api_green_1 :4000]
-      AG2[api_green_2 :4000]
+    subgraph DATA[데이터]
+      direction LR
+      M[(MySQL)]
+      R[(Redis)]
     end
-    M[(MySQL)]
-    R[(Redis)]
-    C --> AB1
-    C --> AB2
-    C -.->|다음 배포| AG1
-    C -.-> AG2
-    AB1 --> M
-    AB1 --> R
-    AB2 --> M
-    AB2 --> R
+    D[deploy.sh]
   end
+
+  B -->|화면| V
   B -->|API · HTTPS 443| C
-  GH[GitHub Actions] -->|ARM 이미지 push| GHCR[(GHCR)]
-  GH -->|OIDC 임시 키 → SSM| D[deploy/deploy.sh]
-  D -->|쉬던 색 2개 띄우기 · 둘 다 /health 200 → Caddy 전환| C
-  M -->|매일 04:00 백업| S3[(S3)]
+  C --> AB1
+  C --> AB2
+  AB1 --> DATA
+  AB2 --> DATA
+  M -->|매일 04:00| S3
+  GH -->|ARM 이미지 push| GHCR
+  GH -->|OIDC 임시 키 → SSM| D
+  D -.->|green 2개 띄우고 둘 다 /health 200이면 Caddy 전환| C
 ```
 
 - 밖에서 열린 포트는 80/443(Caddy)과 SSH(내 IP·내 키 전용)뿐이에요. API(4000) · MySQL · Redis는 서버 안쪽 네트워크에만 있어요.
