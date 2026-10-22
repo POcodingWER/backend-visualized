@@ -450,7 +450,7 @@ export default function DeployPage() {
 
       <nav className={ui.nextChapter} aria-label="다른 이야기">
         <p>
-          <span>여섯 편의 이야기로</span>
+          <span>7편의 이야기로</span>
           <Link href="/ticketing">1장 티켓팅 — 선착순에 몰린 500명 →</Link>
         </p>
         <p>

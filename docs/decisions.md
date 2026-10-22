@@ -1,6 +1,6 @@
-# 일곱 장의 선택 — 고른 것 · 포기한 것 · 배운 것
+# 7가지 선택 — 고른 것 · 포기한 것 · 배운 것
 
-첫 화면의 "일곱 장의 선택"과 같은 내용입니다 (원본: `apps/web/app/landing-content.ts`).
+첫 화면의 "7가지 선택"과 같은 내용입니다 (원본: `apps/web/app/landing-content.ts`).
 숫자는 모두 [benchmarks/](benchmarks/), [chapters-4-6.md](chapters-4-6.md), [auth-tokens.md](auth-tokens.md),
 `apps/web/public/data/*.json`의 실측 기록과 git 기록에 있는 값입니다. 맥북(M1 Pro) 한 대에서 잰 상대 비교라 실행마다 흔들립니다.
 

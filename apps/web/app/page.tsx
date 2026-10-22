@@ -66,7 +66,7 @@ export default function Home() {
           <p className={styles.heroLead}>
             티켓팅, 로그인 유지, 클릭 기록, 포인트, 결제, 캐시, 서버 늘리기. 매일 쓰는 기능 뒤에서
             서버가 실수하는 순간을 실제 서버와 데이터베이스에서 일부러 일으켜 보고, 고친 뒤 얼마나
-            나아졌는지 숫자로 확인하는 그림책 일곱 편이에요.
+            나아졌는지 숫자로 확인하는 그림책 7편이에요.
           </p>
           <Link href="/ticketing" className={`${buttonClassName.big} ${styles.cta}`}>
             1장 티켓팅부터 보기 →
@@ -107,7 +107,7 @@ export default function Home() {
       </section>
 
       <section className={ui.wide}>
-        <h2 className={ui.sectionTitle}>일곱 편의 이야기</h2>
+        <h2 className={ui.sectionTitle}>7편의 이야기</h2>
         <ol className={styles.teasers}>
           {CHAPTERS.map((chapter, index) => {
             const teaser = TEASERS[index]!;
@@ -126,7 +126,7 @@ export default function Home() {
             );
           })}
         </ol>
-        {/* 장 번호 없는 따로 페이지: 여섯 편 목록 밖에 둔다 */}
+        {/* 장 번호 없는 따로 페이지: 7편 목록 밖에 둔다 */}
         <Link href={DEPLOY_PAGE.href} className={styles.extra}>
           <span className={styles.teaserNumber}>번외</span>
           <h3>
@@ -182,7 +182,7 @@ export default function Home() {
       </section>
 
       <section className={ui.wide} id="decisions">
-        <h2 className={ui.sectionTitle}>일곱 장의 선택</h2>
+        <h2 className={ui.sectionTitle}>7가지 선택</h2>
         <p className={ui.lead}>
           장마다 무엇을 고르고 무엇을 포기했는지, 재 보고 나서 알게 된 것까지 적었어요. 숫자는 모두
           이 저장소의 측정 기록에 있는 값이에요.
