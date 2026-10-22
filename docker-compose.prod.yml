@@ -36,15 +36,42 @@ x-api: &api
 
 services:
   # profiles: 그냥 `./deploy/compose.sh up -d` 를 하면 API는 건드리지 않는다. API는 deploy/deploy.sh로만 교체
-  api_blue:
+  # 7장 스케일아웃: 각 색마다 2개 인스턴스로 명시적 정의 (Caddy에서 로드 밸런싱)
+  api_blue_1:
     <<: *api
+    container_name: backend-visualized-api_blue-1
     image: backend-visualized-api:blue
     profiles: ['blue']
 
-  api_green:
+  api_blue_2:
     <<: *api
+    container_name: backend-visualized-api_blue-2
+    image: backend-visualized-api:blue
+    profiles: ['blue']
+    environment:
+      NODE_ENV: production
+      PORT: '4000'
+      WEB_ORIGIN: ${WEB_ORIGIN:?WEB_ORIGIN을 deploy/production.env에 설정하세요}${VERCEL_ORIGIN:+,${VERCEL_ORIGIN}}
+      TRUST_PROXY: ${TRUST_PROXY:-1}
+      RUN_MIGRATIONS: 'false'
+
+  api_green_1:
+    <<: *api
+    container_name: backend-visualized-api_green-1
     image: backend-visualized-api:green
     profiles: ['green']
+
+  api_green_2:
+    <<: *api
+    container_name: backend-visualized-api_green-2
+    image: backend-visualized-api:green
+    profiles: ['green']
+    environment:
+      NODE_ENV: production
+      PORT: '4000'
+      WEB_ORIGIN: ${WEB_ORIGIN:?WEB_ORIGIN을 deploy/production.env에 설정하세요}${VERCEL_ORIGIN:+,${VERCEL_ORIGIN}}
+      TRUST_PROXY: ${TRUST_PROXY:-1}
+      RUN_MIGRATIONS: 'false'
 
   caddy:
     image: caddy:2-alpine

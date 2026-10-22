@@ -7,7 +7,7 @@
 - 배포 및 회고: https://backend-visualized.vercel.app/deploy — 서버를 어떻게 올렸고, 왜 그렇게 했고, 어디서 막혔는지
 - About me: https://backend-visualized.vercel.app/about
 
-## 여섯 장
+## 일곱 장
 
 | 장  | 페이지                                                              | 다루는 것                                            | API 모듈     |
 | --- | ------------------------------------------------------------------- | ---------------------------------------------------- | ------------ |
@@ -17,6 +17,7 @@
 | 4   | [포인트 통장](https://backend-visualized.vercel.app/ledger)         | 포인트 원장(내역)과 대사                             | `points`     |
 | 5   | [결제 버튼 두 번](https://backend-visualized.vercel.app/double-pay) | 멱등키(Idempotency-Key)로 중복 결제 막기             | `payments`   |
 | 6   | [맛집 메뉴판](https://backend-visualized.vercel.app/cache)          | Redis 캐시, 무효화, 캐시 스탬피드                    | `cache-demo` |
+| 7   | [스케일아웃](https://backend-visualized.vercel.app/scale-out)       | API 인스턴스 2개, Caddy 로드 밸런싱, cron 분산 락    | (인프라)     |
 
 장마다 고른 방법 · 포기한 방법 · 배운 것은 [docs/decisions.md](docs/decisions.md)에 실측 숫자와 같이 있어요.
 
@@ -38,14 +39,18 @@ flowchart LR
   B[브라우저] -->|화면| V[Vercel · Next.js]
   B -->|API · HTTPS 443| C
   subgraph EC2[EC2 t4g.small · Docker Compose]
-    C[Caddy] --> AB[api_blue :4000]
-    C -.-> AG[api_green :4000]
-    AB --> M[(MySQL)]
-    AB --> R[(Redis)]
+    C[Caddy LB] --> AB1[api_blue_1 :4000]
+    C --> AB2[api_blue_2 :4000]
+    C -.-> AG1[api_green_1 :4000]
+    C -.-> AG2[api_green_2 :4000]
+    AB1 --> M[(MySQL)]
+    AB1 --> R[(Redis)]
+    AB2 --> M
+    AB2 --> R
   end
   GH[GitHub Actions] -->|ARM 이미지 push| GHCR[(GHCR)]
   GH -->|OIDC 임시 키 → SSM| D[deploy/deploy.sh]
-  D -->|이미지 pull · 쉬던 색 띄우기 · /health 200 → Caddy 전환| C
+  D -->|이미지 pull · 쉬던 색 2개 띄우기 · 둘 다 /health 200 → Caddy 전환| C
   M -->|매일 04:00 백업| S3[(S3)]
 ```
 

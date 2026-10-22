@@ -26,9 +26,10 @@ log() { echo "[deploy $(date +%T)] $*"; }
 compose() { ./deploy/compose.sh "$@"; }
 
 # 지금 서비스 중인 색 (upstream 파일이 없으면 none = blue-green 첫 배포)
+# 7장: api_blue_1 api_blue_2 형식에서 색 추출
 active=none
 if [[ -f "$upstream_file" ]]; then
-  active=$(sed -n 's/^reverse_proxy api_\(blue\|green\):4000.*/\1/p' "$upstream_file")
+  active=$(sed -n 's/^reverse_proxy api_\(blue\|green\)_[12]:.*/\1/p' "$upstream_file" | head -1)
 fi
 
 sha="${1:-}"
@@ -45,10 +46,12 @@ write_upstream() { # $1 = blue | green
   local tmp
   tmp=$(mktemp deploy/caddy/.upstream.XXXXXX)
   cat > "$tmp" <<CADDY
-# deploy/deploy.sh가 만든 파일 (git 미추적). 지금 서비스 중인 색: $1
-reverse_proxy api_$1:4000 {
+# deploy/deploy.sh가 만든 파일 (git 미추적). 지금 서비스 중인 색: $1 (7장: 2개 인스턴스)
+reverse_proxy api_${1}_1:4000 api_${1}_2:4000 {
+	lb_policy least_conn
 	health_uri /health
 	health_interval 30s
+	health_timeout 3s
 }
 CADDY
   chmod 644 "$tmp"
@@ -74,32 +77,41 @@ else
 fi
 docker tag "$registry_image:$sha" "backend-visualized-api:$next"
 
-# ── 2) 새 색 띄우기 ───────────────────────────────────────────────────────
+# ── 2) 새 색 띄우기 (7장: 2개 인스턴스) ────────────────────────────────────
 # --no-deps: mysql/redis는 건드리지 않는다. --force-recreate: 같은 색의 예전 컨테이너가 있으면 새 이미지로 다시 만든다
-compose up -d --no-deps --force-recreate "api_$next"
+compose up -d --no-deps --force-recreate "api_${next}_1" "api_${next}_2"
 
-# ── 3) 새 색이 건강해질 때까지 기다리기 (최대 2분) ─────────────────────────
-log "api_$next 의 /health 를 기다립니다"
-healthy=false
+# ── 3) 새 색의 두 인스턴스가 모두 건강해질 때까지 기다리기 (최대 2분) ──
+log "api_${next}_1 과 api_${next}_2 의 /health 를 기다립니다"
+healthy_1=false
+healthy_2=false
 for _ in $(seq 1 60); do
-  if compose exec -T caddy wget -q -O /dev/null "http://api_$next:4000/health" 2> /dev/null; then
-    healthy=true
+  if [[ "$healthy_1" != true ]] && compose exec -T caddy wget -q -O /dev/null "http://api_${next}_1:4000/health" 2> /dev/null; then
+    healthy_1=true
+    log "api_${next}_1 정상"
+  fi
+  if [[ "$healthy_2" != true ]] && compose exec -T caddy wget -q -O /dev/null "http://api_${next}_2:4000/health" 2> /dev/null; then
+    healthy_2=true
+    log "api_${next}_2 정상"
+  fi
+  if [[ "$healthy_1" == true && "$healthy_2" == true ]]; then
     break
   fi
-  if [[ "$(docker inspect -f '{{.State.Running}}' "backend-visualized-api_$next-1")" != true ]]; then
+  if [[ "$(docker inspect -f '{{.State.Running}}' "backend-visualized-api_${next}-1")" != true ]] ||
+     [[ "$(docker inspect -f '{{.State.Running}}' "backend-visualized-api_${next}-2")" != true ]]; then
     break # 컨테이너가 죽었다 (마이그레이션 실패, 환경 변수 오류 등) → 더 기다릴 필요 없음
   fi
   sleep 2
 done
-if [[ "$healthy" != true ]]; then
-  echo "api_$next 가 건강해지지 않았습니다. 예전 색(${active})이 계속 서비스합니다. 최근 로그:" >&2
-  compose logs --no-color --tail 40 "api_$next" >&2 || true
-  compose stop "api_$next" || true
+if [[ "$healthy_1" != true || "$healthy_2" != true ]]; then
+  echo "api_$next 인스턴스가 건강해지지 않았습니다. 예전 색(${active})이 계속 서비스합니다. 최근 로그:" >&2
+  compose logs --no-color --tail 40 "api_${next}_1" "api_${next}_2" >&2 || true
+  compose stop "api_${next}_1" "api_${next}_2" || true
   exit 1
 fi
-log "api_$next 정상"
+log "api_$next 두 인스턴스 모두 정상"
 
-# ── 4) Caddy가 새 색으로 보내도록 바꾸기 ───────────────────────────────────
+# ── 4) Caddy가 새 색(2개 인스턴스)으로 보내도록 바꾸기 ──────────────────
 write_upstream "$next"
 # caddy 컨테이너 설정(마운트 등)이 바뀐 커밋이면 여기서 한 번 다시 만들어진다 (평소엔 아무 일 없음)
 compose up -d caddy
@@ -124,11 +136,11 @@ api_domain=$(sed -n 's/^API_DOMAIN=//p' deploy/production.env)
 curl -fsS --max-time 10 --resolve "$api_domain:443:127.0.0.1" "https://$api_domain/health" > /dev/null
 log "https://$api_domain/health 정상"
 
-# ── 5) 예전 색 정리 ───────────────────────────────────────────────────────
+# ── 5) 예전 색 정리 (7장: 2개 인스턴스) ──────────────────────────────────
 sleep "$drain_seconds" # 예전 색에서 처리 중이던 요청이 끝날 시간
 if [[ "$active" == blue || "$active" == green ]]; then
-  compose stop "api_$active"
-  log "api_$active 정지 (다음 배포 때 다시 쓰임)"
+  compose stop "api_${active}_1" "api_${active}_2" 2> /dev/null || compose stop "api_$active" 2> /dev/null || true
+  log "api_$active 인스턴스 정지 (다음 배포 때 다시 쓰임)"
 fi
 # blue-green 이전의 단일 api 컨테이너가 남아 있으면 정리 (처음 한 번만 해당)
 if docker inspect backend-visualized-api-1 > /dev/null 2>&1; then

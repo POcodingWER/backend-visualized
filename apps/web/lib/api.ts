@@ -6,6 +6,7 @@ export interface ApiResult<Body> {
   ok: boolean;
   body: Body;
   durationMs: number;
+  instanceId?: string;
 }
 
 /** 화면에 그대로 보여줘도 되는 쉬운 오류 문장 */
@@ -47,6 +48,7 @@ export async function callApi<Body>(
     ok: response.ok,
     body,
     durationMs: performance.now() - startedAt,
+    instanceId: response.headers.get('x-instance-id') ?? undefined,
   };
 }
 
