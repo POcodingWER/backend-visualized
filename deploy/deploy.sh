@@ -149,20 +149,30 @@ log "https://$api_domain/health 정상"
 # ── 5) 예전 색 정리 ──────────────────────────────────────────────────────
 sleep "$drain_seconds" # 예전 색에서 처리 중이던 요청이 끝날 시간
 if [[ "$active" == blue || "$active" == green ]]; then
-  # 신규 형식 (api_${active}_1, api_${active}_2 서비스) 먼저 시도
-  if compose stop "api_${active}_1" "api_${active}_2" 2> /dev/null; then
-    log "api_$active 인스턴스 정지 (다음 배포 때 다시 쓰임)"
-  # 기존 형식 (api_$active 서비스, compose 기본 이름 backend-visualized-api_$active-1)
-  elif compose stop "api_$active" 2> /dev/null; then
-    log "기존 api_$active 서비스 정지"
-    # 컨테이너도 제거 (다음 배포 때 신규 형식의 api_${active}_1 서비스와 이름 충돌 방지)
-    docker rm -f "backend-visualized-api_$active-1" 2> /dev/null || true
-  fi
+  # 신규 형식 서비스 (api_${active}_1, api_${active}_2) 정지 시도
+  # 첫 배포 시엔 서비스는 있지만 컨테이너는 없어서 no-op 성공할 수 있음
+  compose stop "api_${active}_1" "api_${active}_2" 2> /dev/null && log "api_$active 인스턴스 정지 (다음 배포 때 다시 쓰임)"
+  
+  # 기존 형식 서비스 (api_$active) 정지 시도 (7장 이전 단일 인스턴스)
+  # 이미 신규 형식으로 전환된 뒤엔 서비스가 없어서 실패
+  compose stop "api_$active" 2> /dev/null && log "기존 단일 api_$active 서비스 정지"
 fi
-# 아주 옛날 단일 api 컨테이너가 남아 있으면 정리 (7장 이전 단일 서비스 시절)
+
+# 7장 이전 기존 단일 컨테이너 무조건 정리 (메모리 낭비 방지)
+# compose 프로젝트명: backend-visualized (docker-compose.prod.yml의 name 필드)
+# 기존: backend-visualized-api_blue-1 (service api_blue, 언더스코어 1개)
+# 신규: backend-visualized-api_blue_1-1 (service api_blue_1, 언더스코어 2개)
+for color in blue green; do
+  legacy_container="backend-visualized-api_${color}-1"
+  if docker inspect "$legacy_container" > /dev/null 2>&1; then
+    docker rm -f "$legacy_container" > /dev/null
+    log "기존 단일 $legacy_container 컨테이너 제거"
+  fi
+done
+# 아주 옛날 컨테이너 (blue-green 이전 api 서비스)
 if docker inspect backend-visualized-api-1 > /dev/null 2>&1; then
   docker rm -f backend-visualized-api-1 > /dev/null
-  log "예전 단일 api 컨테이너 정리"
+  log "아주 옛날 backend-visualized-api-1 컨테이너 정리"
 fi
 
 # 디스크 정리: GHCR 이미지는 최근 3개만 남긴다 (빠른 롤백용). 사용 중인 이미지는 지워지지 않는다
