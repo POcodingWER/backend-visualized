@@ -77,15 +77,9 @@ const PANELS = [
         <text x={70} y={50} textAnchor="middle" fontSize="11" fontWeight="700" fill={INK}>
           api-1
         </text>
-        <text x={70} y={68} textAnchor="middle" fontSize="10" fill="#5e564b">
-          100% CPU
-        </text>
         <rect x={130} y={30} width="80" height="60" rx="6" fill="#bcd4e0" {...inkStroke} />
         <text x={170} y={50} textAnchor="middle" fontSize="11" fontWeight="700" fill={INK}>
           api-2
-        </text>
-        <text x={170} y={68} textAnchor="middle" fontSize="10" fill="#5e564b">
-          50% CPU
         </text>
         <rect x={80} y={110} width="80" height="40" rx="6" fill="#f2d3c8" {...inkStroke} />
         <text x={120} y={135} textAnchor="middle" fontSize="11" fontWeight="700" fill={INK}>
@@ -98,11 +92,7 @@ const PANELS = [
 
 export default function ScaleOutPage() {
   return (
-    <ChapterLayout
-      chapterNumber={7}
-      title="스케일아웃"
-      question="한 계산대가 한계에 부딪히면?"
-    >
+    <ChapterLayout chapterNumber={7} title="스케일아웃" question="한 계산대가 한계에 부딪히면?">
       <ComicStrip label="계산대 하나 더 열기" panels={PANELS} />
 
       <section>
@@ -254,9 +244,11 @@ if (!acquired) return;
             <strong>실제로는</strong>
           </summary>
           <p>
-            Prisma는 <code>_prisma_migrations</code> 테이블에 advisory lock을 사용해서 동시 실행을
-            막아요. 하지만 불필요한 경쟁을 피하려고, 첫 번째 인스턴스(<code>api_*_1</code>)만
-            마이그레이션을 실행하고 두 번째는 <code>RUN_MIGRATIONS=false</code>로 건너뛰게 했어요.
+            Prisma는 DB advisory lock을 사용해서 동시 실행을 막아요. 하지만 불필요한 경쟁을
+            피하려고, 첫 번째 인스턴스(<code>api_*_1</code>)만 마이그레이션을 실행하고 두 번째는{' '}
+            <code>RUN_MIGRATIONS=false</code>로 건너뛰게 했어요. expand-only 스키마(새 컬럼/테이블
+            추가만, 삭제·이름 변경 없음)라면 두 번째 인스턴스가 먼저 시작해도 기존 컬럼/테이블로
+            동작하므로 안전해요.
           </p>
         </details>
       </section>

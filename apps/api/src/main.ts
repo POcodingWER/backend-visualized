@@ -8,7 +8,6 @@ import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/observability/all-exceptions.filter';
 import { REQUEST_ID_HEADER } from './common/observability/request-id';
 import { initSentry } from './common/observability/sentry';
-import { hostname } from 'node:os';
 
 async function bootstrap() {
   // bufferLogs: 시작 중 로그도 pino가 준비된 뒤 같은 JSON 모양으로 찍는다
@@ -23,8 +22,8 @@ async function bootstrap() {
   // 프록시(Caddy/ALB) 뒤에서 req.ip가 실제 클라이언트 IP가 되도록. IP별 레이트 리밋이 이 값을 쓴다
   app.set('trust proxy', appEnvironment.trustProxy);
   app.disable('x-powered-by');
-  // 7장 스케일아웃: 어느 인스턴스가 응답했는지 볼 수 있게 (진짜 IP/ID는 노출하지 않음)
-  const instanceId = hostname().replace(/^.*-([a-z0-9]+)$/, 'api-$1');
+  // 7장 스케일아웃: 어느 인스턴스가 응답했는지 볼 수 있게 (INSTANCE_NAME 환경변수, 컨테이너 ID 노출하지 않음)
+  const instanceId = process.env.INSTANCE_NAME ?? 'local';
   app.use(
     (
       _req: unknown,

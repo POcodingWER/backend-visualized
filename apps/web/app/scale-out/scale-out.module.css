@@ -1,0 +1,58 @@
+.results {
+  margin-top: 1.5rem;
+}
+
+.results h4 {
+  margin-bottom: 0.5rem;
+}
+
+.results ul {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0;
+}
+
+.results ul li {
+  padding: 0.25rem 0;
+}
+
+.error {
+  color: var(--c-error, #b91c1c);
+}
+
+.details {
+  margin-top: 1rem;
+}
+
+.details summary {
+  cursor: pointer;
+  user-select: none;
+}
+
+.table {
+  width: 100%;
+  margin-top: 0.5rem;
+  font-size: 0.9em;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  text-align: left;
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--c-border, #e5e7eb);
+}
+
+.table th {
+  font-weight: 600;
+  background-color: var(--c-bg-subtle, #f9fafb);
+}
+
+.failedRow {
+  background-color: #fee;
+}
+
+.time {
+  font-size: 0.85em;
+  color: var(--c-text-secondary, #6b7280);
+}

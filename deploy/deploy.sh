@@ -26,10 +26,15 @@ log() { echo "[deploy $(date +%T)] $*"; }
 compose() { ./deploy/compose.sh "$@"; }
 
 # 지금 서비스 중인 색 (upstream 파일이 없으면 none = blue-green 첫 배포)
-# 7장: api_blue_1 api_blue_2 형식에서 색 추출
+# 7장: 기존 형식 (api_blue:4000) + 신규 형식 (api_blue_1:4000 api_blue_2:4000) 둘 다 감지
 active=none
 if [[ -f "$upstream_file" ]]; then
+  # 신규 형식: api_blue_1:4000 ... → blue
   active=$(sed -n 's/^reverse_proxy api_\(blue\|green\)_[12]:.*/\1/p' "$upstream_file" | head -1)
+  # 기존 형식: api_blue:4000 → blue (신규 형식에서 못 찾았을 때만)
+  if [[ -z "$active" ]]; then
+    active=$(sed -n 's/^reverse_proxy api_\(blue\|green\):4000.*/\1/p' "$upstream_file")
+  fi
 fi
 
 sha="${1:-}"
@@ -77,12 +82,16 @@ else
 fi
 docker tag "$registry_image:$sha" "backend-visualized-api:$next"
 
-# ── 2) 새 색 띄우기 (7장: 2개 인스턴스) ────────────────────────────────────
+# ── 2) 새 색 띄우기 (7장: 2개 인스턴스, compose 기본 이름) ───────────────
 # --no-deps: mysql/redis는 건드리지 않는다. --force-recreate: 같은 색의 예전 컨테이너가 있으면 새 이미지로 다시 만든다
+# compose 기본 이름: backend-visualized-api_blue_1-1, backend-visualized-api_blue_2-1 (프로젝트명-서비스명-번호)
 compose up -d --no-deps --force-recreate "api_${next}_1" "api_${next}_2"
 
 # ── 3) 새 색의 두 인스턴스가 모두 건강해질 때까지 기다리기 (최대 2분) ──
 log "api_${next}_1 과 api_${next}_2 의 /health 를 기다립니다"
+# compose 기본 컨테이너 이름: backend-visualized-api_<색>_<번호>-1
+container_1="backend-visualized-api_${next}_1-1"
+container_2="backend-visualized-api_${next}_2-1"
 healthy_1=false
 healthy_2=false
 for _ in $(seq 1 60); do
@@ -97,8 +106,9 @@ for _ in $(seq 1 60); do
   if [[ "$healthy_1" == true && "$healthy_2" == true ]]; then
     break
   fi
-  if [[ "$(docker inspect -f '{{.State.Running}}' "backend-visualized-api_${next}-1")" != true ]] ||
-     [[ "$(docker inspect -f '{{.State.Running}}' "backend-visualized-api_${next}-2")" != true ]]; then
+  # compose 기본 이름으로 컨테이너 상태 확인
+  if [[ "$(docker inspect -f '{{.State.Running}}' "$container_1" 2>/dev/null)" != true ]] ||
+     [[ "$(docker inspect -f '{{.State.Running}}' "$container_2" 2>/dev/null)" != true ]]; then
     break # 컨테이너가 죽었다 (마이그레이션 실패, 환경 변수 오류 등) → 더 기다릴 필요 없음
   fi
   sleep 2
@@ -136,13 +146,20 @@ api_domain=$(sed -n 's/^API_DOMAIN=//p' deploy/production.env)
 curl -fsS --max-time 10 --resolve "$api_domain:443:127.0.0.1" "https://$api_domain/health" > /dev/null
 log "https://$api_domain/health 정상"
 
-# ── 5) 예전 색 정리 (7장: 2개 인스턴스) ──────────────────────────────────
+# ── 5) 예전 색 정리 ──────────────────────────────────────────────────────
 sleep "$drain_seconds" # 예전 색에서 처리 중이던 요청이 끝날 시간
 if [[ "$active" == blue || "$active" == green ]]; then
-  compose stop "api_${active}_1" "api_${active}_2" 2> /dev/null || compose stop "api_$active" 2> /dev/null || true
-  log "api_$active 인스턴스 정지 (다음 배포 때 다시 쓰임)"
+  # 신규 형식 (api_${active}_1, api_${active}_2 서비스) 먼저 시도
+  if compose stop "api_${active}_1" "api_${active}_2" 2> /dev/null; then
+    log "api_$active 인스턴스 정지 (다음 배포 때 다시 쓰임)"
+  # 기존 형식 (api_$active 서비스, compose 기본 이름 backend-visualized-api_$active-1)
+  elif compose stop "api_$active" 2> /dev/null; then
+    log "기존 api_$active 서비스 정지"
+    # 컨테이너도 제거 (다음 배포 때 신규 형식의 api_${active}_1 서비스와 이름 충돌 방지)
+    docker rm -f "backend-visualized-api_$active-1" 2> /dev/null || true
+  fi
 fi
-# blue-green 이전의 단일 api 컨테이너가 남아 있으면 정리 (처음 한 번만 해당)
+# 아주 옛날 단일 api 컨테이너가 남아 있으면 정리 (7장 이전 단일 서비스 시절)
 if docker inspect backend-visualized-api-1 > /dev/null 2>&1; then
   docker rm -f backend-visualized-api-1 > /dev/null
   log "예전 단일 api 컨테이너 정리"
