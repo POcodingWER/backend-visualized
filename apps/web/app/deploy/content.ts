@@ -48,7 +48,7 @@ export const REASONS: Reason[] = [
     question: '왜 sslip.io인가요?',
     answer:
       'Vercel 화면은 https라서 API도 https여야 브라우저가 막지 않고, 로그인 쿠키(`Secure`)도 https에서만 돼요. 그런데 Let’s Encrypt 인증서는 도메인 이름이 있어야 받을 수 있어요. sslip.io는 IP를 이름으로 바꿔 주는 무료 주소라, 도메인을 사지 않고도 진짜 인증서를 받을 수 있었어요.',
-    cost: 'sslip.io는 남의 무료 서비스라 멈추면 API 주소도 멈춰요. 제 도메인이 생기면 `API_DOMAIN` 한 줄만 바꾸면 돼요.',
+    cost: 'sslip.io는 남의 무료 서비스라 멈추면 API 주소도 멈춰요. 그래서 2026-10-23에 `chuckplay.dev` 도메인을 사서 `api.chuckplay.dev`로 옮겼어요. 실제로 바꾼 건 DNS A 레코드 하나와 `API_DOMAIN` 한 줄이었어요.',
   },
   {
     id: 'caddy',
@@ -115,7 +115,7 @@ env:
       '세 겹으로 봐요. ① GitHub Actions가 15분마다 `/health`를 찔러 보고, 3번 연속 200이 아니면 실패 메일이 와요. ② 오류(500)는 Sentry로 보내서 어떤 코드에서 났는지 바로 봐요. `SENTRY_DSN`이 없으면 그냥 꺼져 있고 서버는 그대로 떠요. ③ 요청마다 `x-request-id` 번호를 붙여 응답 헤더와 서버 로그에 같이 남겨요. 화면에서 오류가 나면 그 번호 하나로 서버 로그의 그 줄을 찾을 수 있어요.',
     cost: '15분 간격이라 짧게 죽었다 살아나면 모를 수 있어요. 게다가 GitHub 예약 실행은 실제로 해 보니 약 3시간에 한 번꼴로만 돌았어요. 지금은 메일 한 통이 전부라, 진짜 서비스라면 UptimeRobot 같은 1분 단위 외부 감시나 메신저 알림을 붙일 거예요.',
     snippet: `# 응답에 붙는 번호 (들어온 x-request-id가 있으면 그대로 이어 받음)
-curl -si https://<IP-대시>.sslip.io/nope | grep -i request-id
+curl -si https://api.chuckplay.dev/nope | grep -i request-id
 x-request-id: 2f0c…
 {"statusCode":404,"message":"Cannot GET /nope","requestId":"2f0c…"}
 
@@ -214,7 +214,7 @@ export const TROUBLES: Trouble[] = [
     symptom: '고정 IP가 있는데 왜 `https://<IP>`가 아니라 sslip.io?',
     cause:
       'Vercel 화면은 https라서 API를 http로 부르면 브라우저가 막아요(mixed content). 그런데 Caddy가 기본으로 받는 Let’s Encrypt 인증서는 도메인 이름이 있어야 해요.',
-    fix: '`1-2-3-4.sslip.io`처럼(IP `1.2.3.4`의 점을 -로) IP를 이름으로 바꿔 주는 무료 DNS를 쓰고, Caddy가 그 이름으로 인증서를 받아요. 제 도메인이 생기면 `API_DOMAIN` 한 줄만 바꾸면 돼요.',
+    fix: '`1-2-3-4.sslip.io`처럼(IP `1.2.3.4`의 점을 -로) IP를 이름으로 바꿔 주는 무료 DNS를 쓰고, Caddy가 그 이름으로 인증서를 받아요. 2026-10-23에 제 도메인(`api.chuckplay.dev`)으로 옮길 때는 `API_DOMAIN` 한 줄만 바꿨어요.',
   },
   {
     symptom: '화면(vercel.app)과 API(sslip.io)가 다른 사이트: CORS와 로그인 쿠키',
@@ -308,7 +308,6 @@ export const RETRO = {
     'CORS, SameSite 쿠키처럼 프론트에서 "서버가 막아요"라고 넘기던 것들이 서버 쪽에서는 한 줄 설정이라는 것, 그리고 그 한 줄의 의미를 이제는 설명할 수 있어요.',
   ],
   next: [
-    '제 도메인 사기: 화면과 API를 같은 사이트로 묶어 엄격한 쿠키 설정에서도 로그인이 유지되게 하고, sslip.io 의존도 없애기',
     '롤백 연습: 일부러 예전 커밋으로 되돌려 보고 몇 초 걸리는지 재기',
     '모니터링과 알림: 서버가 죽거나 디스크·메모리가 차면 메일이 오게 (CloudWatch 경보)',
     'GitHub Actions의 Node 20 경고 정리: checkout, build-push, login, setup-buildx 액션 버전 올리기',

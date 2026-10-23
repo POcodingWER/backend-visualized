@@ -138,6 +138,10 @@ curl https://<IP-대시>.sslip.io/health # {"status":"ok","db":{"status":"up",..
 > **도메인 없이 HTTPS**: [sslip.io](https://sslip.io)는 `1-2-3-4.sslip.io` → `1.2.3.4`으로 응답하는 공개 DNS라
 > Caddy가 Let's Encrypt 인증서를 바로 받습니다. 현재 서버에는 Elastic IP가 연결돼 있습니다 (2026-10-20, 주소는 이 문서에 적지 않음). Elastic IP가 없으면 인스턴스를 **중지/시작**할 때 공인 IP가 바뀌므로
 > `API_DOMAIN`도 바꿔야 합니다 (재부팅은 IP 유지).
+>
+> **제 도메인으로 교체 (2026-10-23)**: Route 53에서 `chuckplay.dev`를 사서 `api` A 레코드 → Elastic IP, `bv` CNAME → Vercel을 걸었습니다.
+> 서버는 `API_DOMAIN=api.chuckplay.dev`(전환 중엔 쉼표로 예전 sslip 주소도 같이), `VERCEL_ORIGIN=https://bv.chuckplay.dev`, 같은 사이트라 `REFRESH_COOKIE_SAME_SITE=lax`.
+> Vercel은 `NEXT_PUBLIC_API_URL=https://api.chuckplay.dev`로 바꾸고 다시 빌드.
 
 ---
 

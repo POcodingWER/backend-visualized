@@ -43,7 +43,7 @@ env:
   AWS_ROLE_ARN: arn:aws:iam::071732232414:role/backend-visualized-github-deploy
   INSTANCE_ID: i-0c7a663e814fc808d
   APP_DIR: /opt/backend-visualized
-  HEALTH_URL: https://3-35-59-193.sslip.io/health
+  HEALTH_URL: https://api.chuckplay.dev/health
 
 jobs:
   # ── 1) 배포할 커밋 정하기 ───────────────────────────────────────────────

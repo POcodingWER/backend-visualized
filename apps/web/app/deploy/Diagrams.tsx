@@ -10,7 +10,7 @@ function Port({ port, open = false }: { port: string; open?: boolean }) {
   );
 }
 
-/** (A) 요청 흐름: 브라우저 → sslip.io → 보안 그룹 → Caddy → API → Redis / MySQL */
+/** (A) 요청 흐름: 브라우저 → DNS(Route 53) → 보안 그룹 → Caddy → API → Redis / MySQL */
 export function RequestDiagram() {
   return (
     <figure className={styles.diagram}>
@@ -18,10 +18,10 @@ export function RequestDiagram() {
         <div className={`${styles.box} ${styles.browser}`}>
           <b>브라우저 · Vercel 화면</b>
           <small>
-            <code>https://&lt;IP-대시&gt;.sslip.io</code>로 API 부르기
+            <code>https://api.chuckplay.dev</code>로 API 부르기
           </small>
         </div>
-        <p className={styles.arrowDown}>sslip.io가 주소 안 숫자를 IP로 바꿔 줌 ↓</p>
+        <p className={styles.arrowDown}>Route 53이 api.chuckplay.dev를 서버 IP로 바꿔 줌 ↓</p>
         <div className={styles.ec2}>
           <p className={styles.ec2Label}>
             AWS 서버(EC2) · 보안 그룹: <Port port="80" open /> <Port port="443" open />{' '}

@@ -23,8 +23,8 @@ export interface DeployStep {
   reasons?: string[];
 }
 
-/** 화면에 보이는 API 주소. 실제 IP는 페이지에 싣지 않는다 (no-secrets.test.ts) */
-const API_HOST = 'https://<IP-대시>.sslip.io';
+/** 화면에 보이는 API 주소 (2026-10-23부터 제 도메인). 실제 IP는 페이지에 싣지 않는다 (no-secrets.test.ts) */
+const API_HOST = 'https://api.chuckplay.dev';
 
 export const DEPLOY_STEPS: DeployStep[] = [
   {
