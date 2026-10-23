@@ -34,7 +34,7 @@ test('연락처는 공개된 것만 (개인 메일 · GitHub · 블로그 · Ins
       [
         `mailto:${PUBLIC_EMAIL}`,
         'github.com',
-        'pocodingwer.github.io',
+        'chuckplay.dev',
         'www.instagram.com',
         'instagram.com',
       ].includes(host),

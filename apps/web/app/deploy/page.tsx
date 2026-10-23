@@ -179,10 +179,9 @@ export default function DeployPage() {
           source={
             <>
               2026-10-21 측정. 배포 시간은 <a href={ACTIONS_RUNS}>GitHub Actions Deploy 기록</a>,
-              요청은 맥에서 <code>https://&lt;IP-대시&gt;.sslip.io/health</code>를 0.2초마다 부른
-              결과, 메모리는 서버에서 1초마다 <code>free -m</code>. 처리량은 맥에서 k6로 잰 값이라
-              서버 한 대 · 내 맥 한 대 조건의 작은 측정이고, &quot;동시 사용자 몇 명&quot;을
-              뜻하지는 않아요.
+              요청은 맥에서 API <code>/health</code>를 0.2초마다 부른 결과, 메모리는 서버에서
+              1초마다 <code>free -m</code>. 처리량은 맥에서 k6로 잰 값이라 서버 한 대 · 내 맥 한 대
+              조건의 작은 측정이고, &quot;동시 사용자 몇 명&quot;을 뜻하지는 않아요.
             </>
           }
         />

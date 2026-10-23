@@ -50,7 +50,7 @@ export default function AboutPage() {
               </a>
             )}
             <a href="https://github.com/POcodingWER">GitHub</a>
-            <a href="https://pocodingwer.github.io">블로그</a>
+            <a href="https://chuckplay.dev">블로그</a>
           </p>
         </div>
       </header>

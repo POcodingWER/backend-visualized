@@ -18,9 +18,9 @@ test('단계의 reasons는 모두 REASONS에 있고, 카드마다 단계는 하�
   }
 });
 
-test('HTTPS 단계에서 sslip.io · Caddy 카드로 바로 간다', () => {
+test('HTTPS 단계에서 도메인 · Caddy 카드로 바로 간다', () => {
   const step = DEPLOY_STEPS.find((item) => item.title.includes('Caddy'));
-  assert.deepEqual(step?.reasons, ['sslip', 'caddy']);
+  assert.deepEqual(step?.reasons, ['domain', 'caddy']);
   const caddy = REASONS.find((reason) => reason.id === 'caddy');
   assert.ok(caddy?.compare?.length, 'Caddy 카드에 비교가 없음');
 });

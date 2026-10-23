@@ -6,6 +6,8 @@ test('연락처 링크만 골라낸다', () => {
   assert.equal(contactTarget('/resume.pdf'), 'resume_pdf');
   assert.equal(contactTarget('https://pocodingwer.github.io/about/'), 'resume_web');
   assert.equal(contactTarget('https://pocodingwer.github.io'), 'blog');
+  assert.equal(contactTarget('https://chuckplay.dev/about/'), 'resume_web');
+  assert.equal(contactTarget('https://chuckplay.dev/aws/2025/12/02/cloudfront_cache/'), 'blog');
   assert.equal(contactTarget('https://pocodingwer.github.io/posts/redis'), 'blog');
   assert.equal(contactTarget('https://github.com/POcodingWER'), 'github');
   assert.equal(contactTarget('https://github.com/POcodingWER/backend-visualized'), 'github');

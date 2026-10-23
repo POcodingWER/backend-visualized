@@ -125,4 +125,4 @@ load/           k6 부하 테스트 (선택, 1장)
 
 ## 만든 사람
 
-임철순 · [GitHub](https://github.com/POcodingWER) · [블로그](https://pocodingwer.github.io) · [이력서](https://pocodingwer.github.io/about/) · [Instagram](https://www.instagram.com/lim_cuck) · cjftns01@gmail.com
+임철순 · [GitHub](https://github.com/POcodingWER) · [블로그](https://chuckplay.dev) · [이력서](https://chuckplay.dev/about/) · [Instagram](https://www.instagram.com/lim_cuck) · cjftns01@gmail.com
