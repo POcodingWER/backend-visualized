@@ -17,7 +17,7 @@ export function contactTarget(href: string): ContactTarget | null {
     return null;
   }
   if (url.pathname.endsWith('/resume.pdf')) return 'resume_pdf';
-  if (url.hostname === 'pocodingwer.github.io') {
+  if (url.hostname === 'chuckplay.dev' || url.hostname === 'pocodingwer.github.io') {
     return url.pathname.startsWith('/about') ? 'resume_web' : 'blog';
   }
   if (url.hostname === 'github.com' && url.pathname.toLowerCase().startsWith('/pocodingwer'))

@@ -18,7 +18,7 @@ export interface LinkedLine {
 }
 
 /**
- * About me. 회사 경력 숫자는 이력서(https://pocodingwer.github.io/about/)에 적힌 값만, 이 사이트 이야기는 이 저장소에 있는 것만 쓴다.
+ * About me. 회사 경력 숫자는 이력서(https://chuckplay.dev/about/)에 적힌 값만, 이 사이트 이야기는 이 저장소에 있는 것만 쓴다.
  * 순서: 가장 센 숫자 → 회사 경험이 이 사이트의 어느 장으로 이어지는지 → 끝까지 판 문제 하나.
  */
 export const AUTHOR = {
@@ -28,7 +28,7 @@ export const AUTHOR = {
   career: '2022.06 블록체인(Solidity) 개발 → 2022.09~ 캠퍼스 B2C 모바일 앱 회사 프론트엔드',
   photoAlt: '임철순 증명사진',
   /** 비워 두면 이력서 버튼을 숨긴다 */
-  resumeUrl: 'https://pocodingwer.github.io/about/',
+  resumeUrl: 'https://chuckplay.dev/about/',
   /** apps/web/public/resume.pdf. 비워 두면 PDF 이력서 링크를 숨긴다 */
   resumePdf: '/resume.pdf',
   highlights: [
@@ -146,19 +146,19 @@ export const AUTHOR = {
       posts: [
         {
           label: 'CloudFront 캐시 최적화',
-          href: 'https://pocodingwer.github.io/aws/2025/12/02/cloudfront_cache/',
+          href: 'https://chuckplay.dev/aws/2025/12/02/cloudfront_cache/',
         },
         {
           label: 'CloudFront 비용 절감',
-          href: 'https://pocodingwer.github.io/aws/2025/12/10/cloudfront_cost_savings/',
+          href: 'https://chuckplay.dev/aws/2025/12/10/cloudfront_cost_savings/',
         },
         {
           label: 'Cookie 보안 완벽 가이드',
-          href: 'https://pocodingwer.github.io/front/2025/08/07/cookie/',
+          href: 'https://chuckplay.dev/front/2025/08/07/cookie/',
         },
         {
           label: 'React Query 사용법',
-          href: 'https://pocodingwer.github.io/reactguide/2025/08/01/reactQuery/',
+          href: 'https://chuckplay.dev/reactguide/2025/08/01/reactQuery/',
         },
       ],
     },
@@ -167,15 +167,15 @@ export const AUTHOR = {
       posts: [
         {
           label: '찾아줘 주차장! 개발 회고',
-          href: 'https://pocodingwer.github.io/mcp/2026/07/10/find-parking-mcp-dev-history/',
+          href: 'https://chuckplay.dev/mcp/2026/07/10/find-parking-mcp-dev-history/',
         },
         {
           label: 'Cursor MCP OAuth 인증',
-          href: 'https://pocodingwer.github.io/mcp/2026/07/14/cursor-mcp-oauth/',
+          href: 'https://chuckplay.dev/mcp/2026/07/14/cursor-mcp-oauth/',
         },
         {
           label: 'MCP 시리즈 전체',
-          href: 'https://pocodingwer.github.io/mcp/2026/03/19/mcp_recommend3/',
+          href: 'https://chuckplay.dev/mcp/2026/03/19/mcp_recommend3/',
         },
       ],
     },
@@ -185,7 +185,7 @@ export const AUTHOR = {
     href: 'https://playmcp.kakao.com/mcp/68948413827338498',
   },
   links: [
-    { label: '블로그', href: 'https://pocodingwer.github.io' },
+    { label: '블로그', href: 'https://chuckplay.dev' },
     { label: 'GitHub', href: 'https://github.com/POcodingWER' },
     { label: 'Instagram', href: 'https://www.instagram.com/lim_cuck' },
     { label: '이메일 cjftns01@gmail.com', href: 'mailto:cjftns01@gmail.com' },

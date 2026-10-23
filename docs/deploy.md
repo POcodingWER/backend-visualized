@@ -18,15 +18,15 @@ GitHub Actions ──이미지──▶ GHCR        GitHub Actions ──OIDC �
 
 ## 0. 준비해서 알려주실 것
 
-| #   | 항목                                                                                                        | 용도                                                                                                                   |
-| --- | ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| 1   | **AWS 계정** (EC2·RDS·Elastic IP를 만들 수 있는 IAM 사용자 또는 콘솔 접근)                                  | 서버·DB                                                                                                                |
-| 2   | **리전 선택** (권장: 서울 `ap-northeast-2`)                                                                 | 지연 시간                                                                                                              |
-| 3   | **API 도메인** 1개 (예: `api.example.com`)와 그 DNS를 수정할 수 있는 권한 (가비아, Route 53, Cloudflare 등) | HTTPS 인증서는 도메인이 있어야 발급됩니다. 도메인이 아직 없으면 `<IP를-로>.sslip.io`로 임시 HTTPS 가능 (1장 Ubuntu 절) |
-| 4   | **Vercel 계정** + 이 GitHub 저장소 접근 연결                                                                | 웹 배포                                                                                                                |
-| 5   | DB 방식 선택: **RDS** 또는 **EC2 안의 MySQL 컨테이너**                                                      | 비용/관리 트레이드오프 (아래 3장)                                                                                      |
-| 6   | (선택) 웹 커스텀 도메인 (예: `app.example.com`)                                                             | 쿠키를 같은 사이트로 만들어 엄격한 쿠키 설정에서도 로그인 유지가 확실해짐 (4장)                                        |
-| 7   | Let's Encrypt 알림용 이메일 (`ACME_EMAIL`)                                                                  | 인증서 만료 경고 수신                                                                                                  |
+| #   | 항목                                                                                                        | 용도                                                                            |
+| --- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| 1   | **AWS 계정** (EC2·RDS·Elastic IP를 만들 수 있는 IAM 사용자 또는 콘솔 접근)                                  | 서버·DB                                                                         |
+| 2   | **리전 선택** (권장: 서울 `ap-northeast-2`)                                                                 | 지연 시간                                                                       |
+| 3   | **API 도메인** 1개 (예: `api.example.com`)와 그 DNS를 수정할 수 있는 권한 (가비아, Route 53, Cloudflare 등) | HTTPS 인증서는 도메인이 있어야 발급됩니다                                       |
+| 4   | **Vercel 계정** + 이 GitHub 저장소 접근 연결                                                                | 웹 배포                                                                         |
+| 5   | DB 방식 선택: **RDS** 또는 **EC2 안의 MySQL 컨테이너**                                                      | 비용/관리 트레이드오프 (아래 3장)                                               |
+| 6   | (선택) 웹 커스텀 도메인 (예: `app.example.com`)                                                             | 쿠키를 같은 사이트로 만들어 엄격한 쿠키 설정에서도 로그인 유지가 확실해짐 (4장) |
+| 7   | Let's Encrypt 알림용 이메일 (`ACME_EMAIL`)                                                                  | 인증서 만료 경고 수신                                                           |
 
 비밀값(`JWT_ACCESS_SECRET`, `ADMIN_API_KEY`, DB 비밀번호)은 EC2에서 직접 생성하면 되므로 따로 전달하지 않아도 됩니다.
 
@@ -73,7 +73,7 @@ sudo mkswap /swapfile && sudo swapon /swapfile && echo '/swapfile swap swap defa
 
 ### EC2에 Docker 설치 (Ubuntu 24.04, 실제 배포에 쓴 순서)
 
-2026-10-20 `t4g.small`(arm64) + Ubuntu 24.04 + 같은 EC2의 MySQL 컨테이너 + sslip.io로 배포할 때 실행한 그대로입니다.
+2026-10-20 `t4g.small`(arm64) + Ubuntu 24.04 + 같은 EC2의 MySQL 컨테이너로 배포할 때 실행한 그대로입니다.
 
 ```bash
 ssh -i ~/.ssh/<key>.pem ubuntu@<EC2 IP>   # 키 권한이 넓으면 거부됨: chmod 400 ~/.ssh/<key>.pem
@@ -116,8 +116,8 @@ cd /opt/backend-visualized && umask 077
 cp deploy/production.env.example deploy/production.env
 # 아래 값들을 채우기: hex 비밀번호는 DATABASE_URL에 그대로 넣어도 URL 인코딩이 필요 없음
 #   COMPOSE_PROFILES=local-db
-#   API_DOMAIN=<IP-대시>.sslip.io        (IP의 점을 -로: 도메인이 생기면 이 줄만 교체)
-#   WEB_ORIGIN=http://localhost:3000   VERCEL_ORIGIN=   (Vercel 주소가 생기면 채우기)
+#   API_DOMAIN=api.chuckplay.dev        (DNS A 레코드 → 서버 Elastic IP)
+#   WEB_ORIGIN=http://localhost:3000   VERCEL_ORIGIN=https://bv.chuckplay.dev
 #   MYSQL_ROOT_PASSWORD=$(openssl rand -hex 24)   MYSQL_PASSWORD=$(openssl rand -hex 24)
 #   DATABASE_URL=mysql://app:<MYSQL_PASSWORD>@mysql:3306/backend_visualized
 #   JWT_ACCESS_SECRET=$(openssl rand -base64 48)  ADMIN_API_KEY=$(openssl rand -hex 32)
@@ -132,15 +132,13 @@ chmod 600 deploy/production.env
 ./deploy/deploy.sh "$(git rev-parse HEAD)"   # API: GHCR 이미지 받아서 api_blue_1·_2로 시작 + Caddy 연결
 ./deploy/compose.sh ps                   # api_blue_1·_2/mysql/redis (healthy), 공개 포트는 caddy 80/443 뿐
 ./deploy/compose.sh logs caddy | grep 'certificate obtained'
-curl https://<IP-대시>.sslip.io/health # {"status":"ok","db":{"status":"up",...}}
+curl https://api.chuckplay.dev/health # {"status":"ok","db":{"status":"up",...}}
 ```
 
-> **도메인 없이 HTTPS**: [sslip.io](https://sslip.io)는 `1-2-3-4.sslip.io` → `1.2.3.4`으로 응답하는 공개 DNS라
-> Caddy가 Let's Encrypt 인증서를 바로 받습니다. 현재 서버에는 Elastic IP가 연결돼 있습니다 (2026-10-20, 주소는 이 문서에 적지 않음). Elastic IP가 없으면 인스턴스를 **중지/시작**할 때 공인 IP가 바뀌므로
-> `API_DOMAIN`도 바꿔야 합니다 (재부팅은 IP 유지).
+> 현재 서버에는 Elastic IP가 연결돼 있습니다 (2026-10-20, 주소는 이 문서에 적지 않음). Elastic IP가 없으면 인스턴스를 **중지/시작**할 때 공인 IP가 바뀌므로 DNS A 레코드도 바꿔야 합니다 (재부팅은 IP 유지).
 >
 > **제 도메인으로 교체 (2026-10-23)**: Route 53에서 `chuckplay.dev`를 사서 `api` A 레코드 → Elastic IP, `bv` CNAME → Vercel을 걸었습니다.
-> 서버는 `API_DOMAIN=api.chuckplay.dev`(전환 중엔 쉼표로 예전 sslip 주소도 같이), `VERCEL_ORIGIN=https://bv.chuckplay.dev`, 같은 사이트라 `REFRESH_COOKIE_SAME_SITE=lax`.
+> 서버는 `API_DOMAIN=api.chuckplay.dev`, `VERCEL_ORIGIN=https://bv.chuckplay.dev`, 같은 사이트라 `REFRESH_COOKIE_SAME_SITE=lax`.
 > Vercel은 `NEXT_PUBLIC_API_URL=https://api.chuckplay.dev`로 바꾸고 다시 빌드.
 
 ---

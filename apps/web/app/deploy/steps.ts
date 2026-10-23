@@ -198,10 +198,10 @@ ADMIN_API_KEY=$(openssl rand -hex 32)
 # 3) 설정 파일 쓰기 (비밀값 자리는 위 변수. 이 화면에서는 가림)
 cat > deploy/production.env <<ENV
 COMPOSE_PROFILES=local-db
-API_DOMAIN=<예전 IP-대시>.sslip.io
+API_DOMAIN=api.chuckplay.dev
 ACME_EMAIL=<GitHub noreply 메일>
 WEB_ORIGIN=http://localhost:3000
-VERCEL_ORIGIN=
+VERCEL_ORIGIN=https://bv.chuckplay.dev
 MYSQL_ROOT_PASSWORD=<서버에서 생성, 가림>
 MYSQL_DATABASE=backend_visualized
 MYSQL_USER=app
@@ -211,7 +211,7 @@ MIGRATION_MAX_ATTEMPTS=40
 REDIS_URL=redis://redis:6379/0
 JWT_ACCESS_SECRET=<서버에서 생성, 가림>
 ADMIN_API_KEY=<서버에서 생성, 가림>
-REFRESH_COOKIE_SAME_SITE=none
+REFRESH_COOKIE_SAME_SITE=lax
 AUTH_DEMO_ENDPOINTS=true
 SIMULATION_COOLDOWN_MS=3000
 ENV
@@ -250,11 +250,17 @@ sudo ss -tlnp | grep -E ':(3306|6379|4000)\\b' || echo "밖에서 안 보임 OK"
       '`All migrations have been successfully applied` · `[config] mode=production …` · DB·Redis·API 포트는 서버 밖으로 안 열림',
   },
   {
-    title: 'HTTPS: Caddy + sslip.io',
-    reasons: ['sslip', 'caddy'],
+    title: 'HTTPS: 내 도메인 + Caddy',
+    reasons: ['domain', 'caddy'],
     plain:
-      '인증서는 도메인에만 발급돼요. sslip.io는 `1-2-3-4.sslip.io`를 `1.2.3.4`로 알려주는 무료 주소라, 도메인 없이도 진짜 인증서를 받았어요. Caddy가 발급과 갱신을 알아서 해요.',
+      '인증서는 도메인 이름이 있어야 발급돼요. Route 53에서 `chuckplay.dev`를 사서 `api` A 레코드를 서버 고정 IP로 걸었고, Caddy가 `api.chuckplay.dev` 인증서 발급과 갱신을 알아서 해요.',
     commands: [
+      {
+        where: '브라우저 (AWS 콘솔)',
+        code: `# api.chuckplay.dev → 서버 고정 IP
+Route 53 → 호스팅 영역 chuckplay.dev → 레코드 생성
+  이름 api · 유형 A · 값 <IP> · TTL 300`,
+      },
       {
         where: '서버 (ubuntu@EC2)',
         code: `# Caddy 띄우기 → 인증서 자동 발급 로그 확인
@@ -265,11 +271,11 @@ sudo ss -tlnp | grep -E ':(3306|6379|4000)\\b' || echo "밖에서 안 보임 OK"
       {
         where: '내 맥',
         code: `# 1) https로 응답하는지
-curl -sS https://<예전 IP-대시>.sslip.io/health
+curl -sS https://api.chuckplay.dev/health
 # 2) http로 오면 https로 보내는지 (308)
-curl -sSI http://<예전 IP-대시>.sslip.io/health | head -3
+curl -sSI http://api.chuckplay.dev/health | head -3
 # 3) 인증서 발급자 · 만료일
-curl -sSv https://<예전 IP-대시>.sslip.io/health 2>&1 \\
+curl -sSv https://api.chuckplay.dev/health 2>&1 \\
   | grep -E 'subject:|issuer:|expire date'`,
       },
     ],
@@ -293,7 +299,7 @@ sudo systemctl reboot`,
         where: '내 맥',
         code: `# 5초마다 health → 언제 다시 살아나는지
 while true; do
-  curl -sS -m 5 https://<예전 IP-대시>.sslip.io/health; echo
+  curl -sS -m 5 https://api.chuckplay.dev/health; echo
   sleep 5
 done`,
       },
@@ -336,7 +342,7 @@ nc -vz -G 5 <IP> 3306`,
     title: '고정 IP(Elastic IP)로 바꾸고 주소 한 줄 고치기',
     reasons: ['eip'],
     plain:
-      '일반 공인 IP는 서버를 중지했다 켜면 바뀌어요. 그러면 주소도 인증서도 다 다시 해야 해서, 계정에 묶이는 고정 IP를 붙였어요.',
+      '일반 공인 IP는 서버를 중지했다 켜면 바뀌어요. 그러면 DNS도 접속 설정도 다 다시 해야 해서, 계정에 묶이는 고정 IP를 붙였어요.',
     commands: [
       {
         where: '브라우저 (AWS 콘솔)',
@@ -345,11 +351,9 @@ EC2 → 탄력적 IP → 할당 → 연결 → backend-visualized
   <예전 IP> (반납) → <IP>`,
       },
       {
-        where: '서버 (ubuntu@EC2)',
-        code: `# 1) API 주소를 새 IP의 sslip.io 이름으로
-sed -i 's/^API_DOMAIN=.*/API_DOMAIN=<IP-대시>.sslip.io/' deploy/production.env
-# 2) 다시 띄우기 → Caddy가 새 주소로 인증서를 다시 받음
-./deploy/compose.sh up -d`,
+        where: '브라우저 (AWS 콘솔)',
+        code: `# api A 레코드 값만 새 IP로 (API 주소 · 인증서는 그대로)
+Route 53 → chuckplay.dev → api (A) → 편집 → 값 <IP>`,
       },
     ],
     result: 'API 주소: `' + API_HOST + '`',

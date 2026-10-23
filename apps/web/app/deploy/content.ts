@@ -43,12 +43,12 @@ export const REASONS: Reason[] = [
     cost: '백업과 패치는 제 몫이에요. 서버 한 대가 죽으면 API와 DB가 같이 죽어요(단일 장애점). 그래서 매일 백업(서버 + S3)과 복원 테스트를 만들었고, 진짜 서비스라면 RDS로 옮길 거예요.',
   },
   {
-    id: 'sslip',
-    label: 'sslip.io',
-    question: '왜 sslip.io인가요?',
+    id: 'domain',
+    label: '내 도메인',
+    question: '왜 도메인을 샀나요?',
     answer:
-      'Vercel 화면은 https라서 API도 https여야 브라우저가 막지 않고, 로그인 쿠키(`Secure`)도 https에서만 돼요. 그런데 Let’s Encrypt 인증서는 도메인 이름이 있어야 받을 수 있어요. sslip.io는 IP를 이름으로 바꿔 주는 무료 주소라, 도메인을 사지 않고도 진짜 인증서를 받을 수 있었어요.',
-    cost: 'sslip.io는 남의 무료 서비스라 멈추면 API 주소도 멈춰요. 그래서 2026-10-23에 `chuckplay.dev` 도메인을 사서 `api.chuckplay.dev`로 옮겼어요. 실제로 바꾼 건 DNS A 레코드 하나와 `API_DOMAIN` 한 줄이었어요.',
+      'Vercel 화면은 https라서 API도 https여야 브라우저가 막지 않고, 로그인 쿠키(`Secure`)도 https에서만 돼요. 그런데 Let’s Encrypt 인증서는 도메인 이름이 있어야 받을 수 있어요. 그래서 Route 53에서 `chuckplay.dev`를 사서 화면은 `bv.chuckplay.dev`, API는 `api.chuckplay.dev`로 나눴어요. 둘이 같은 사이트가 돼서 로그인 쿠키도 `SameSite=Lax`로 충분해요.',
+    cost: '`.dev` 도메인이 1년에 약 $17, Route 53 호스팅 영역이 월 $0.5예요. 처음엔 IP를 이름으로 바꿔 주는 무료 주소(sslip.io)로 시작했는데, 남의 무료 서비스라 멈추면 API도 멈춰서 2026-10-23에 옮겼어요. 바꾼 건 DNS 레코드와 `API_DOMAIN` 한 줄이었어요.',
   },
   {
     id: 'caddy',
@@ -56,7 +56,7 @@ export const REASONS: Reason[] = [
     question: '왜 Caddy인가요?',
     answer:
       '설정이 짧아요. `Caddyfile`은 열 줄 남짓이고, Nginx처럼 server 블록 · SSL · http→https 리다이렉트를 따로 쓸 필요가 없어요. 주소만 적으면 Let’s Encrypt 인증서 발급과 갱신도 알아서 해요. 무중단 배포도 쉬워요. `upstream.caddy` 한 줄을 반대 색으로 바꾸고 `caddy reload`만 하면, 접속을 끊지 않고 바로 새 API로 넘어가요. 같은 서버에 컨테이너 하나라 추가 비용이 없고, 메모리 2GB 서버라 가벼운 게 중요했어요.',
-    cost: '자료와 실무 사례는 Nginx가 훨씬 많아요. 그리고 도메인을 사도 Caddy는 그대로 필요해요. 바뀌는 건 주소뿐이에요.',
+    cost: '자료와 실무 사례는 Nginx가 훨씬 많아요. 그래도 도메인을 옮길 때 Caddy는 손댈 게 없었어요. 바뀐 건 주소 한 줄뿐이에요.',
     compare: [
       {
         name: 'Nginx + Certbot',
@@ -70,13 +70,13 @@ export const REASONS: Reason[] = [
       { name: 'Cloudflare 프록시', note: '무료지만 도메인이 있어야 해요.' },
     ],
     verdict:
-      '도메인 없음 · 서버 한 대 · 추가 비용 0이라는 조건에서, 가장 적은 설정으로 HTTPS와 무중단 전환이 되는 게 Caddy였어요.',
+      '서버 한 대 · 추가 비용 0이라는 조건에서, 가장 적은 설정으로 HTTPS와 무중단 전환이 되는 게 Caddy였어요.',
   },
   {
     id: 'eip',
     question: '왜 Elastic IP(고정 IP)를 붙였나요?',
     answer:
-      '일반 공인 IP는 서버를 중지했다 켜면 바뀌어요. 주소가 바뀌면 sslip.io 주소, 인증서, Vercel 설정, Workbench 접속까지 다 고쳐야 해요. 실제로 한 번 바꿔 보고 나서 고정했어요.',
+      '일반 공인 IP는 서버를 중지했다 켜면 바뀌어요. 주소가 바뀌면 DNS 레코드, Workbench 접속, `ssh` 명령까지 다 고쳐야 해요. 실제로 한 번 바꿔 보고 나서 고정했어요.',
     cost: '공인 IPv4는 고정이든 아니든 시간당 $0.005(월 약 $3.7)가 나가요.',
   },
   {
@@ -211,22 +211,22 @@ export const TROUBLES: Trouble[] = [
     ],
   },
   {
-    symptom: '고정 IP가 있는데 왜 `https://<IP>`가 아니라 sslip.io?',
+    symptom: '고정 IP가 있는데 왜 `https://<IP>`로는 못 부르나?',
     cause:
       'Vercel 화면은 https라서 API를 http로 부르면 브라우저가 막아요(mixed content). 그런데 Caddy가 기본으로 받는 Let’s Encrypt 인증서는 도메인 이름이 있어야 해요.',
-    fix: '`1-2-3-4.sslip.io`처럼(IP `1.2.3.4`의 점을 -로) IP를 이름으로 바꿔 주는 무료 DNS를 쓰고, Caddy가 그 이름으로 인증서를 받아요. 2026-10-23에 제 도메인(`api.chuckplay.dev`)으로 옮길 때는 `API_DOMAIN` 한 줄만 바꿨어요.',
+    fix: '도메인을 사서 `api.chuckplay.dev` A 레코드를 고정 IP로 걸고, Caddy가 그 이름으로 인증서를 받아요. 서버 쪽은 `API_DOMAIN` 한 줄이면 돼요.',
   },
   {
-    symptom: '화면(vercel.app)과 API(sslip.io)가 다른 사이트: CORS와 로그인 쿠키',
+    symptom: '화면과 API가 다른 사이트였을 때: CORS와 로그인 쿠키',
     cause:
       'API가 허락한 주소가 아니면 브라우저가 응답을 화면에 안 넘겨요(CORS). 로그인을 이어 주는 리프레시 쿠키도 다른 사이트로 보내려면 `SameSite=None; Secure`가 있어야 하고, Safari는 원래 제3자 쿠키를 막아서(ITP) 새로고침하면 풀릴까 걱정했어요.',
-    fix: '`VERCEL_ORIGIN`에 Vercel 주소를 넣고 preflight(`OPTIONS`)로 허락 헤더를 확인했어요. 쿠키는 `SameSite=None; Secure; Partitioned`. 실제 Safari에서 새로고침해도 로그인이 유지됐어요(Partitioned 덕분으로 보여요). "모든 쿠키 차단" 같은 엄격한 설정이나 오래된 버전에서는 여전히 막힐 수 있어서, 제 도메인으로 같은 사이트를 만들고 `SameSite=Lax`로 바꾸는 게 가장 튼튼해요.',
+    fix: '`VERCEL_ORIGIN`에 Vercel 주소를 넣고 preflight(`OPTIONS`)로 허락 헤더를 확인했어요. 쿠키는 `SameSite=None; Secure; Partitioned`. 실제 Safari에서 새로고침해도 로그인이 유지됐어요(Partitioned 덕분으로 보여요). "모든 쿠키 차단" 같은 엄격한 설정이나 오래된 버전에서는 여전히 막힐 수 있어서, 그래서 2026-10-23에 화면을 `bv.chuckplay.dev`, API를 `api.chuckplay.dev`로 옮겨 같은 사이트로 만들고, 쿠키를 `SameSite=Lax`(Partitioned 없음)로 바꿨어요.',
   },
   {
     symptom: 'Elastic IP로 바꾼 뒤 Workbench가 갑자기 접속 실패 (API도 잠깐 503)',
     cause:
       'Workbench의 SSH Hostname이 아직 예전 IP를 가리키고 있었어요. API는 새 주소로 다시 뜨는 동안 Caddy가 잠깐 503을 돌려줬어요.',
-    fix: 'Workbench의 SSH Hostname을 새 IP로 바꿨고, 503은 API가 healthy가 되자 사라졌어요. IP를 바꾸면 sslip.io 주소, Vercel, Workbench, `ssh` 명령을 한 번에 같이 고쳐야 해요.',
+    fix: 'Workbench의 SSH Hostname을 새 IP로 바꿨고, 503은 API가 healthy가 되자 사라졌어요. IP를 바꾸면 API 주소, Workbench, `ssh` 명령을 한 번에 같이 고쳐야 해요. 지금은 도메인이 있어서 DNS 레코드 값만 바꾸면 돼요.',
   },
   {
     symptom: 'MySQL Workbench가 서버 MySQL에 접속을 못 함',
@@ -305,6 +305,8 @@ export const RETRO = {
     '"돌아간다"와 "운영할 수 있다"는 달랐어요. 재부팅 테스트, 0.2초마다 `/health` 찌르기, 복원 테스트처럼 일부러 깨 보고 숫자로 확인해야 마음이 놓였어요.',
     'GitHub Actions 예약 실행으로 15분마다 `/health`를 보게 걸어 뒀어요. 문서상 최소 간격은 5분인데, 하루 지켜보니 실제로는 약 3~5시간에 한 번 돌았어요(하루 5번). 바쁜 시간엔 늦거나 빠질 수 있다고 문서에도 적혀 있어서, 장애 알림용으로는 별 쓸모가 없어요. 제대로 하려면 외부 감시가 필요해요.',
     '비밀값은 처음부터 서버 안에서 만들고, 화면에는 이름만 찍는 습관이 생겼어요.',
+    '도메인을 사서 옮겨 보니 코드는 거의 안 바뀌고 설정만 바뀌었어요. 화면은 `bv.chuckplay.dev`(CNAME → Vercel), API는 `api.chuckplay.dev`(A 레코드 → 고정 IP)로 나눴고, 둘이 같은 사이트가 되면서 쿠키도 `SameSite=Lax`로 충분해졌어요. 대신 세 번 막혔어요. `API_DOMAIN`에 화면 주소를 넣어서 인증서 발급 요청이 Vercel로 가 404가 났고, Vercel의 `NEXT_PUBLIC_API_URL`은 빌드할 때 박히는 값이라 다시 빌드해야 했고, API는 켜질 때만 env를 읽어서 CORS 허락 주소가 바뀌려면 다시 띄워야 했어요.',
+    '블로그도 같은 날 `chuckplay.dev`로 옮겼어요. DNS와 `CNAME` 파일은 금방인데, 서치 콘솔·네이버 재등록, 사이트맵 다시 제출, GA 주소 수정, 애드센스 사이트 추가처럼 주소에 묶인 바깥 설정이 더 많았어요. 순서도 중요했어요. DNS보다 `CNAME`이 먼저 올라가면 옛 주소가 아직 안 열리는 새 주소로 넘어가요.',
     'CORS, SameSite 쿠키처럼 프론트에서 "서버가 막아요"라고 넘기던 것들이 서버 쪽에서는 한 줄 설정이라는 것, 그리고 그 한 줄의 의미를 이제는 설명할 수 있어요.',
   ],
   next: [
