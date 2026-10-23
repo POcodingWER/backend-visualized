@@ -21,7 +21,7 @@ jobs:
     timeout-minutes: 3
     env:
       # deploy.yml의 HEALTH_URL과 같은 주소 (주소를 바꾸면 둘 다 고친다)
-      HEALTH_URL: https://3-35-59-193.sslip.io/health
+      HEALTH_URL: https://api.chuckplay.dev/health
     steps:
       - name: /health 가 200인지
         run: |

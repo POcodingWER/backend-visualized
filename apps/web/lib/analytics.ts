@@ -12,7 +12,7 @@ export function contactTarget(href: string): ContactTarget | null {
   if (href.startsWith('mailto:')) return 'email';
   let url: URL;
   try {
-    url = new URL(href, 'https://backend-visualized.vercel.app');
+    url = new URL(href, 'https://bv.chuckplay.dev');
   } catch {
     return null;
   }
